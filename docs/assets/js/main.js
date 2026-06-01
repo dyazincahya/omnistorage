@@ -5,6 +5,7 @@ const footerWrapper = document.getElementById("site-footer-wrapper");
 
 // i18n
 let currentLang = localStorage.getItem("omnistorage_lang") || "en";
+let lastLoadedLang = null;
 const translations = {
   en: {
     tagline:
@@ -43,6 +44,14 @@ const translations = {
       api: "API Reference",
       cookbook: "Cookbook",
       usecases: "Use Cases",
+      apiSub: {
+        config: "Configuration",
+        basic: "Basic Operations",
+        retrieval: "Data Retrieval",
+        deletion: "Deletion",
+        batch: "Batch Operations",
+        advanced: "Advanced Features",
+      },
     },
   },
   id: {
@@ -80,6 +89,14 @@ const translations = {
       cookbook: "Buku Resep",
       usecases: "Contoh Kasus",
       logsStats: "Log & Statistik",
+      apiSub: {
+        config: "Konfigurasi",
+        basic: "Operasi Dasar",
+        retrieval: "Pengambilan Data",
+        deletion: "Penghapusan",
+        batch: "Operasi Batch",
+        advanced: "Fitur Lanjutan",
+      },
     },
   },
 };
@@ -116,6 +133,12 @@ function updateUIStrings() {
     if (el) el.innerText = text;
   });
 
+  // Sidebar Sub-items (API)
+  Object.entries(t.sidebar.apiSub).forEach(([anchor, text]) => {
+    const el = document.querySelector(`[data-anchor="${anchor}"]`);
+    if (el) el.innerText = text;
+  });
+
   // Language Buttons
   document
     .querySelectorAll(".lang-btn")
@@ -131,13 +154,58 @@ window.changeLang = function (lang) {
   handleRoute();
 };
 
-window.loadPage = async function (pageName) {
+function updateActiveNav(pageName, anchor) {
+  // Update Active Main Nav
+  document.querySelectorAll(".nav-item").forEach((el) => {
+    el.classList.toggle("active", el.dataset.page === pageName);
+  });
+
+  // Update Active Sub-items
+  document.querySelectorAll(".nav-subitem").forEach((el) => {
+    el.classList.toggle("active", el.dataset.anchor === anchor);
+  });
+}
+
+let scrollSpyObserver = null;
+
+function initScrollSpy(pageName) {
+  if (scrollSpyObserver) scrollSpyObserver.disconnect();
+  if (pageName !== "api") return;
+
+  const headers = contentDiv.querySelectorAll("h2[id]");
+  if (headers.length === 0) return;
+
+  scrollSpyObserver = new IntersectionObserver(
+    (entries) => {
+      entries.forEach((entry) => {
+        if (entry.isIntersecting) {
+          const anchor = entry.target.id;
+          updateActiveNav(pageName, anchor);
+        }
+      });
+    },
+    { rootMargin: "-80px 0px -80% 0px" },
+  );
+
+  headers.forEach((h) => scrollSpyObserver.observe(h));
+}
+
+window.loadPage = async function (pageName, anchor) {
   // Normalize pageName for routing
   if (!pageName || pageName === "/" || pageName === "#") {
     pageName = "home";
   }
 
   const isHome = pageName === "home";
+  const currentPage = document.querySelector(".nav-item.active")?.dataset.page;
+
+  // If already on the page and just moving to an anchor (and same language)
+  if (currentPage === pageName && lastLoadedLang === currentLang && anchor) {
+    updateActiveNav(pageName, anchor);
+    scrollToAnchor(anchor);
+    return;
+  }
+
   document.body.className = isHome ? "home-mode" : "docs-mode";
   const t = translations[currentLang];
 
@@ -194,10 +262,7 @@ window.loadPage = async function (pageName) {
         </footer>
     `;
 
-  // Update Active Nav
-  document.querySelectorAll(".nav-item").forEach((el) => {
-    el.classList.toggle("active", el.dataset.page === pageName);
-  });
+  updateActiveNav(pageName, anchor);
 
   // Close mobile menus on page load
   document.getElementById("header-nav")?.classList.remove("active");
@@ -214,6 +279,8 @@ window.loadPage = async function (pageName) {
 
     contentDiv.innerHTML = marked.parse(markdown);
     Prism.highlightAll();
+    lastLoadedLang = currentLang;
+    initScrollSpy(pageName);
 
     // Clean up hash if it's home
     if (isHome && window.location.hash) {
@@ -224,11 +291,29 @@ window.loadPage = async function (pageName) {
       );
     }
 
-    window.scrollTo(0, 0);
+    if (anchor) {
+      setTimeout(() => scrollToAnchor(anchor), 100);
+    } else {
+      window.scrollTo(0, 0);
+    }
   } catch (error) {
     contentDiv.innerHTML = `<div style="color: red;">Error: ${error.message}</div>`;
   }
 };
+
+function scrollToAnchor(anchorId) {
+  const element = document.getElementById(anchorId);
+  if (element) {
+    const headerOffset = 80;
+    const elementPosition = element.getBoundingClientRect().top;
+    const offsetPosition = elementPosition + window.pageYOffset - headerOffset;
+
+    window.scrollTo({
+      top: offsetPosition,
+      behavior: "smooth",
+    });
+  }
+}
 
 // Antigravity Background Logic
 // ... (no changes here, keeping it for context)
@@ -313,9 +398,10 @@ window.copyInstallCmd = function (btn) {
 // Initial Load & Routing
 window.handleRoute = () => {
   const hash = window.location.hash.replace("#", "");
+  const [page, anchor] = hash.split(":");
   // Treat empty, #, or #/ as home
-  const page = !hash || hash === "/" ? "home" : hash;
-  loadPage(page);
+  const pageName = !page || page === "/" ? "home" : page;
+  loadPage(pageName, anchor);
 };
 
 document.addEventListener("DOMContentLoaded", () => {

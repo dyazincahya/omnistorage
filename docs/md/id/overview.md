@@ -4,15 +4,15 @@
 
 `OmniStorage` adalah library wrapper penyimpanan data key-value yang universal, ringan, dan _type-safe_ untuk JavaScript dan Node.js.
 
-Library ini dirancang untuk memberikan pengalaman pengembangan yang konsisten di berbagai platform, menangani perbedaan antara penyimpanan browser (seperti `localStorage` dan `IndexedDB`) dan penyimpanan server (seperti File System atau Memory).
+Library ini dirancang untuk memberikan pengalaman pengembangan yang konsisten di berbagai platform, menangani perbedaan antara penyimpanan browser (seperti `localStorage`, `IndexedDB`, dan `SQLite WASM`) dan penyimpanan server (seperti `SQLite`, `File System`, atau `Memory`).
 
 ## <i class="ri-question-line"></i> Mengapa Menggunakan Library Ini?
 
 1.  <i class="ri-global-line"></i> **Universal API**: Gunakan kode yang sama untuk penyimpanan di Browser dan Node.js.
 2.  <i class="ri-code-box-line"></i> **ORM-Like Syntax**: Menggunakan istilah yang akrab bagi pengembang seperti `create`, `find`, `update`, dan `save`.
 3.  <i class="ri-shield-check-line"></i> **Type Safety**: Validasi tipe data bawaan saat pengambilan data.
-4.  <i class="ri-plug-line"></i> **Engine Pluggable**: Pilih engine yang sesuai dengan kebutuhan Anda (Local, Session, Memory, IndexedDB, SQLite, File).
-5.  <i class="ri-flashlight-line"></i> **Smart Logic**: Perbedaan jelas antara operasi insert (`create`), update (`update`), dan upsert (`save`).
+4.  <i class="ri-plug-line"></i> **Engine Pluggable**: Pilih engine yang sesuai dengan kebutuhan Anda (Local, Session, Memory, IndexedDB, SQLite Client/Server, File).
+5.  <i class="ri-history-line"></i> **Pelacakan Aktivitas**: Logging SQLite bawaan untuk memantau semua operasi penyimpanan untuk debugging dan audit.
 
 ## <i class="ri-focus-2-line"></i> Konsep Utama
 

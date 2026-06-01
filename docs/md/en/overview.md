@@ -4,15 +4,15 @@
 
 `OmniStorage` is a universal, lightweight, and type-safe key-value storage wrapper library for JavaScript and Node.js.
 
-The library is designed to provide a consistent development experience across various platforms, handling differences between browser storage (such as `localStorage` and `IndexedDB`) and server-side storage (such as File System or Memory).
+The library is designed to provide a consistent development experience across various platforms, handling differences between browser storage (such as `localStorage`, `IndexedDB`, and `SQLite WASM`) and server-side storage (such as `SQLite`, `File System`, or `Memory`).
 
 ## <i class="ri-question-line"></i> Why Use This Library?
 
 1.  <i class="ri-global-line"></i> **Universal API**: Use the same code for storage in the Browser and Node.js.
 2.  <i class="ri-code-box-line"></i> **ORM-Like Syntax**: Uses familiar terms for developers such as `create`, `find`, `update`, and `save`.
 3.  <i class="ri-shield-check-line"></i> **Type Safety**: Built-in data type validation during retrieval.
-4.  <i class="ri-plug-line"></i> **Pluggable Engines**: Choose the engine that fits your needs (Local, Session, Memory, IndexedDB, SQLite, File).
-5.  <i class="ri-flashlight-line"></i> **Smart Logic**: Clear distinction between insert (`create`), update (`update`), and upsert (`save`) operations.
+4.  <i class="ri-plug-line"></i> **Pluggable Engines**: Choose the engine that fits your needs (Local, Session, Memory, IndexedDB, SQLite Client/Server, File).
+5.  <i class="ri-history-line"></i> **Activity Tracking**: Built-in SQLite logging to monitor all storage operations for debugging and auditing.
 
 ## <i class="ri-focus-2-line"></i> Core Concepts
 

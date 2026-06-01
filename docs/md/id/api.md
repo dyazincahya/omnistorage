@@ -16,7 +16,44 @@ const userData = {
 
 ---
 
-## <i class="ri-settings-4-line"></i> Operasi Dasar
+<h2 id="config"><i class="ri-settings-4-line"></i> Konfigurasi & Namespacing</h2>
+
+### <i class="ri-database-2-line"></i> `.db(name)`
+
+Mengatur nama database global. Ini bertindak sebagai nama database fisik di IndexedDB atau prefix global pada engine lainnya.
+
+```javascript
+store.db("my_app");
+```
+
+### <i class="ri-plug-line"></i> `.use(engineType)`
+
+Mengatur engine penyimpanan default secara global.
+
+```javascript
+store.use("session"); // local, session, memory, file, indexeddb, sqlite-server, sqlite-client
+```
+
+### <i class="ri-equalizer-line"></i> `.config(engineType)`
+
+Beralih sementara ke engine tertentu untuk serangkaian operasi tanpa mengubah default global.
+
+```javascript
+await store.config("memory").save("temp_key", "value");
+```
+
+### <i class="ri-folder-shield-line"></i> `.namespace(name)`
+
+Membuat lapisan isolasi logis di dalam engine saat ini.
+
+```javascript
+const auth = store.namespace("v1/auth");
+await auth.save("token", "xyz123"); // Disimpan sebagai "dbName_v1/auth:token"
+```
+
+---
+
+<h2 id="basic"><i class="ri-settings-4-line"></i> Operasi Dasar</h2>
 
 ### <i class="ri-arrow-left-right-line"></i> Perbandingan Cepat: `create` vs `save`
 
@@ -102,11 +139,11 @@ const res = await store.save("user:102", {
 
 ---
 
-## <i class="ri-search-eye-line"></i> Pengambilan Data
+<h2 id="retrieval"><i class="ri-search-eye-line"></i> Pengambilan Data</h2>
 
-### <i class="ri-find-replace-line"></i> `.find(key, options?)`
+### <i class="ri-find-replace-line"></i> `.find(key, options?)` / `.findOne(key, options?)`
 
-Mengambil satu entri data. Anda dapat memberikan opsi untuk memvalidasi tipe data yang dikembalikan.
+Mengambil satu entri data. `.findOne` adalah alias untuk `.find`.
 
 **Contoh:**
 
@@ -147,7 +184,7 @@ Mengambil semua data dalam database atau namespace saat ini.
 
 ---
 
-## <i class="ri-delete-bin-line"></i> Penghapusan
+<h2 id="deletion"><i class="ri-delete-bin-line"></i> Penghapusan</h2>
 
 ### <i class="ri-close-circle-line"></i> `.destroy(key)`
 
@@ -181,8 +218,89 @@ Menghapus semua data dalam database atau namespace saat ini.
 
 ---
 
-## <i class="ri-rocket-2-line"></i> Fitur Lanjutan
+<h2 id="batch"><i class="ri-stack-line"></i> Operasi Batch</h2>
+
+Memproses banyak item secara efisien dalam satu panggilan.
+
+### `.saveMany(items)`
+
+_Upsert_ banyak item sekaligus.
+
+```javascript
+await store.saveMany({
+  key1: "value1",
+  key2: { id: 2 },
+});
+```
+
+### `.createMany(items)`
+
+_Insert_ banyak item sekaligus. Gagal untuk key yang sudah ada.
+
+### `.updateMany(items)`
+
+_Update_ banyak item sekaligus. Gagal untuk key yang tidak ditemukan.
+
+### `.findMany(keys)`
+
+Mengambil banyak item sekaligus berdasarkan key mereka.
+
+```javascript
+const res = await store.findMany(["key1", "key2"]);
+// res.data = { "key1": "value1", "key2": { "id": 2 } }
+```
+
+### `.destroyMany(keys)`
+
+Menghapus banyak item sekaligus berdasarkan key mereka.
+
+---
+
+<h2 id="advanced"><i class="ri-rocket-2-line"></i> Fitur Lanjutan</h2>
 
 ### <i class="ri-eye-line"></i> `.watch(key, callback)`
 
 Memantau perubahan pada key tertentu. Mengembalikan fungsi `unwatch`.
+
+```javascript
+const unwatch = store.watch("user:101", (newValue, oldValue) => {
+  console.log("Data berubah!", newValue);
+});
+
+// Untuk berhenti memantau:
+unwatch();
+```
+
+### <i class="ri-flashlight-line"></i> `.on(event, callback)`
+
+Hook global untuk operasi penyimpanan. Event yang didukung: `onSet`, `onGet`, `onDelete`, `onClear`.
+
+```javascript
+store.on("onSet", (data) => {
+  console.log(`Tersimpan di ${data.engine}: ${data.key}`);
+});
+```
+
+### <i class="ri-exchange-funds-line"></i> `.transaction(callback)`
+
+Eksekusi banyak operasi dalam satu blok.
+
+```javascript
+await store.transaction(async (trx) => {
+  await trx.create("trx:1", "Nilai A");
+  await trx.save("trx:2", "Nilai B");
+});
+```
+
+### <i class="ri-information-line"></i> `.describe(key)`
+
+Mengambil metadata untuk key tertentu (misalnya, ukuran dalam bytes, engine yang digunakan).
+
+```javascript
+const meta = await store.describe("user:101");
+console.log(meta.data.size);
+```
+
+### <i class="ri-bar-chart-box-line"></i> `.getStatistics()` / `.getStatistic(name)`
+
+Mengambil statistik penggunaan penyimpanan. Lihat [Log & Statistik](logs-stats.md) untuk detail lebih lanjut.
