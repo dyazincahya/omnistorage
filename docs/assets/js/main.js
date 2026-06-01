@@ -253,7 +253,7 @@ window.loadPage = async function (pageName, anchor) {
   // Global Footer
   footerWrapper.innerHTML = `
         <footer class="site-footer">
-            <div>© 2026 OmniStorage. ${t.footer}</div>
+            <div>© 2026 OmniStorage. ${t.footer} Developed by <a href="https://github.com/dyazincahya" class="footer-link-credit" target="_blank">Kang Cahya</a></div>
             <div class="footer-links">
                 <a href="https://github.com/dyazincahya/omnistorage" class="footer-link" target="_blank">GitHub</a>
                 <a href="#overview" class="footer-link">${t.nav.docs}</a>

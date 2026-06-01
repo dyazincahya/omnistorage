@@ -19,7 +19,7 @@
 body {
   font-family: "Plus Jakarta Sans";
   font-size: 16px;
-  line-height: 1.5;
+  line-height: 1.7;
   color: var(--color-fg-default);
   background-color: var(--color-canvas-default);
   margin: 0;
@@ -296,20 +296,37 @@ pre code {
   border-bottom: 1px solid var(--color-border-default);
   padding-bottom: 0.3em;
   margin-top: 0;
+  margin-bottom: 24px;
 }
 .markdown-body h2 {
   font-size: 1.5em;
   border-bottom: 1px solid var(--color-border-default);
   padding-bottom: 0.3em;
-  margin-top: 24px;
+  margin-top: 48px;
+  margin-bottom: 16px;
 }
 .markdown-body h3 {
   font-size: 1.25em;
-  margin-top: 24px;
+  margin-top: 32px;
+  margin-bottom: 12px;
 }
 .markdown-body p {
   margin-top: 0;
-  margin-bottom: 16px;
+  margin-bottom: 20px;
+}
+
+.markdown-body ul,
+.markdown-body ol {
+  margin-bottom: 20px;
+}
+
+.markdown-body li {
+  margin-bottom: 8px;
+}
+
+.markdown-body li > ul,
+.markdown-body li > ol {
+  margin-top: 8px;
 }
 
 /* Tables (GitHub Style) */
@@ -643,6 +660,16 @@ pre code {
 }
 
 .footer-link:hover {
+  text-decoration: underline;
+}
+
+.footer-link-credit {
+  color: var(--primary);
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.footer-link-credit:hover {
   text-decoration: underline;
 }
 
