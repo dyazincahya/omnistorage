@@ -1,0 +1,136 @@
+import sqlite3InitModule from "@sqlite.org/sqlite-wasm";
+import is from "is";
+import { BaseEngine } from "../base.js";
+
+export default class SQLiteClientEngine extends BaseEngine {
+  constructor(dbName) {
+    super(dbName, "sqlite-client");
+    this._db = null;
+    this._promise = this._init();
+  }
+
+  async _init() {
+    if (is.undefined(globalThis.window)) return;
+    try {
+      const sqlite3 = await sqlite3InitModule({
+        print: console.log,
+        printErr: console.error,
+      });
+      if ("opfs" in sqlite3) {
+        this._db = new sqlite3.oo1.OpfsDb(`${this.dbName}.sqlite3`);
+      } else {
+        this._db = new sqlite3.oo1.DB(`${this.dbName}.sqlite3`, "ct");
+      }
+      this._db.exec(`
+        CREATE TABLE IF NOT EXISTS kv (
+          key TEXT PRIMARY KEY,
+          value TEXT
+        )
+      `);
+    } catch (e) {
+      console.error("SQLite WASM init error:", e);
+    }
+  }
+
+  async _getDb() {
+    await this._promise;
+    return this._db;
+  }
+
+  async getItemRaw(fullKey) {
+    const db = await this._getDb();
+    if (!db) return null;
+    let value = null;
+    db.exec({
+      sql: "SELECT value FROM kv WHERE key = ?",
+      bind: [fullKey],
+      callback: (row) => { value = row[0]; }
+    });
+    return value;
+  }
+
+  async getItem(key) {
+    return await this.getItemRaw(this._applyPrefix(key));
+  }
+
+  async setItem(key, value) {
+    const db = await this._getDb();
+    if (!db) return;
+    db.exec({
+      sql: "INSERT OR REPLACE INTO kv (key, value) VALUES (?, ?)",
+      bind: [this._applyPrefix(key), value]
+    });
+  }
+
+  async removeItem(key) {
+    const db = await this._getDb();
+    if (!db) return;
+    db.exec({
+      sql: "DELETE FROM kv WHERE key = ?",
+      bind: [this._applyPrefix(key)]
+    });
+  }
+
+  async setItems(items) {
+    const db = await this._getDb();
+    if (!db) return;
+    db.transaction((d) => {
+      for (const [k, v] of Object.entries(items)) {
+        d.exec({
+          sql: "INSERT OR REPLACE INTO kv (key, value) VALUES (?, ?)",
+          bind: [k, v]
+        });
+      }
+    });
+  }
+
+  async removeItems(keys) {
+    const db = await this._getDb();
+    if (!db) return;
+    db.transaction((d) => {
+      for (const k of keys) {
+        d.exec({
+          sql: "DELETE FROM kv WHERE key = ?",
+          bind: [k]
+        });
+      }
+    });
+  }
+
+  async truncate() {
+    const db = await this._getDb();
+    if (!db) return;
+    const prefix = `${this.dbName}_%`;
+    db.exec({
+      sql: "DELETE FROM kv WHERE key LIKE ?",
+      bind: [prefix]
+    });
+  }
+
+  async getAll() {
+    const db = await this._getDb();
+    if (!db) return {};
+    const prefix = `${this.dbName}_`;
+    const results = {};
+    db.exec({
+      sql: "SELECT key, value FROM kv WHERE key LIKE ?",
+      bind: [`${prefix}%`],
+      callback: (row) => {
+        const cleanKey = row[0].replace(prefix, "");
+        results[cleanKey] = JSON.parse(row[1]);
+      }
+    });
+    return results;
+  }
+
+  async keys() {
+    const db = await this._getDb();
+    if (!db) return [];
+    const keys = [];
+    db.exec({
+      sql: "SELECT key FROM kv",
+      callback: (row) => { keys.push(row[0]); }
+    });
+    return keys;
+  }
+}

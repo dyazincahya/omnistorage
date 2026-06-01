@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OmniStorage — Universal Storage Layer</title>
+
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" href="assets/images/icon.png">
+
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,200..800;1,200..800&display=swap"
+        rel="stylesheet">
+
+    <!-- Remix Icon -->
+    <link href="https://cdn.jsdelivr.net/npm/remixicon@4.2.0/fonts/remixicon.css" rel="stylesheet" />
+
+    <!-- External CSS -->
+    <link rel="stylesheet" href="assets/css/style.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism.min.css" rel="stylesheet" />
+</head>
+
+<body class="home-mode">
+    <div id="bg-canvas"></div>
+
+    <header class="header">
+        <button class="mobile-menu-toggle" id="menu-toggle">
+            <i class="ri-menu-line"></i>
+        </button>
+        <a href="#" class="header-brand">
+            <img src="assets/images/icon.png" alt="Logo">
+            <span>OmniStorage</span>
+        </a>
+        <nav class="header-nav" id="header-nav">
+            <div class="lang-switcher">
+                <button class="lang-btn" id="lang-en" onclick="changeLang('en')">EN</button>
+                <button class="lang-btn" id="lang-id" onclick="changeLang('id')">ID</button>
+            </div>
+            <a href="#overview" class="header-link" id="nav-docs">Docs</a>
+            <a href="#examples" class="header-link" id="nav-examples">Examples</a>
+            <a href="https://github.com/dyazincahya/omnistorage" class="header-link" target="_blank">GitHub</a>
+        </nav>
+    </header>
+
+    <div class="container-main">
+        <aside id="sidebar">
+            <div class="nav-section">
+                <div class="nav-title"><i class="ri-book-open-line"></i> Introduction</div>
+                <a href="#overview" class="nav-item" data-page="overview">Overview</a>
+                <a href="#installation" class="nav-item" data-page="installation">Installation</a>
+            </div>
+            <div class="nav-section">
+                <div class="nav-title"><i class="ri-stack-line"></i> Core</div>
+                <a href="#engines" class="nav-item" data-page="engines">Storage Engines</a>
+                <a href="#api" class="nav-item" data-page="api">API Reference</a>
+                <a href="#logs-stats" class="nav-item" data-page="logs-stats">Logs & Statistics</a>
+            </div>
+            <div class="nav-section">
+                <div class="nav-title"><i class="ri-lightbulb-line"></i> Examples</div>
+                <a href="#examples" class="nav-item" data-page="examples">Use Cases</a>
+            </div>
+        </aside>
+
+        <main id="content-wrapper">
+            <div id="home-hero-wrapper"></div>
+            <div id="home-features-wrapper"></div>
+            <div id="doc-content" class="markdown-body">
+                <!-- Content injected here -->
+            </div>
+            <div id="site-footer-wrapper"></div>
+        </main>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-javascript.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-bash.min.js"></script>
+
+    <!-- External JS -->
+    <script src="assets/js/main.js"></script>
+</body>
+
+</html>

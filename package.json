@@ -1,0 +1,23 @@
+{
+  "name": "omnistorage",
+  "version": "1.0.0",
+  "description": "A lightweight, type-safe, and universal storage layer for JavaScript. Store anything, anywhere, with a single unified API.",
+  "main": "src/index.js",
+  "type": "module",
+  "keywords": [
+    "storage",
+    "localstorage",
+    "persistence",
+    "type-safe"
+  ],
+  "author": "Kang Cahya",
+  "license": "MIT",
+  "dependencies": {
+    "@sqlite.org/sqlite-wasm": "^3.45.3-build1",
+    "better-sqlite3": "^11.0.0",
+    "cacheable": "^1.8.8",
+    "dexie": "^4.0.8",
+    "idb": "^8.0.0",
+    "is": "^3.3.0"
+  }
+}
