@@ -1,0 +1,131 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>OmniStorage Interactive Demo</title>
+  <link rel="stylesheet" href="./styles.css" />
+</head>
+<body>
+  <header class="header">
+    <a class="header-brand" href="../README.md" target="_blank" rel="noreferrer">
+      <img src="../docs/assets/images/icon.png" alt="OmniStorage Logo" />
+      <span>OmniStorage Demo</span>
+    </a>
+    <nav class="header-nav" aria-label="Demo links">
+      <a class="header-link" href="https://github.com/dyazincahya/omnistorage" target="_blank" rel="noreferrer">GitHub Repository</a>
+      <a class="header-link" href="../docs/index.html" target="_blank" rel="noreferrer">Documentation</a>
+    </nav>
+  </header>
+
+  <main class="page-shell">
+    <section class="intro markdown-card">
+      <img class="intro-logo" src="../docs/assets/images/icon.png" alt="OmniStorage Logo" />
+      <div>
+        <p class="eyebrow">Interactive Demo</p>
+        <h1>OmniStorage Playground</h1>
+        <p>
+          Test browser-safe storage engines manually. Choose an engine, run operations,
+          inspect stored data, and review activity output directly from this page.
+        </p>
+        <div class="link-row">
+          <a class="btn btn-primary" href="https://github.com/dyazincahya/omnistorage" target="_blank" rel="noreferrer">View GitHub Repository</a>
+          <a class="btn" href="../docs/index.html" target="_blank" rel="noreferrer">Open Documentation</a>
+        </div>
+      </div>
+    </section>
+
+    <section class="grid two-columns">
+      <form id="storage-form" class="markdown-card">
+        <div class="section-header">
+          <div>
+            <p class="eyebrow">Configuration</p>
+            <h2>Storage Target</h2>
+          </div>
+          <button type="button" id="reset-demo" class="btn">Reset Form</button>
+        </div>
+
+        <div class="form-grid">
+          <label>Engine
+            <select id="engine">
+              <option value="memory">Memory</option>
+              <option value="local">LocalStorage</option>
+              <option value="session">SessionStorage</option>
+              <option value="indexeddb">IndexedDB</option>
+            </select>
+          </label>
+          <label>Database Name
+            <input id="db-name" type="text" value="demo_app" autocomplete="off" />
+          </label>
+          <label>Namespace
+            <input id="namespace" type="text" value="default" autocomplete="off" />
+          </label>
+          <label>Key
+            <input id="key" type="text" value="user:1" autocomplete="off" />
+          </label>
+        </div>
+
+        <label>Value
+          <textarea id="value" rows="9" spellcheck="false">{
+  "name": "Kang Cahya",
+  "role": "developer",
+  "active": true
+}</textarea>
+        </label>
+
+        <div class="actions">
+          <button type="button" id="create" class="btn btn-primary">Create</button>
+          <button type="button" id="save" class="btn btn-primary">Save / Upsert</button>
+          <button type="button" id="update" class="btn">Update</button>
+          <button type="button" id="find" class="btn">Find</button>
+          <button type="button" id="remove" class="btn btn-danger">Delete</button>
+        </div>
+
+        <div class="actions">
+          <button type="button" id="find-all" class="btn">Find All</button>
+          <button type="button" id="seed" class="btn">Seed Demo Data</button>
+          <button type="button" id="stats" class="btn">Stats</button>
+          <button type="button" id="truncate" class="btn btn-danger">Truncate Namespace</button>
+        </div>
+      </form>
+
+      <section class="markdown-card">
+        <div class="section-header">
+          <div>
+            <p class="eyebrow">Result</p>
+            <h2>Operation Output</h2>
+          </div>
+          <span id="status-pill" class="pill">Ready</span>
+        </div>
+        <pre id="result" class="output">Choose an operation to start testing.</pre>
+      </section>
+    </section>
+
+    <section class="grid two-columns">
+      <section class="markdown-card">
+        <div class="section-header">
+          <div>
+            <p class="eyebrow">Stored Data</p>
+            <h2>Current Namespace</h2>
+          </div>
+          <button type="button" id="refresh-data" class="btn">Refresh</button>
+        </div>
+        <div id="data-list" class="data-list empty">No data loaded yet.</div>
+      </section>
+
+      <section class="markdown-card">
+        <div class="section-header">
+          <div>
+            <p class="eyebrow">Activity</p>
+            <h2>Manual Test Log</h2>
+          </div>
+          <button type="button" id="clear-log" class="btn">Clear Log</button>
+        </div>
+        <ol id="activity-log" class="activity-log"></ol>
+      </section>
+    </section>
+  </main>
+
+  <script type="module" src="./app.js"></script>
+</body>
+</html>
