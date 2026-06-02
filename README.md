@@ -51,6 +51,11 @@ OmniStorage supports multiple engines across browser, Node.js, and shared runtim
 - **Client-side / Browser**: `local`, `session`, `indexeddb`, `sqlite-client`
 - **Server-only / Node.js**: `file`, `sqlite-server`
 
+## Publishing
+
+Publishing to GitHub Packages is handled by `.github/workflows/publish-package.yml`.
+Create a GitHub Release using a tag that matches `package.json` exactly, for example `1.0.0` instead of `v1.0.0`.
+
 ## Documentation
 
 Detailed installation guides, API reference, engine configuration, and advanced examples are available on the official documentation site:

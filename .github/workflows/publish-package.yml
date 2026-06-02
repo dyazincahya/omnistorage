@@ -27,6 +27,13 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Validate release tag
+        if: github.event_name == 'release'
+        run: |
+          node -e "const fs = require('fs'); const pkg = JSON.parse(fs.readFileSync('package.json', 'utf8')); const tag = process.env.RELEASE_TAG; if (tag !== pkg.version) { console.error('Release tag must match package.json version exactly. Expected ' + pkg.version + ', got ' + tag + '. Use ' + pkg.version + ', not v' + pkg.version + '.'); process.exit(1); }"
+        env:
+          RELEASE_TAG: ${{ github.event.release.tag_name }}
+
       - name: Run tests
         run: npm test
 

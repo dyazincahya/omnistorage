@@ -122,6 +122,13 @@ class Logger {
     if (!this._db) return;
     this._db.exec("DELETE FROM activity_logs");
   }
+
+  async close() {
+    await this._promise;
+    if (!this._db || typeof this._db.close !== "function") return;
+    this._db.close();
+    this._db = null;
+  }
 }
 
 export const logger = new Logger();
