@@ -31,16 +31,16 @@ The library is designed for projects that need flexible storage options without 
 
 ## Installation
 
-This package is configured for GitHub Packages:
+Install from npm:
 
 ```bash
-npm install @dyazincahya/omnistorage
+npm install omnistorage
 ```
 
 Use it in your project:
 
 ```javascript
-import store from "@dyazincahya/omnistorage";
+import store from "omnistorage";
 ```
 
 ## Supported Engines
@@ -53,8 +53,8 @@ OmniStorage supports multiple engines across browser, Node.js, and shared runtim
 
 ## Publishing
 
-Publishing to GitHub Packages is handled by `.github/workflows/publish-package.yml`.
-Create a GitHub Release using a tag that matches `package.json` exactly, for example `1.0.0` instead of `v1.0.0`.
+Publishing to npm is handled by `.github/workflows/publish-package.yml`.
+Push a semver tag such as `1.0.0` to publish the package and create a GitHub Release.
 
 ## Documentation
 

@@ -1,43 +1,46 @@
-name: Publish package to GitHub Packages
+name: Publish to npm
 
 on:
-  release:
-    types: [published]
-  workflow_dispatch:
+  push:
+    tags:
+      - "*.*.*"
+      - "v*.*.*"
 
 permissions:
-  contents: read
-  packages: write
+  contents: write
+  id-token: write
 
 jobs:
   publish:
+    name: Publish package
     runs-on: ubuntu-latest
+
     steps:
-      - name: Checkout
+      - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Setup Node
+      - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: "22"
-          registry-url: "https://npm.pkg.github.com"
-          scope: "@dyazincahya"
-          cache: "npm"
+          node-version: 20
+          registry-url: "https://registry.npmjs.org"
+          cache: npm
 
       - name: Install dependencies
         run: npm ci
 
-      - name: Validate release tag
-        if: github.event_name == 'release'
-        run: |
-          node -e "const fs = require('fs'); const pkg = JSON.parse(fs.readFileSync('package.json', 'utf8')); const tag = process.env.RELEASE_TAG; if (tag !== pkg.version) { console.error('Release tag must match package.json version exactly. Expected ' + pkg.version + ', got ' + tag + '. Use ' + pkg.version + ', not v' + pkg.version + '.'); process.exit(1); }"
-        env:
-          RELEASE_TAG: ${{ github.event.release.tag_name }}
+      - name: Typecheck
+        run: npm run typecheck
 
-      - name: Run tests
-        run: npm test
+      - name: Build
+        run: npm run build
 
-      - name: Publish package
-        run: npm publish
+      - name: Publish to npm
+        run: npm publish --provenance --access public
         env:
-          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          generate_release_notes: true

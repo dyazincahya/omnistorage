@@ -1,5 +1,5 @@
 {
-  "name": "@dyazincahya/omnistorage",
+  "name": "omnistorage",
   "version": "1.0.0",
   "description": "A lightweight, type-safe, and universal storage layer for JavaScript. Store anything, anywhere, with a single unified API.",
   "main": "src/index.js",
@@ -19,7 +19,7 @@
   },
   "homepage": "https://dyazincahya.github.io/omnistorage/store/docs/index.html",
   "publishConfig": {
-    "registry": "https://npm.pkg.github.com"
+    "access": "public"
   },
   "keywords": [
     "storage",
@@ -43,6 +43,8 @@
     "jest-environment-jsdom": "^29.7.0"
   },
   "scripts": {
-    "test": "node --experimental-vm-modules node_modules/jest/bin/jest.js"
+    "test": "node --experimental-vm-modules node_modules/jest/bin/jest.js",
+    "typecheck": "node --check src/index.js",
+    "build": "node --check src/index.js"
   }
 }
