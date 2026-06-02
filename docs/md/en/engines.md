@@ -44,15 +44,15 @@ A low-level API for client-side storage of significant amounts of structured dat
 ---
 
 ### <i class="ri-temp-hot-line"></i> In-Memory
-A high-performance storage that lives in the application's memory (RAM). It is extremely fast but volatile.
+A high-performance in-process storage that lives in the active runtime memory (RAM). In the browser it uses the page/tab memory; in Node.js it uses the server process memory. It is extremely fast but volatile.
 
 | Property | Value |
 | :--- | :--- |
 | **Engine Key** | `memory` |
-| **Type** | Client & Server |
+| **Type** | Universal runtime (Browser & Node.js) |
 | **Dependencies** | `cacheable` |
 
-**Best for:** Data caching, fast lookup, and server-side temporary state.
+**Best for:** Runtime caching, fast lookup, browser demo state, and temporary server-side state.
 
 ---
 

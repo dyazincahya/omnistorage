@@ -39,8 +39,29 @@ const translations = {
       },
       pluggable: {
         title: "Pluggable Engines",
-        desc: "Supports over 7 storage engines. Switch engines easily without changing your app's logic flow.",
+        desc: "Supports multiple storage engines. Switch engines easily without changing your app's logic flow.",
       },
+    },
+    engines: {
+      title: "Supported Engines",
+      desc: "Choose the right backend for browser apps, Node.js services, or shared runtime code.",
+      categories: [
+        {
+          icon: "ri-loop-left-line",
+          title: "Hybrid / Universal",
+          engines: ["memory"],
+        },
+        {
+          icon: "ri-window-line",
+          title: "Client-side / Browser",
+          engines: ["local", "session", "indexeddb", "sqlite-client"],
+        },
+        {
+          icon: "ri-server-line",
+          title: "Server-only / Node.js",
+          engines: ["file", "sqlite-server"],
+        },
+      ],
     },
     footer: "Built with ❤️ for the JS Community.",
     nav: {
@@ -86,8 +107,29 @@ const translations = {
       },
       pluggable: {
         title: "Engine Pluggable",
-        desc: "Mendukung lebih dari 7 engine penyimpanan. Ganti engine dengan mudah tanpa mengubah alur logika aplikasi Anda.",
+        desc: "Mendukung berbagai engine penyimpanan. Ganti engine dengan mudah tanpa mengubah alur logika aplikasi Anda.",
       },
+    },
+    engines: {
+      title: "Dukungan Engine",
+      desc: "Pilih backend penyimpanan yang tepat untuk aplikasi browser, layanan Node.js, atau kode lintas runtime.",
+      categories: [
+        {
+          icon: "ri-loop-left-line",
+          title: "Hybrid / Universal",
+          engines: ["memory"],
+        },
+        {
+          icon: "ri-window-line",
+          title: "Client-side / Browser",
+          engines: ["local", "session", "indexeddb", "sqlite-client"],
+        },
+        {
+          icon: "ri-server-line",
+          title: "Server-only / Node.js",
+          engines: ["file", "sqlite-server"],
+        },
+      ],
     },
     footer: "Dibuat dengan ❤️ untuk Komunitas JS.",
     nav: {
@@ -233,7 +275,7 @@ window.loadPage = async function (pageName, anchor) {
                 <h1>OmniStorage</h1>
                 <p>${t.tagline}</p>
                 <div class="home-quick-install">
-                    <code>npm install omnistorage</code>
+                    <code>npm install @dyazincahya/omnistorage</code>
                     <button class="copy-btn" onclick="copyInstallCmd(this)"><i class="ri-file-copy-line"></i></button>
                 </div>
                 <div class="home-hero-btns">
@@ -242,6 +284,21 @@ window.loadPage = async function (pageName, anchor) {
                 </div>
             </div>
         `;
+    const engineCards = t.engines.categories
+      .map(
+        (category) => `
+                <div class="engine-card">
+                    <div class="engine-card-title">
+                        <span class="engine-card-icon"><i class="${category.icon}"></i></span>
+                        <h3>${category.title}</h3>
+                    </div>
+                    <div class="engine-badges">
+                        ${category.engines.map((engine) => `<code>${engine}</code>`).join("")}
+                    </div>
+                </div>`,
+      )
+      .join("");
+
     featuresWrapper.innerHTML = `
             <div class="features-container">
                 <div class="feature-card">
@@ -260,6 +317,13 @@ window.loadPage = async function (pageName, anchor) {
                     <p>${t.features.pluggable.desc}</p>
                 </div>
             </div>
+            <section class="home-engines" aria-labelledby="home-engines-title">
+                <div class="home-engines-header">
+                    <h2 id="home-engines-title">${t.engines.title}</h2>
+                    <p>${t.engines.desc}</p>
+                </div>
+                <div class="engine-grid">${engineCards}</div>
+            </section>
         `;
   } else {
     heroWrapper.innerHTML = "";
@@ -399,7 +463,7 @@ if (bgCanvas) {
 }
 
 window.copyInstallCmd = function (btn) {
-  const cmd = "npm install omnistorage";
+  const cmd = "npm install @dyazincahya/omnistorage";
   navigator.clipboard.writeText(cmd).then(() => {
     const icon = btn.querySelector("i");
     icon.className = "ri-check-line";

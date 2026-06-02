@@ -4,10 +4,11 @@ Mulai menggunakan `OmniStorage` di proyek Anda.
 
 ## <i class="ri-terminal-box-line"></i> Instalasi
 
-Gunakan npm untuk menginstal library:
+Gunakan npm untuk menginstal library dari GitHub Packages:
 
 ```bash
-npm install omnistorage
+npm config set @dyazincahya:registry https://npm.pkg.github.com
+npm install @dyazincahya/omnistorage
 ```
 
 ## <i class="ri-links-line"></i> Dependensi

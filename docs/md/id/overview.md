@@ -4,7 +4,7 @@
 
 `OmniStorage` adalah library wrapper penyimpanan data key-value yang universal, ringan, dan _type-safe_ untuk JavaScript dan Node.js.
 
-Library ini dirancang untuk memberikan pengalaman pengembangan yang konsisten di berbagai platform, menangani perbedaan antara penyimpanan browser (seperti `localStorage`, `IndexedDB`, dan `SQLite WASM`) dan penyimpanan server (seperti `SQLite`, `File System`, atau `Memory`).
+Library ini dirancang untuk memberikan pengalaman pengembangan yang konsisten di berbagai platform, menangani perbedaan antara penyimpanan browser (seperti `localStorage`, `IndexedDB`, dan `SQLite WASM`), penyimpanan server (seperti `SQLite` dan `File System`), serta penyimpanan runtime universal seperti `Memory`.
 
 ## <i class="ri-question-line"></i> Mengapa Menggunakan Library Ini?
 
@@ -34,21 +34,28 @@ Library ini dirancang untuk memberikan pengalaman pengembangan yang konsisten di
     *   **Persistensi**: Permanen.
     *   **Kapasitas**: Sangat Besar (GB).
     *   **Logika**: Menggunakan `dbName` sebagai nama database fisik.
+*   **SQLite WASM (`sqlite-client`)**
+    *   **Persistensi**: Database SQLite sisi browser.
+    *   **Kapasitas**: Besar (tergantung browser/storage).
+    *   **Logika**: SQLite sisi klien melalui WebAssembly.
 
-### <i class="ri-server-line"></i> Engine Server & Universal
+### <i class="ri-git-branch-line"></i> Engine Hybrid / Universal
 
 *   **Memory (`memory`)**
-    *   **Persistensi**: Volatile (terhapus saat restart/refresh).
-    *   **Kapasitas**: Terbatas oleh RAM.
-    *   **Logika**: Universal (Browser/Node). Menggunakan `dbName` sebagai prefix.
+    *   **Persistensi**: Volatile (terhapus saat halaman browser atau proses Node.js aktif berakhir).
+    *   **Kapasitas**: Terbatas oleh RAM runtime yang sedang aktif.
+    *   **Logika**: Penyimpanan in-process hybrid/universal (Browser/Node). Menggunakan `dbName` sebagai prefix.
+
+### <i class="ri-server-line"></i> Engine Server
+
 *   **File System (`file`)**
     *   **Persistensi**: Permanen.
     *   **Kapasitas**: Besar (Tergantung disk).
     *   **Logika**: Khusus Node.js. Menggunakan `dbName` sebagai prefix file/folder.
-*   **SQLite (`sqlite-server` / `sqlite-client`)**
+*   **SQLite Server (`sqlite-server`)**
     *   **Persistensi**: Permanen.
-    *   **Kapasitas**: Besar (Tergantung disk).
-    *   **Logika**: Menggunakan `dbName` sebagai file database fisik (`.sqlite`).
+    *   **Kapasitas**: Besar (tergantung disk).
+    *   **Logika**: SQLite Node.js yang menggunakan `dbName` sebagai file database fisik (`.sqlite`).
 
 ---
 

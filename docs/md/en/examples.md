@@ -7,7 +7,7 @@ This page provides detailed implementation patterns for complex application requ
 Manage user sessions with automatic cleanup and namespacing.
 
 ```javascript
-import store from "omnistorage";
+import store from "@dyazincahya/omnistorage";
 
 // Configure dedicated session storage for auth
 const auth = store.config("session").namespace("v1/auth");

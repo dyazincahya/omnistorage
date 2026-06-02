@@ -44,15 +44,15 @@ API tingkat rendah untuk penyimpanan data terstruktur dalam jumlah besar di sisi
 ---
 
 ### <i class="ri-temp-hot-line"></i> In-Memory
-Penyimpanan berkinerja tinggi yang berada di memori aplikasi (RAM). Engine ini sangat cepat tetapi bersifat volatile.
+Penyimpanan in-process berkinerja tinggi yang berada di memori runtime aktif (RAM). Di browser, engine ini memakai memori halaman/tab; di Node.js, engine ini memakai memori proses server. Engine ini sangat cepat tetapi bersifat volatile.
 
 | Properti | Nilai |
 | :--- | :--- |
 | **Key Engine** | `memory` |
-| **Tipe** | Client & Server |
+| **Tipe** | Runtime universal (Browser & Node.js) |
 | **Dependensi** | `cacheable` |
 
-**Cocok untuk:** Caching data, pencarian cepat, dan status sementara sisi server.
+**Cocok untuk:** Caching runtime, pencarian cepat, state demo di browser, dan status sementara sisi server.
 
 ---
 

@@ -4,10 +4,11 @@ Start using `OmniStorage` in your project.
 
 ## <i class="ri-terminal-box-line"></i> Installation
 
-Use npm to install the library:
+Use npm to install the library from GitHub Packages:
 
 ```bash
-npm install omnistorage
+npm config set @dyazincahya:registry https://npm.pkg.github.com
+npm install @dyazincahya/omnistorage
 ```
 
 ## <i class="ri-links-line"></i> Dependencies

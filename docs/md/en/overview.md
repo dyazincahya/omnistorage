@@ -4,7 +4,7 @@
 
 `OmniStorage` is a universal, lightweight, and type-safe key-value storage wrapper library for JavaScript and Node.js.
 
-The library is designed to provide a consistent development experience across various platforms, handling differences between browser storage (such as `localStorage`, `IndexedDB`, and `SQLite WASM`) and server-side storage (such as `SQLite`, `File System`, or `Memory`).
+The library is designed to provide a consistent development experience across various platforms, handling differences between browser storage (such as `localStorage`, `IndexedDB`, and `SQLite WASM`), server-side storage (such as `SQLite` and `File System`), and universal runtime storage such as `Memory`.
 
 ## <i class="ri-question-line"></i> Why Use This Library?
 
@@ -34,21 +34,28 @@ The library is designed to provide a consistent development experience across va
     *   **Persistence**: Permanent.
     *   **Capacity**: Very Large (GBs).
     *   **Logic**: Uses `dbName` as the physical database name.
+*   **SQLite WASM (`sqlite-client`)**
+    *   **Persistence**: Browser-side SQLite database.
+    *   **Capacity**: Large (browser/storage dependent).
+    *   **Logic**: Client-side SQLite via WebAssembly.
 
-### <i class="ri-server-line"></i> Server & Universal Engines
+### <i class="ri-git-branch-line"></i> Hybrid / Universal Engine
 
 *   **Memory (`memory`)**
-    *   **Persistence**: Volatile (cleared on restart/refresh).
-    *   **Capacity**: Limited by RAM.
-    *   **Logic**: Universal (Browser/Node). Uses `dbName` as a prefix.
+    *   **Persistence**: Volatile (cleared when the current browser page or Node.js process ends).
+    *   **Capacity**: Limited by the active runtime RAM.
+    *   **Logic**: Hybrid/universal in-process storage (Browser/Node). Uses `dbName` as a prefix.
+
+### <i class="ri-server-line"></i> Server Engines
+
 *   **File System (`file`)**
     *   **Persistence**: Permanent.
     *   **Capacity**: Large (Disk dependent).
     *   **Logic**: Node.js only. Uses `dbName` as a file/folder prefix.
-*   **SQLite (`sqlite-server` / `sqlite-client`)**
+*   **SQLite Server (`sqlite-server`)**
     *   **Persistence**: Permanent.
     *   **Capacity**: Large (Disk dependent).
-    *   **Logic**: Uses `dbName` as the physical database file (`.sqlite`).
+    *   **Logic**: Node.js SQLite using `dbName` as the physical database file (`.sqlite`).
 
 ---
 

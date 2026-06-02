@@ -2,7 +2,15 @@ const memoryStore = new Map();
 const idbConnections = new Map();
 const logs = [];
 const watchers = new Set();
-const runnableEngines = new Set(["memory", "local", "session", "indexeddb"]);
+const runnableEngines = new Set([
+  "memory",
+  "local",
+  "session",
+  "indexeddb",
+  "sqlite-client",
+]);
+const sqliteConnections = new Map();
+let sqlite3Module = null;
 let editors = null;
 let isApplyingPreset = false;
 
@@ -266,33 +274,33 @@ function buildCodePreview(cmd) {
   const op = cmd.operation;
 
   if (["create", "save", "update", "insert", "set"].includes(op)) {
-    return `import store from "omnistorage";\n\nconst result = await ${target}.${op}(\n  ${JSON.stringify(cmd.key)},\n  ${js(cmd.value)}\n);\n\nconsole.log(result);`;
+    return `import store from "@dyazincahya/omnistorage";\n\nconst result = await ${target}.${op}(\n  ${JSON.stringify(cmd.key)},\n  ${js(cmd.value)}\n);\n\nconsole.log(result);`;
   }
 
   if (
     ["find", "findOne", "destroy", "delete", "remove", "describe"].includes(op)
   ) {
-    return `import store from "omnistorage";\n\nconst result = await ${target}.${op}(${JSON.stringify(cmd.key)});\n\nconsole.log(result);`;
+    return `import store from "@dyazincahya/omnistorage";\n\nconst result = await ${target}.${op}(${JSON.stringify(cmd.key)});\n\nconsole.log(result);`;
   }
 
   if (["findAll", "truncate", "getStatistic", "getStatistics"].includes(op)) {
-    return `import store from "omnistorage";\n\nconst result = await ${target}.${op}();\n\nconsole.log(result);`;
+    return `import store from "@dyazincahya/omnistorage";\n\nconst result = await ${target}.${op}();\n\nconsole.log(result);`;
   }
 
   if (["saveMany", "createMany"].includes(op)) {
-    return `import store from "omnistorage";\n\nconst result = await ${target}.${op}(${js(cmd.items || {})});\n\nconsole.log(result);`;
+    return `import store from "@dyazincahya/omnistorage";\n\nconst result = await ${target}.${op}(${js(cmd.items || {})});\n\nconsole.log(result);`;
   }
 
   if (["findMany", "destroyMany"].includes(op)) {
-    return `import store from "omnistorage";\n\nconst result = await ${target}.${op}(${js(cmd.keys || [])});\n\nconsole.log(result);`;
+    return `import store from "@dyazincahya/omnistorage";\n\nconst result = await ${target}.${op}(${js(cmd.keys || [])});\n\nconsole.log(result);`;
   }
 
   if (op === "namespace") {
-    return `import store from "omnistorage";\n\nconst authStorage = store\n  .db(${JSON.stringify(cmd.dbName)})\n  .config(${JSON.stringify(cmd.engine)})\n  .namespace(${JSON.stringify(cmd.namespace)});\n\nconst result = await authStorage.save(\n  ${JSON.stringify(cmd.key)},\n  ${js(cmd.value)}\n);\n\nconsole.log(result);`;
+    return `import store from "@dyazincahya/omnistorage";\n\nconst authStorage = store\n  .db(${JSON.stringify(cmd.dbName)})\n  .config(${JSON.stringify(cmd.engine)})\n  .namespace(${JSON.stringify(cmd.namespace)});\n\nconst result = await authStorage.save(\n  ${JSON.stringify(cmd.key)},\n  ${js(cmd.value)}\n);\n\nconsole.log(result);`;
   }
 
   if (op === "transaction") {
-    return `import store from "omnistorage";\n\nconst result = await store.transaction(async (trx) => {\n${Object.entries(
+    return `import store from "@dyazincahya/omnistorage";\n\nconst result = await store.transaction(async (trx) => {\n${Object.entries(
       cmd.items || {},
     )
       .map(
@@ -303,7 +311,7 @@ function buildCodePreview(cmd) {
   }
 
   if (op === "watch") {
-    return `import store from "omnistorage";\n\nconst unwatch = ${target}.watch(${JSON.stringify(cmd.key)}, (newValue, oldValue) => {\n  console.log({ newValue, oldValue });\n});\n\nawait ${target}.save(\n  ${JSON.stringify(cmd.key)},\n  ${js(cmd.value)}\n);\n\n// Later, stop watching:\n// unwatch();`;
+    return `import store from "@dyazincahya/omnistorage";\n\nconst unwatch = ${target}.watch(${JSON.stringify(cmd.key)}, (newValue, oldValue) => {\n  console.log({ newValue, oldValue });\n});\n\nawait ${target}.save(\n  ${JSON.stringify(cmd.key)},\n  ${js(cmd.value)}\n);\n\n// Later, stop watching:\n// unwatch();`;
   }
 
   return `// Unsupported operation preview: ${op}`;
@@ -362,13 +370,51 @@ function ensureRunnable(cmd) {
   }
 }
 
+async function sqliteDb(cmd) {
+  if (sqliteConnections.has(cmd.dbName))
+    return sqliteConnections.get(cmd.dbName);
+
+  if (!sqlite3Module) {
+    const { default: sqlite3InitModule } =
+      await import("./vendor/sqlite-wasm/jswasm/sqlite3-bundler-friendly.mjs");
+    sqlite3Module = await sqlite3InitModule({
+      locateFile: (file) => `./vendor/sqlite-wasm/jswasm/${file}`,
+    });
+  }
+
+  const sqlite3 = sqlite3Module;
+  const db = new sqlite3.oo1.DB(`${cmd.dbName}.sqlite3`, "ct");
+
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS kv (
+      key TEXT PRIMARY KEY,
+      value TEXT
+    )
+  `);
+
+  sqliteConnections.set(cmd.dbName, db);
+  return db;
+}
+
 async function rawGet(cmd, key) {
   ensureRunnable(cmd);
   if (cmd.engine === "memory") return memoryStore.get(key) ?? null;
   if (cmd.engine === "local") return localStorage.getItem(key);
   if (cmd.engine === "session") return sessionStorage.getItem(key);
-  const row = await idb(cmd, "readonly", (store) => store.get(key));
-  return row ? row.value : null;
+  if (cmd.engine === "indexeddb") {
+    const row = await idb(cmd, "readonly", (store) => store.get(key));
+    return row ? row.value : null;
+  }
+  const db = await sqliteDb(cmd);
+  let value = null;
+  db.exec({
+    sql: "SELECT value FROM kv WHERE key = ?",
+    bind: [key],
+    callback: (row) => {
+      value = row[0];
+    },
+  });
+  return value;
 }
 async function getItem(cmd, key) {
   return rawGet(cmd, fullKey(cmd, key));
@@ -382,10 +428,17 @@ async function setItem(cmd, key, value) {
   if (cmd.engine === "memory") memoryStore.set(fk, stored);
   else if (cmd.engine === "local") localStorage.setItem(fk, stored);
   else if (cmd.engine === "session") sessionStorage.setItem(fk, stored);
-  else
+  else if (cmd.engine === "indexeddb")
     await idb(cmd, "readwrite", (store) =>
       store.put({ key: fk, value: stored }),
     );
+  else {
+    const db = await sqliteDb(cmd);
+    db.exec({
+      sql: "INSERT OR REPLACE INTO kv (key, value) VALUES (?, ?)",
+      bind: [fk, stored],
+    });
+  }
   triggerWatcher(cmd, key, value, oldValue);
 }
 
@@ -396,7 +449,15 @@ async function removeItem(cmd, key) {
   if (cmd.engine === "memory") memoryStore.delete(fk);
   else if (cmd.engine === "local") localStorage.removeItem(fk);
   else if (cmd.engine === "session") sessionStorage.removeItem(fk);
-  else await idb(cmd, "readwrite", (store) => store.delete(fk));
+  else if (cmd.engine === "indexeddb")
+    await idb(cmd, "readwrite", (store) => store.delete(fk));
+  else {
+    const db = await sqliteDb(cmd);
+    db.exec({
+      sql: "DELETE FROM kv WHERE key = ?",
+      bind: [fk],
+    });
+  }
   triggerWatcher(cmd, key, null, oldValue);
   return oldValue;
 }
@@ -410,9 +471,19 @@ async function keys(cmd) {
     return Object.keys(localStorage).filter((key) => key.startsWith(p));
   if (cmd.engine === "session")
     return Object.keys(sessionStorage).filter((key) => key.startsWith(p));
-  return (await idb(cmd, "readonly", (store) => store.getAllKeys()))
-    .map(String)
-    .filter((key) => key.startsWith(p));
+  if (cmd.engine === "indexeddb")
+    return (await idb(cmd, "readonly", (store) => store.getAllKeys()))
+      .map(String)
+      .filter((key) => key.startsWith(p));
+
+  const db = await sqliteDb(cmd);
+  const found = [];
+  db.exec({
+    sql: "SELECT key FROM kv WHERE key LIKE ?",
+    bind: [`${p}%`],
+    callback: (row) => found.push(row[0]),
+  });
+  return found;
 }
 
 async function allData(cmd) {
@@ -692,7 +763,7 @@ function addLog(result) {
   el.activityLog.innerHTML = logs
     .map(
       (item) =>
-        `<li><strong>${esc(item.operation)}</strong> · ${esc(item.engine)}<br><small>${esc(item.message)} · ${new Date(item.timestamp).toLocaleTimeString()}</small></li>`,
+        `<li><strong>${esc(item.operation)}</strong> Â· ${esc(item.engine)}<br><small>${esc(item.message)} Â· ${new Date(item.timestamp).toLocaleTimeString()}</small></li>`,
     )
     .join("");
 }

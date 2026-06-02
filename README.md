@@ -29,6 +29,28 @@ The library is designed for projects that need flexible storage options without 
 - **Activity logging** — track storage operations for debugging and auditing.
 - **Hooks and watchers** — react to storage changes when data is created, updated, read, or deleted.
 
+## Installation
+
+This package is configured for GitHub Packages:
+
+```bash
+npm install @dyazincahya/omnistorage
+```
+
+Use it in your project:
+
+```javascript
+import store from "@dyazincahya/omnistorage";
+```
+
+## Supported Engines
+
+OmniStorage supports multiple engines across browser, Node.js, and shared runtime use cases:
+
+- **Hybrid / Universal**: `memory`
+- **Client-side / Browser**: `local`, `session`, `indexeddb`, `sqlite-client`
+- **Server-only / Node.js**: `file`, `sqlite-server`
+
 ## Documentation
 
 Detailed installation guides, API reference, engine configuration, and advanced examples are available on the official documentation site:

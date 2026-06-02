@@ -1,9 +1,26 @@
 {
-  "name": "omnistorage",
+  "name": "@dyazincahya/omnistorage",
   "version": "1.0.0",
   "description": "A lightweight, type-safe, and universal storage layer for JavaScript. Store anything, anywhere, with a single unified API.",
   "main": "src/index.js",
+  "exports": "./src/index.js",
   "type": "module",
+  "files": [
+    "src",
+    "README.md",
+    "LICENSE"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/dyazincahya/omnistorage.git"
+  },
+  "bugs": {
+    "url": "https://github.com/dyazincahya/omnistorage/issues"
+  },
+  "homepage": "https://dyazincahya.github.io/omnistorage/store/docs/index.html",
+  "publishConfig": {
+    "registry": "https://npm.pkg.github.com"
+  },
   "keywords": [
     "storage",
     "localstorage",

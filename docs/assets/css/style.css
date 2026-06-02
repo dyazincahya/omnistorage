@@ -447,6 +447,7 @@ pre code {
 
 .home-hero,
 .features-container,
+.home-engines,
 .site-footer {
   background: transparent !important; /* Ensure all components are transparent */
 }
@@ -462,6 +463,7 @@ pre code {
 .home-mode #home-hero-wrapper,
 .home-mode #home-features-wrapper {
   flex: 0 0 auto;
+  width: 100%;
 }
 
 /* Spacer to push content to middle while keeping footer at bottom */
@@ -516,14 +518,15 @@ pre code {
 
 /* Quick Install Bar */
 .home-quick-install {
-  display: flex;
+  display: inline-flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: center;
+  gap: 10px;
   background: var(--color-canvas-subtle);
   border: 1px solid var(--color-border-default);
-  padding: 8px 16px;
+  padding: 9px 10px 10px 14px;
   border-radius: 8px;
-  max-width: 320px;
+  max-width: min(100%, 420px);
   margin: 0 auto 32px;
   font-family:
     ui-monospace,
@@ -531,23 +534,31 @@ pre code {
     SF Mono,
     Menlo,
     monospace;
+  white-space: nowrap;
 }
 
 .home-quick-install code {
-  font-size: 14px;
+  flex: 0 1 auto;
+  min-width: 0;
+  overflow: hidden;
   color: var(--color-fg-default);
   background: none;
   padding: 0;
+  font-size: 13px;
+  line-height: 1.45;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .copy-btn {
+  flex: 0 0 auto;
   background: none;
   border: none;
   color: var(--color-fg-muted);
   cursor: pointer;
   padding: 4px;
   border-radius: 4px;
-  display: flex;
+  display: inline-flex;
   align-items: center;
   justify-content: center;
   transition: all 0.2s ease;
@@ -627,6 +638,93 @@ pre code {
   color: var(--color-fg-muted);
   font-size: 12px;
   line-height: 1.4;
+}
+
+.home-engines {
+  width: 100%;
+  max-width: 1012px;
+  margin: 20px auto 0;
+  padding: 0 16px;
+}
+
+.home-engines-header {
+  margin-bottom: 12px;
+  text-align: center;
+}
+
+.home-engines-header h2 {
+  margin: 0 0 6px;
+  border: none;
+  font-size: 18px;
+  font-weight: 800;
+}
+
+.home-engines-header p {
+  max-width: 640px;
+  margin: 0 auto;
+  color: var(--color-fg-muted);
+  font-size: 13px;
+}
+
+.engine-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+}
+
+.engine-card {
+  padding: 14px 16px;
+  border: 1px solid var(--color-border-default);
+  border-radius: 8px;
+  background: var(--color-canvas-default);
+}
+
+.engine-card-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.engine-card-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  background: var(--color-canvas-subtle);
+  color: var(--primary);
+  font-size: 16px;
+}
+
+.engine-card h3 {
+  margin: 0;
+  border: none;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.engine-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.engine-badges code {
+  padding: 3px 7px;
+  border: 1px solid var(--color-border-default);
+  border-radius: 999px;
+  background: var(--color-canvas-subtle);
+  color: var(--color-fg-default);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+@media (max-width: 1012px) {
+  .engine-grid {
+    grid-template-columns: 1fr;
+  }
 }
 
 /* Footer Sticky at Bottom */
