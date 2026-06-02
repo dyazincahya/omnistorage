@@ -1,4 +1,4 @@
-import store from "../src/index.js";
+import store from "../../src/index.js";
 import is from "is";
 
 async function runDemo() {

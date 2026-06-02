@@ -3,6 +3,22 @@ const heroWrapper = document.getElementById("home-hero-wrapper");
 const featuresWrapper = document.getElementById("home-features-wrapper");
 const footerWrapper = document.getElementById("site-footer-wrapper");
 
+function configureMarkdownRenderer() {
+  if (!window.marked) {
+    throw new Error("Marked markdown renderer is not loaded");
+  }
+
+  marked.setOptions({
+    gfm: true,
+    breaks: false,
+  });
+}
+
+function renderMarkdown(markdown) {
+  configureMarkdownRenderer();
+  return marked.parse(markdown);
+}
+
 // i18n
 let currentLang = localStorage.getItem("omnistorage_lang") || "en";
 let lastLoadedLang = null;
@@ -277,7 +293,7 @@ window.loadPage = async function (pageName, anchor) {
     if (!response.ok) throw new Error("Page not found");
     const markdown = await response.text();
 
-    contentDiv.innerHTML = marked.parse(markdown);
+    contentDiv.innerHTML = renderMarkdown(markdown);
     Prism.highlightAll();
     lastLoadedLang = currentLang;
     initScrollSpy(pageName);
