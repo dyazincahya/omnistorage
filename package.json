@@ -1,5 +1,5 @@
 {
-  "name": "omnistorage",
+  "name": "@x-labs-myid/omnistorage",
   "version": "1.0.0",
   "description": "A lightweight, type-safe, and universal storage layer for JavaScript. Store anything, anywhere, with a single unified API.",
   "main": "src/index.js",

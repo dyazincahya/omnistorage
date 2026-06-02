@@ -34,13 +34,13 @@ The library is designed for projects that need flexible storage options without 
 Install from npm:
 
 ```bash
-npm install omnistorage
+npm install @x-labs-myid/omnistorage
 ```
 
 Use it in your project:
 
 ```javascript
-import store from "omnistorage";
+import store from "@x-labs-myid/omnistorage";
 ```
 
 ## Supported Engines

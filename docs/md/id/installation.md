@@ -7,7 +7,7 @@ Mulai menggunakan `OmniStorage` di proyek Anda.
 Gunakan npm untuk menginstal library:
 
 ```bash
-npm install omnistorage
+npm install @x-labs-myid/omnistorage
 ```
 
 ## <i class="ri-links-line"></i> Dependensi

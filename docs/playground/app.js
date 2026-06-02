@@ -274,33 +274,33 @@ function buildCodePreview(cmd) {
   const op = cmd.operation;
 
   if (["create", "save", "update", "insert", "set"].includes(op)) {
-    return `import store from "omnistorage";\n\nconst result = await ${target}.${op}(\n  ${JSON.stringify(cmd.key)},\n  ${js(cmd.value)}\n);\n\nconsole.log(result);`;
+    return `import store from "@x-labs-myid/omnistorage";\n\nconst result = await ${target}.${op}(\n  ${JSON.stringify(cmd.key)},\n  ${js(cmd.value)}\n);\n\nconsole.log(result);`;
   }
 
   if (
     ["find", "findOne", "destroy", "delete", "remove", "describe"].includes(op)
   ) {
-    return `import store from "omnistorage";\n\nconst result = await ${target}.${op}(${JSON.stringify(cmd.key)});\n\nconsole.log(result);`;
+    return `import store from "@x-labs-myid/omnistorage";\n\nconst result = await ${target}.${op}(${JSON.stringify(cmd.key)});\n\nconsole.log(result);`;
   }
 
   if (["findAll", "truncate", "getStatistic", "getStatistics"].includes(op)) {
-    return `import store from "omnistorage";\n\nconst result = await ${target}.${op}();\n\nconsole.log(result);`;
+    return `import store from "@x-labs-myid/omnistorage";\n\nconst result = await ${target}.${op}();\n\nconsole.log(result);`;
   }
 
   if (["saveMany", "createMany"].includes(op)) {
-    return `import store from "omnistorage";\n\nconst result = await ${target}.${op}(${js(cmd.items || {})});\n\nconsole.log(result);`;
+    return `import store from "@x-labs-myid/omnistorage";\n\nconst result = await ${target}.${op}(${js(cmd.items || {})});\n\nconsole.log(result);`;
   }
 
   if (["findMany", "destroyMany"].includes(op)) {
-    return `import store from "omnistorage";\n\nconst result = await ${target}.${op}(${js(cmd.keys || [])});\n\nconsole.log(result);`;
+    return `import store from "@x-labs-myid/omnistorage";\n\nconst result = await ${target}.${op}(${js(cmd.keys || [])});\n\nconsole.log(result);`;
   }
 
   if (op === "namespace") {
-    return `import store from "omnistorage";\n\nconst authStorage = store\n  .db(${JSON.stringify(cmd.dbName)})\n  .config(${JSON.stringify(cmd.engine)})\n  .namespace(${JSON.stringify(cmd.namespace)});\n\nconst result = await authStorage.save(\n  ${JSON.stringify(cmd.key)},\n  ${js(cmd.value)}\n);\n\nconsole.log(result);`;
+    return `import store from "@x-labs-myid/omnistorage";\n\nconst authStorage = store\n  .db(${JSON.stringify(cmd.dbName)})\n  .config(${JSON.stringify(cmd.engine)})\n  .namespace(${JSON.stringify(cmd.namespace)});\n\nconst result = await authStorage.save(\n  ${JSON.stringify(cmd.key)},\n  ${js(cmd.value)}\n);\n\nconsole.log(result);`;
   }
 
   if (op === "transaction") {
-    return `import store from "omnistorage";\n\nconst result = await store.transaction(async (trx) => {\n${Object.entries(
+    return `import store from "@x-labs-myid/omnistorage";\n\nconst result = await store.transaction(async (trx) => {\n${Object.entries(
       cmd.items || {},
     )
       .map(
@@ -311,7 +311,7 @@ function buildCodePreview(cmd) {
   }
 
   if (op === "watch") {
-    return `import store from "omnistorage";\n\nconst unwatch = ${target}.watch(${JSON.stringify(cmd.key)}, (newValue, oldValue) => {\n  console.log({ newValue, oldValue });\n});\n\nawait ${target}.save(\n  ${JSON.stringify(cmd.key)},\n  ${js(cmd.value)}\n);\n\n// Later, stop watching:\n// unwatch();`;
+    return `import store from "@x-labs-myid/omnistorage";\n\nconst unwatch = ${target}.watch(${JSON.stringify(cmd.key)}, (newValue, oldValue) => {\n  console.log({ newValue, oldValue });\n});\n\nawait ${target}.save(\n  ${JSON.stringify(cmd.key)},\n  ${js(cmd.value)}\n);\n\n// Later, stop watching:\n// unwatch();`;
   }
 
   return `// Unsupported operation preview: ${op}`;

@@ -275,7 +275,7 @@ window.loadPage = async function (pageName, anchor) {
                 <h1>OmniStorage</h1>
                 <p>${t.tagline}</p>
                 <div class="home-quick-install">
-                    <code>npm install omnistorage</code>
+                    <code>npm install @x-labs-myid/omnistorage</code>
                     <button class="copy-btn" onclick="copyInstallCmd(this)"><i class="ri-file-copy-line"></i></button>
                 </div>
                 <div class="home-hero-btns">
@@ -463,7 +463,7 @@ if (bgCanvas) {
 }
 
 window.copyInstallCmd = function (btn) {
-  const cmd = "npm install omnistorage";
+  const cmd = "npm install @x-labs-myid/omnistorage";
   navigator.clipboard.writeText(cmd).then(() => {
     const icon = btn.querySelector("i");
     icon.className = "ri-check-line";

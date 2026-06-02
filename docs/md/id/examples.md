@@ -6,7 +6,7 @@ Halaman ini menyediakan pola implementasi mendetail untuk kebutuhan aplikasi yan
 Mengelola sesi pengguna dengan pembersihan otomatis dan penggunaan namespace.
 
 ```javascript
-import store from "omnistorage";
+import store from "@x-labs-myid/omnistorage";
 
 // Konfigurasi penyimpanan sesi khusus untuk auth
 const auth = store.config("session").namespace("v1/auth");
