@@ -1,10 +1,27 @@
 node_modules/
 .DS_Store
+
+# Build artifacts
 dist/
 build/
+
+# Logs and temporary test outputs
 *.log
+test_*.txt
+version.txt
+
+# Environment files
 .env
-.sqlite
+.env.*
+
+# Local SQLite/database files
+*.sqlite
+*.sqlite3
+*.sqlite-*
+*.sqlite3-*
 *.db
+*.db-*
 store_activities.sqlite
+
+# Tooling
 .trae/

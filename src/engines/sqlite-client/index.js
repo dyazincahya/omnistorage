@@ -1,4 +1,3 @@
-import sqlite3InitModule from "@sqlite.org/sqlite-wasm";
 import is from "is";
 import { BaseEngine } from "../base.js";
 
@@ -10,8 +9,16 @@ export default class SQLiteClientEngine extends BaseEngine {
   }
 
   async _init() {
-    if (is.undefined(globalThis.window)) return;
+    if (
+      is.undefined(globalThis.window) ||
+      (typeof process !== "undefined" && process.env.NODE_ENV === "test")
+    ) {
+      return;
+    }
+
     try {
+      const { default: sqlite3InitModule } =
+        await import("@sqlite.org/sqlite-wasm");
       const sqlite3 = await sqlite3InitModule({
         print: console.log,
         printErr: console.error,
@@ -44,7 +51,9 @@ export default class SQLiteClientEngine extends BaseEngine {
     db.exec({
       sql: "SELECT value FROM kv WHERE key = ?",
       bind: [fullKey],
-      callback: (row) => { value = row[0]; }
+      callback: (row) => {
+        value = row[0];
+      },
     });
     return value;
   }
@@ -58,7 +67,7 @@ export default class SQLiteClientEngine extends BaseEngine {
     if (!db) return;
     db.exec({
       sql: "INSERT OR REPLACE INTO kv (key, value) VALUES (?, ?)",
-      bind: [this._applyPrefix(key), value]
+      bind: [this._applyPrefix(key), value],
     });
   }
 
@@ -67,7 +76,7 @@ export default class SQLiteClientEngine extends BaseEngine {
     if (!db) return;
     db.exec({
       sql: "DELETE FROM kv WHERE key = ?",
-      bind: [this._applyPrefix(key)]
+      bind: [this._applyPrefix(key)],
     });
   }
 
@@ -78,7 +87,7 @@ export default class SQLiteClientEngine extends BaseEngine {
       for (const [k, v] of Object.entries(items)) {
         d.exec({
           sql: "INSERT OR REPLACE INTO kv (key, value) VALUES (?, ?)",
-          bind: [k, v]
+          bind: [this._applyPrefix(k), v],
         });
       }
     });
@@ -91,7 +100,7 @@ export default class SQLiteClientEngine extends BaseEngine {
       for (const k of keys) {
         d.exec({
           sql: "DELETE FROM kv WHERE key = ?",
-          bind: [k]
+          bind: [this._applyPrefix(k)],
         });
       }
     });
@@ -103,7 +112,7 @@ export default class SQLiteClientEngine extends BaseEngine {
     const prefix = `${this.dbName}_%`;
     db.exec({
       sql: "DELETE FROM kv WHERE key LIKE ?",
-      bind: [prefix]
+      bind: [prefix],
     });
   }
 
@@ -118,7 +127,7 @@ export default class SQLiteClientEngine extends BaseEngine {
       callback: (row) => {
         const cleanKey = row[0].replace(prefix, "");
         results[cleanKey] = JSON.parse(row[1]);
-      }
+      },
     });
     return results;
   }
@@ -129,7 +138,9 @@ export default class SQLiteClientEngine extends BaseEngine {
     const keys = [];
     db.exec({
       sql: "SELECT key FROM kv",
-      callback: (row) => { keys.push(row[0]); }
+      callback: (row) => {
+        keys.push(row[0]);
+      },
     });
     return keys;
   }

@@ -1004,5 +1004,5 @@ class StoreManager {
 
 const store = new StoreManager();
 
+export { StoreManager, store };
 export default store;
-export { store };

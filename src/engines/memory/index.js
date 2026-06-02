@@ -6,37 +6,47 @@ export default class MemoryEngine extends BaseEngine {
   constructor(dbName) {
     super(dbName, "memory");
     this.cache = new Cacheable();
+    this._fallbackStore = new Map();
   }
 
   async getItemRaw(fullKey) {
-    const value = await this.cache.get(fullKey);
+    let value = await this.cache.get(fullKey);
+    if (is.undefined(value)) {
+      value = this._fallbackStore.get(fullKey);
+    }
     return !is.undefined(value) ? value : null;
   }
 
   async getItem(key) {
-    const value = await this.cache.get(this._applyPrefix(key));
+    const fullKey = this._applyPrefix(key);
+    let value = await this.cache.get(fullKey);
+    if (is.undefined(value)) {
+      value = this._fallbackStore.get(fullKey);
+    }
     return !is.undefined(value) ? value : null;
   }
 
   async setItem(key, value) {
-    await this.cache.set(this._applyPrefix(key), value);
+    const fullKey = this._applyPrefix(key);
+    await this.cache.set(fullKey, value);
+    this._fallbackStore.set(fullKey, value);
   }
 
   async removeItem(key) {
-    await this.cache.delete(this._applyPrefix(key));
+    const fullKey = this._applyPrefix(key);
+    await this.cache.delete(fullKey);
+    this._fallbackStore.delete(fullKey);
   }
 
   async truncate() {
+    this._fallbackStore.clear();
     // Cacheable has clear() method to remove all items
     if (is.fn(this.cache.clear)) {
       await this.cache.clear();
     } else {
       const keys = await this.keys();
-      const prefix = `${this.dbName}_`;
       for (const key of keys) {
-        if (key.startsWith(prefix)) {
-          await this.cache.delete(key);
-        }
+        await this.cache.delete(key);
       }
     }
   }
@@ -49,33 +59,29 @@ export default class MemoryEngine extends BaseEngine {
     for (const key of keys) {
       if (key.startsWith(prefix)) {
         const cleanKey = key.replace(prefix, "");
-        const value = await this.cache.get(key);
-        results[cleanKey] = !is.undefined(value) ? value : null;
+        results[cleanKey] = await this.getItemRaw(key);
       }
     }
     return results;
   }
 
   async keys() {
-    // Cacheable uses Keyv internally. To get keys, we check the primary store.
-    // In most versions, Cacheable or its primary store (CacheableMemory) supports keys().
+    const keys = new Set(this._fallbackStore.keys());
+    
     if (is.fn(this.cache.keys)) {
-      return await this.cache.keys();
+      const cacheKeys = await this.cache.keys();
+      cacheKeys.forEach(k => keys.add(k));
     }
 
     // Fallback: If it's a new version, it might be an async iterator
     try {
-      const keys = [];
       if (this.cache.iterator && is.fn(this.cache.iterator)) {
         for await (const [key] of this.cache.iterator()) {
-          keys.push(key);
+          keys.add(key);
         }
-        return keys;
       }
-    } catch (e) {
-      // ignore
-    }
+    } catch (e) {}
 
-    return [];
+    return Array.from(keys);
   }
 }

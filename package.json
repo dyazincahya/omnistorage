@@ -19,5 +19,13 @@
     "dexie": "^4.0.8",
     "idb": "^8.0.0",
     "is": "^3.3.0"
+  },
+  "devDependencies": {
+    "fake-indexeddb": "^6.2.5",
+    "jest": "^29.7.0",
+    "jest-environment-jsdom": "^29.7.0"
+  },
+  "scripts": {
+    "test": "node --experimental-vm-modules node_modules/jest/bin/jest.js"
   }
 }

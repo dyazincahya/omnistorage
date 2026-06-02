@@ -47,7 +47,7 @@ export default class SQLiteServerEngine extends BaseEngine {
     const insert = db.prepare("INSERT OR REPLACE INTO kv (key, value) VALUES (?, ?)");
     const transaction = db.transaction((data) => {
       for (const [k, v] of Object.entries(data)) {
-        insert.run(k, v);
+        insert.run(this._applyPrefix(k), v);
       }
     });
     transaction(items);
@@ -58,7 +58,7 @@ export default class SQLiteServerEngine extends BaseEngine {
     const del = db.prepare("DELETE FROM kv WHERE key = ?");
     const transaction = db.transaction((ks) => {
       for (const k of ks) {
-        del.run(k);
+        del.run(this._applyPrefix(k));
       }
     });
     transaction(keys);

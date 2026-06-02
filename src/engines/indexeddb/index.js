@@ -1,4 +1,3 @@
-import Dexie from "dexie";
 import { openDB } from "idb";
 import { BaseEngine } from "../base.js";
 
@@ -6,50 +5,45 @@ export default class IndexedDBEngine extends BaseEngine {
   constructor(dbName = "MyStoreDB") {
     super(dbName, "indexeddb");
 
-    // Initialize Dexie for Reading/Searching
-    this.dexie = new Dexie(dbName);
-    this.dexie.version(1).stores({
-      kv: "key",
-    });
-
     this.storeName = "kv";
+    this._dbPromise = null;
   }
 
   /**
-   * Internal helper to get idb instance for Writing/Editing/Deleting
+   * Internal helper to get idb instance.
    */
   async _getIdb() {
-    return openDB(this.dbName, 1, {
-      upgrade(db) {
-        if (!db.objectStoreNames.contains("kv")) {
-          db.createObjectStore("kv", { keyPath: "key" });
-        }
-      },
-    });
+    if (!this._dbPromise) {
+      this._dbPromise = openDB(this.dbName, 1, {
+        upgrade(db) {
+          if (!db.objectStoreNames.contains("kv")) {
+            db.createObjectStore("kv", { keyPath: "key" });
+          }
+        },
+      });
+    }
+
+    return this._dbPromise;
   }
 
   async getItemRaw(fullKey) {
-    // Using Dexie for Reading
-    const entry = await this.dexie.kv.get(fullKey);
+    const db = await this._getIdb();
+    const entry = await db.get(this.storeName, fullKey);
     return entry ? entry.value : null;
   }
 
   async getItem(key) {
-    // Using Dexie for Reading
-    const entry = await this.dexie.kv.get(key);
-    return entry ? entry.value : null;
+    return this.getItemRaw(this._applyPrefix(key));
   }
 
   async setItem(key, value) {
-    // Using idb for Inserting/Editing
     const db = await this._getIdb();
-    await db.put(this.storeName, { key, value });
+    await db.put(this.storeName, { key: this._applyPrefix(key), value });
   }
 
   async removeItem(key) {
-    // Using idb for Deleting
     const db = await this._getIdb();
-    await db.delete(this.storeName, key);
+    await db.delete(this.storeName, this._applyPrefix(key));
   }
 
   async setItems(items) {
@@ -57,7 +51,7 @@ export default class IndexedDBEngine extends BaseEngine {
     const tx = db.transaction(this.storeName, "readwrite");
     const store = tx.objectStore(this.storeName);
     for (const [key, value] of Object.entries(items)) {
-      await store.put({ key, value });
+      await store.put({ key: this._applyPrefix(key), value });
     }
     await tx.done;
   }
@@ -67,13 +61,12 @@ export default class IndexedDBEngine extends BaseEngine {
     const tx = db.transaction(this.storeName, "readwrite");
     const store = tx.objectStore(this.storeName);
     for (const key of keys) {
-      await store.delete(key);
+      await store.delete(this._applyPrefix(key));
     }
     await tx.done;
   }
 
   async truncate() {
-    // Using idb for Clearing
     const db = await this._getIdb();
     const tx = db.transaction(this.storeName, "readwrite");
     await tx.objectStore(this.storeName).clear();
@@ -81,18 +74,23 @@ export default class IndexedDBEngine extends BaseEngine {
   }
 
   async getAll() {
-    // Using Dexie for Reading all
-    const all = await this.dexie.kv.toArray();
+    const db = await this._getIdb();
+    const all = await db.getAll(this.storeName);
+    const prefix = `${this.dbName}_`;
     const results = {};
+
     all.forEach((item) => {
-      results[item.key] = item.value;
+      if (item.key.startsWith(prefix)) {
+        results[item.key.replace(prefix, "")] = item.value;
+      }
     });
+
     return results;
   }
 
   async keys() {
-    // Using Dexie for Searching/Listing keys
-    const all = await this.dexie.kv.toArray();
-    return all.map((item) => item.key);
+    const db = await this._getIdb();
+    const all = await db.getAllKeys(this.storeName);
+    return all.map((key) => String(key));
   }
 }
