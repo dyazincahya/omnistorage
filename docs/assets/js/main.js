@@ -280,7 +280,7 @@ window.loadPage = async function (pageName, anchor) {
                 </div>
                 <div class="home-hero-btns">
                     <a href="#overview" class="btn-github btn-primary-github">${t.getStarted}</a>
-                    <a href="https://github.com/dyazincahya/omnistorage" class="btn-github" target="_blank">${t.viewGithub}</a>
+                    <a href="https://github.com/x-labs-myid/omnistorage" class="btn-github" target="_blank">${t.viewGithub}</a>
                 </div>
             </div>
         `;
@@ -335,7 +335,7 @@ window.loadPage = async function (pageName, anchor) {
         <footer class="site-footer">
             <div>© 2026 OmniStorage. ${t.footer} Developed by <a href="https://github.com/dyazincahya" class="footer-link-credit" target="_blank">Kang Cahya</a></div>
             <div class="footer-links">
-                <a href="https://github.com/dyazincahya/omnistorage" class="footer-link" target="_blank">GitHub</a>
+                <a href="https://github.com/x-labs-myid/omnistorage" class="footer-link" target="_blank">GitHub</a>
                 <a href="#overview" class="footer-link">${t.nav.docs}</a>
                 <a href="#examples" class="footer-link">${t.nav.examples}</a>
             </div>

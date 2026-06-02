@@ -12,19 +12,34 @@
   ],
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/dyazincahya/omnistorage.git"
+    "url": "https://github.com/x-labs-myid/omnistorage"
   },
   "bugs": {
-    "url": "https://github.com/dyazincahya/omnistorage/issues"
+    "url": "https://github.com/x-labs-myid/omnistorage/issues"
   },
-  "homepage": "https://dyazincahya.github.io/omnistorage/store/docs/index.html",
+  "homepage": "https://x-labs-myid.github.io/omnistorage/store/docs/index.html",
   "publishConfig": {
     "access": "public"
   },
   "keywords": [
     "storage",
+    "omnistorage",
+    "javascript",
+    "nodejs",
+    "browser",
+    "client",
+    "server",
     "localstorage",
+    "sessionstorage",
+    "indexeddb",
+    "sqlite",
+    "sqlite3",
+    "wasm",
+    "memory",
+    "file",
     "persistence",
+    "cache",
+    "key-value",
     "type-safe"
   ],
   "author": "Kang Cahya",
