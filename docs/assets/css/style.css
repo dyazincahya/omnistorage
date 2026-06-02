@@ -112,8 +112,8 @@ pre code {
 /* Layout */
 .container-main {
   display: flex;
-  max-width: 1280px;
-  margin: 0 auto;
+  width: 100%;
+  margin: 0;
 }
 
 /* Sidebar */
@@ -273,15 +273,16 @@ pre code {
 /* Content */
 #content-wrapper {
   flex: 1;
+  min-width: 0;
   padding: 40px 64px;
 }
 
 .docs-mode #content-wrapper {
-  max-width: calc(100% - var(--sidebar-width));
+  width: calc(100% - var(--sidebar-width));
 }
 
 .home-mode #content-wrapper {
-  max-width: 100%;
+  width: 100%;
   padding: 0;
 }
 

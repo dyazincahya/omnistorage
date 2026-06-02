@@ -1,141 +1,322 @@
 const memoryStore = new Map();
 const idbConnections = new Map();
-const activity = [];
-const watchers = new Map();
+const logs = [];
+const watchers = new Set();
+const runnableEngines = new Set(["memory", "local", "session", "indexeddb"]);
+let editors = null;
+let isApplyingPreset = false;
 
 const el = {
-  operation: document.querySelector("#operation"),
+  preset: document.querySelector("#preset"),
   engine: document.querySelector("#engine"),
-  dbName: document.querySelector("#db-name"),
-  namespace: document.querySelector("#namespace"),
-  key: document.querySelector("#key"),
-  value: document.querySelector("#value"),
-  keys: document.querySelector("#keys"),
+  codePreview: document.querySelector("#code-preview"),
+  command: document.querySelector("#command"),
   result: document.querySelector("#result"),
-  status: document.querySelector("#status-pill"),
+  status: document.querySelector("#status"),
   dataList: document.querySelector("#data-list"),
   dataCount: document.querySelector("#data-count"),
   activityLog: document.querySelector("#activity-log"),
   logCount: document.querySelector("#log-count"),
 };
 
+const base = { engine: "memory", dbName: "demo_app", namespace: "default" };
 const presets = {
-  create: {
-    key: "user:1",
-    value: { name: "Kang Cahya", role: "admin", active: true },
-    keys: ["user:1", "user:2"],
-  },
-  save: {
-    key: "user:1",
-    value: { name: "Kang Cahya", role: "developer", active: true },
-    keys: ["user:1", "user:2"],
-  },
-  update: {
-    key: "user:1",
-    value: { name: "Kang Cahya Updated", role: "maintainer", active: true },
-    keys: ["user:1", "user:2"],
-  },
-  insert: {
-    key: "user:3",
-    value: { name: "Inserted User", role: "guest", active: false },
-    keys: ["user:1", "user:3"],
-  },
-  set: {
-    key: "settings:theme",
-    value: { mode: "dark", accent: "purple" },
-    keys: ["settings:theme"],
-  },
-  find: { key: "user:1", value: null, keys: ["user:1", "user:2"] },
-  findOne: { key: "user:1", value: null, keys: ["user:1", "user:2"] },
-  findAll: { key: "", value: null, keys: [] },
-  saveMany: {
-    key: "",
-    value: {
-      "product:1": { name: "Laptop", price: 1000 },
-      "product:2": { name: "Mouse", price: 25 },
+  create: [
+    "create(key, value)",
+    {
+      ...base,
+      operation: "create",
+      key: "user:1",
+      value: { name: "Kang Cahya", role: "admin", active: true },
     },
-    keys: ["product:1", "product:2"],
-  },
-  createMany: {
-    key: "",
-    value: {
-      "batch:1": { value: "A" },
-      "batch:2": { value: "B" },
+  ],
+  save: [
+    "save(key, value)",
+    {
+      ...base,
+      operation: "save",
+      key: "user:1",
+      value: { name: "Kang Cahya", role: "developer", active: true },
     },
-    keys: ["batch:1", "batch:2"],
-  },
-  findMany: { key: "", value: null, keys: ["user:1", "user:2", "product:1"] },
-  destroy: { key: "user:1", value: null, keys: ["user:1"] },
-  delete: { key: "user:1", value: null, keys: ["user:1"] },
-  remove: { key: "user:1", value: null, keys: ["user:1"] },
-  destroyMany: { key: "", value: null, keys: ["user:1", "user:2"] },
-  truncate: { key: "", value: null, keys: [] },
-  describe: { key: "user:1", value: null, keys: ["user:1"] },
-  getStatistic: { key: "", value: null, keys: [] },
-  getStatistics: { key: "", value: null, keys: [] },
-  namespace: {
-    key: "token",
-    value: "secure-token-value",
-    keys: ["token"],
-  },
-  transaction: {
-    key: "",
-    value: {
-      "trx:1": { value: "A" },
-      "trx:2": { value: "B" },
+  ],
+  update: [
+    "update(key, value)",
+    {
+      ...base,
+      operation: "update",
+      key: "user:1",
+      value: { name: "Kang Cahya Updated", role: "maintainer", active: true },
     },
-    keys: ["trx:1", "trx:2"],
-  },
-  watch: {
-    key: "settings:theme",
-    value: { mode: "light", accent: "blue" },
-    keys: ["settings:theme"],
-  },
+  ],
+  insert: [
+    "insert(key, value)",
+    {
+      ...base,
+      operation: "insert",
+      key: "user:3",
+      value: { name: "Inserted User", role: "guest", active: false },
+    },
+  ],
+  set: [
+    "set(key, value)",
+    {
+      ...base,
+      operation: "set",
+      key: "settings:theme",
+      value: { mode: "dark", accent: "purple" },
+    },
+  ],
+  find: ["find(key)", { ...base, operation: "find", key: "user:1" }],
+  findOne: ["findOne(key)", { ...base, operation: "findOne", key: "user:1" }],
+  findAll: ["findAll()", { ...base, operation: "findAll" }],
+  saveMany: [
+    "saveMany(items)",
+    {
+      ...base,
+      operation: "saveMany",
+      items: {
+        "product:1": { name: "Laptop", price: 1000 },
+        "product:2": { name: "Mouse", price: 25 },
+      },
+    },
+  ],
+  createMany: [
+    "createMany(items)",
+    {
+      ...base,
+      operation: "createMany",
+      items: { "batch:1": { value: "A" }, "batch:2": { value: "B" } },
+    },
+  ],
+  findMany: [
+    "findMany(keys)",
+    { ...base, operation: "findMany", keys: ["user:1", "user:2", "product:1"] },
+  ],
+  destroy: ["destroy(key)", { ...base, operation: "destroy", key: "user:1" }],
+  delete: ["delete(key)", { ...base, operation: "delete", key: "user:1" }],
+  remove: ["remove(key)", { ...base, operation: "remove", key: "user:1" }],
+  destroyMany: [
+    "destroyMany(keys)",
+    { ...base, operation: "destroyMany", keys: ["user:1", "user:2"] },
+  ],
+  truncate: ["truncate()", { ...base, operation: "truncate" }],
+  describe: [
+    "describe(key)",
+    { ...base, operation: "describe", key: "user:1" },
+  ],
+  getStatistic: [
+    "getStatistic(engine)",
+    { ...base, operation: "getStatistic" },
+  ],
+  getStatistics: ["getStatistics()", { ...base, operation: "getStatistics" }],
+  namespace: [
+    "namespace(name).save(key, value)",
+    {
+      ...base,
+      operation: "namespace",
+      namespace: "auth",
+      key: "token",
+      value: "secure-token-value",
+    },
+  ],
+  transaction: [
+    "transaction(callback)",
+    {
+      ...base,
+      operation: "transaction",
+      items: { "trx:1": { value: "A" }, "trx:2": { value: "B" } },
+    },
+  ],
+  watch: [
+    "watch(key, callback)",
+    {
+      ...base,
+      operation: "watch",
+      key: "settings:theme",
+      value: { mode: "dark", accent: "purple" },
+    },
+  ],
 };
 
-function config() {
+const presetGroups = [
+  ["Write operations", ["create", "save", "update", "insert", "set"]],
+  ["Read operations", ["find", "findOne", "findAll", "findMany"]],
+  ["Batch operations", ["saveMany", "createMany", "destroyMany"]],
+  ["Delete operations", ["destroy", "delete", "remove", "truncate"]],
+  ["Utility operations", ["describe", "getStatistic", "getStatistics"]],
+  ["Advanced operations", ["namespace", "transaction", "watch"]],
+];
+
+function init() {
+  el.preset.innerHTML = presetGroups
+    .map(([groupName, keys]) => {
+      const options = keys
+        .map((key) => `<option value="${key}">${presets[key][0]}</option>`)
+        .join("");
+      return `<optgroup label="${groupName}">${options}</optgroup>`;
+    })
+    .join("");
+  initCodeEditors();
+  reset();
+}
+
+function initCodeEditors() {
+  editors = {
+    codePreview: CodeMirror.fromTextArea(el.codePreview, {
+      mode: "javascript",
+      theme: "eclipse",
+      lineNumbers: true,
+      lineWrapping: true,
+      matchBrackets: true,
+      styleActiveLine: true,
+      viewportMargin: Infinity,
+    }),
+    command: CodeMirror.fromTextArea(el.command, {
+      mode: { name: "javascript", json: true },
+      theme: "eclipse",
+      lineNumbers: true,
+      lineWrapping: true,
+      matchBrackets: true,
+      styleActiveLine: true,
+      viewportMargin: Infinity,
+    }),
+  };
+
+  editors.command.on("change", () => {
+    if (isApplyingPreset) return;
+    try {
+      const data = command();
+      el.engine.value = data.engine;
+      setCodePreview(buildCodePreview(data));
+      renderData(data).catch(() => {});
+    } catch {
+      // Keep invalid JSON editable; Run Command will show the parse error.
+    }
+  });
+}
+
+function getPayloadText() {
+  return editors?.command ? editors.command.getValue() : el.command.value;
+}
+
+function setPayload(data) {
+  const text = JSON.stringify(data, null, 2);
+  if (editors?.command) editors.command.setValue(text);
+  else el.command.value = text;
+}
+
+function setCodePreview(code) {
+  if (editors?.codePreview) editors.codePreview.setValue(code);
+  else el.codePreview.value = code;
+}
+
+function command() {
+  const parsed = JSON.parse(getPayloadText());
   return {
-    engine: el.engine.value,
-    dbName: el.dbName.value.trim() || "demo_app",
-    namespace: el.namespace.value.trim() || "default",
-    key: el.key.value.trim(),
+    engine: parsed.engine || el.engine.value,
+    dbName: parsed.dbName || "demo_app",
+    namespace: parsed.namespace || "default",
+    ...parsed,
   };
 }
 
-function namespacePrefix() {
-  const cfg = config();
-  return cfg.dbName + "_" + cfg.namespace + ":";
-}
-
-function storageKey(key) {
-  return namespacePrefix() + key;
-}
-
-function parseJsonField(field, fallback) {
-  const raw = field.value.trim();
-  if (!raw) return fallback;
+function safeCommand() {
   try {
-    return JSON.parse(raw);
+    return command();
   } catch {
-    return raw;
+    return { ...base, operation: "invalid", engine: el.engine.value };
   }
 }
 
-function valuePayload() {
-  return parseJsonField(el.value, null);
+function applyPreset() {
+  const data = structuredClone(presets[el.preset.value][1]);
+  data.engine = el.engine.value;
+  isApplyingPreset = true;
+  setPayload(data);
+  setCodePreview(buildCodePreview(data));
+  isApplyingPreset = false;
+  renderData(data).catch(() => {});
 }
 
-function keyList() {
-  const parsed = parseJsonField(el.keys, []);
-  return Array.isArray(parsed) ? parsed : [];
+function syncEngine() {
+  try {
+    const data = command();
+    data.engine = el.engine.value;
+    isApplyingPreset = true;
+    setPayload(data);
+    setCodePreview(buildCodePreview(data));
+    isApplyingPreset = false;
+    renderData(data).catch(() => {});
+  } catch {}
 }
 
-function stringify(value) {
-  return JSON.stringify(value);
+function js(value) {
+  return JSON.stringify(value, null, 2);
 }
 
+function storeExpr(cmd) {
+  const baseExpr = `store.db(${JSON.stringify(cmd.dbName)}).config(${JSON.stringify(cmd.engine)})`;
+  return cmd.namespace && cmd.namespace !== "default"
+    ? `${baseExpr}.namespace(${JSON.stringify(cmd.namespace)})`
+    : baseExpr;
+}
+
+function buildCodePreview(cmd) {
+  const target = storeExpr(cmd);
+  const op = cmd.operation;
+
+  if (["create", "save", "update", "insert", "set"].includes(op)) {
+    return `import store from "omnistorage";\n\nconst result = await ${target}.${op}(\n  ${JSON.stringify(cmd.key)},\n  ${js(cmd.value)}\n);\n\nconsole.log(result);`;
+  }
+
+  if (
+    ["find", "findOne", "destroy", "delete", "remove", "describe"].includes(op)
+  ) {
+    return `import store from "omnistorage";\n\nconst result = await ${target}.${op}(${JSON.stringify(cmd.key)});\n\nconsole.log(result);`;
+  }
+
+  if (["findAll", "truncate", "getStatistic", "getStatistics"].includes(op)) {
+    return `import store from "omnistorage";\n\nconst result = await ${target}.${op}();\n\nconsole.log(result);`;
+  }
+
+  if (["saveMany", "createMany"].includes(op)) {
+    return `import store from "omnistorage";\n\nconst result = await ${target}.${op}(${js(cmd.items || {})});\n\nconsole.log(result);`;
+  }
+
+  if (["findMany", "destroyMany"].includes(op)) {
+    return `import store from "omnistorage";\n\nconst result = await ${target}.${op}(${js(cmd.keys || [])});\n\nconsole.log(result);`;
+  }
+
+  if (op === "namespace") {
+    return `import store from "omnistorage";\n\nconst authStorage = store\n  .db(${JSON.stringify(cmd.dbName)})\n  .config(${JSON.stringify(cmd.engine)})\n  .namespace(${JSON.stringify(cmd.namespace)});\n\nconst result = await authStorage.save(\n  ${JSON.stringify(cmd.key)},\n  ${js(cmd.value)}\n);\n\nconsole.log(result);`;
+  }
+
+  if (op === "transaction") {
+    return `import store from "omnistorage";\n\nconst result = await store.transaction(async (trx) => {\n${Object.entries(
+      cmd.items || {},
+    )
+      .map(
+        ([key, value]) =>
+          `  await trx.save(${JSON.stringify(key)}, ${js(value).replaceAll("\n", "\n  ")});`,
+      )
+      .join("\n")}\n}, ${JSON.stringify(cmd.engine)});\n\nconsole.log(result);`;
+  }
+
+  if (op === "watch") {
+    return `import store from "omnistorage";\n\nconst unwatch = ${target}.watch(${JSON.stringify(cmd.key)}, (newValue, oldValue) => {\n  console.log({ newValue, oldValue });\n});\n\nawait ${target}.save(\n  ${JSON.stringify(cmd.key)},\n  ${js(cmd.value)}\n);\n\n// Later, stop watching:\n// unwatch();`;
+  }
+
+  return `// Unsupported operation preview: ${op}`;
+}
+
+function prefix(cmd) {
+  return `${cmd.dbName}_${cmd.namespace}:`;
+}
+function fullKey(cmd, key) {
+  return `${prefix(cmd)}${key}`;
+}
 function parseStored(value) {
-  if (value === null || value === undefined) return null;
+  if (value == null) return null;
   try {
     return JSON.parse(value);
   } catch {
@@ -143,34 +324,29 @@ function parseStored(value) {
   }
 }
 
-async function openIndexedDb(dbName) {
+async function openDb(dbName) {
   if (idbConnections.has(dbName)) return idbConnections.get(dbName);
-
   const db = await new Promise((resolve, reject) => {
-    const request = indexedDB.open(dbName, 1);
-    request.onupgradeneeded = () => {
-      const db = request.result;
-      if (!db.objectStoreNames.contains("kv")) {
-        db.createObjectStore("kv", { keyPath: "key" });
-      }
+    const req = indexedDB.open(dbName, 1);
+    req.onupgradeneeded = () => {
+      if (!req.result.objectStoreNames.contains("kv"))
+        req.result.createObjectStore("kv", { keyPath: "key" });
     };
-    request.onsuccess = () => resolve(request.result);
-    request.onerror = () => reject(request.error);
+    req.onsuccess = () => resolve(req.result);
+    req.onerror = () => reject(req.error);
   });
-
   idbConnections.set(dbName, db);
   return db;
 }
 
-async function idb(mode, callback) {
-  const db = await openIndexedDb(config().dbName);
+async function idb(cmd, mode, cb) {
+  const db = await openDb(cmd.dbName);
   return new Promise((resolve, reject) => {
     const tx = db.transaction("kv", mode);
-    const store = tx.objectStore("kv");
-    const request = callback(store);
-    if (request) {
-      request.onsuccess = () => resolve(request.result);
-      request.onerror = () => reject(request.error);
+    const req = cb(tx.objectStore("kv"));
+    if (req) {
+      req.onsuccess = () => resolve(req.result);
+      req.onerror = () => reject(req.error);
     } else {
       tx.oncomplete = () => resolve(undefined);
     }
@@ -178,414 +354,357 @@ async function idb(mode, callback) {
   });
 }
 
-async function rawGet(fullKey) {
-  const engine = config().engine;
-  if (engine === "memory") return memoryStore.get(fullKey) ?? null;
-  if (engine === "local") return localStorage.getItem(fullKey);
-  if (engine === "session") return sessionStorage.getItem(fullKey);
-  if (engine === "indexeddb") {
-    const entry = await idb("readonly", (store) => store.get(fullKey));
-    return entry ? entry.value : null;
-  }
-  return null;
-}
-
-async function getItem(key) {
-  return rawGet(storageKey(key));
-}
-
-async function setItem(key, value) {
-  const engine = config().engine;
-  const fullKey = storageKey(key);
-  const stored = stringify(value);
-  const oldValue = parseStored(await rawGet(fullKey));
-
-  if (engine === "memory") memoryStore.set(fullKey, stored);
-  if (engine === "local") localStorage.setItem(fullKey, stored);
-  if (engine === "session") sessionStorage.setItem(fullKey, stored);
-  if (engine === "indexeddb") {
-    await idb("readwrite", (store) =>
-      store.put({ key: fullKey, value: stored }),
+function ensureRunnable(cmd) {
+  if (!runnableEngines.has(cmd.engine)) {
+    throw new Error(
+      `Engine "${cmd.engine}" is not runnable on GitHub Pages/static browser demo.`,
     );
   }
-
-  triggerWatchers(key, value, oldValue);
 }
 
-async function removeItem(key) {
-  const engine = config().engine;
-  const fullKey = storageKey(key);
-  const oldValue = parseStored(await rawGet(fullKey));
+async function rawGet(cmd, key) {
+  ensureRunnable(cmd);
+  if (cmd.engine === "memory") return memoryStore.get(key) ?? null;
+  if (cmd.engine === "local") return localStorage.getItem(key);
+  if (cmd.engine === "session") return sessionStorage.getItem(key);
+  const row = await idb(cmd, "readonly", (store) => store.get(key));
+  return row ? row.value : null;
+}
+async function getItem(cmd, key) {
+  return rawGet(cmd, fullKey(cmd, key));
+}
 
-  if (engine === "memory") memoryStore.delete(fullKey);
-  if (engine === "local") localStorage.removeItem(fullKey);
-  if (engine === "session") sessionStorage.removeItem(fullKey);
-  if (engine === "indexeddb")
-    await idb("readwrite", (store) => store.delete(fullKey));
+async function setItem(cmd, key, value) {
+  ensureRunnable(cmd);
+  const fk = fullKey(cmd, key);
+  const oldValue = parseStored(await rawGet(cmd, fk));
+  const stored = JSON.stringify(value);
+  if (cmd.engine === "memory") memoryStore.set(fk, stored);
+  else if (cmd.engine === "local") localStorage.setItem(fk, stored);
+  else if (cmd.engine === "session") sessionStorage.setItem(fk, stored);
+  else
+    await idb(cmd, "readwrite", (store) =>
+      store.put({ key: fk, value: stored }),
+    );
+  triggerWatcher(cmd, key, value, oldValue);
+}
 
-  triggerWatchers(key, null, oldValue);
+async function removeItem(cmd, key) {
+  ensureRunnable(cmd);
+  const fk = fullKey(cmd, key);
+  const oldValue = parseStored(await rawGet(cmd, fk));
+  if (cmd.engine === "memory") memoryStore.delete(fk);
+  else if (cmd.engine === "local") localStorage.removeItem(fk);
+  else if (cmd.engine === "session") sessionStorage.removeItem(fk);
+  else await idb(cmd, "readwrite", (store) => store.delete(fk));
+  triggerWatcher(cmd, key, null, oldValue);
   return oldValue;
 }
 
-async function allFullKeys() {
-  const engine = config().engine;
-  const prefix = namespacePrefix();
-
-  if (engine === "memory") {
-    return Array.from(memoryStore.keys()).filter((key) =>
-      key.startsWith(prefix),
-    );
-  }
-  if (engine === "local")
-    return Object.keys(localStorage).filter((key) => key.startsWith(prefix));
-  if (engine === "session")
-    return Object.keys(sessionStorage).filter((key) => key.startsWith(prefix));
-  if (engine === "indexeddb") {
-    const keys = await idb("readonly", (store) => store.getAllKeys());
-    return keys.map(String).filter((key) => key.startsWith(prefix));
-  }
-
-  return [];
+async function keys(cmd) {
+  ensureRunnable(cmd);
+  const p = prefix(cmd);
+  if (cmd.engine === "memory")
+    return Array.from(memoryStore.keys()).filter((key) => key.startsWith(p));
+  if (cmd.engine === "local")
+    return Object.keys(localStorage).filter((key) => key.startsWith(p));
+  if (cmd.engine === "session")
+    return Object.keys(sessionStorage).filter((key) => key.startsWith(p));
+  return (await idb(cmd, "readonly", (store) => store.getAllKeys()))
+    .map(String)
+    .filter((key) => key.startsWith(p));
 }
 
-async function allData() {
-  const prefix = namespacePrefix();
+async function allData(cmd) {
+  const p = prefix(cmd);
   const data = {};
-  for (const fullKey of await allFullKeys()) {
-    const cleanKey = fullKey.replace(prefix, "");
-    data[cleanKey] = parseStored(await rawGet(fullKey));
-  }
+  for (const key of await keys(cmd))
+    data[key.replace(p, "")] = parseStored(await rawGet(cmd, key));
   return data;
 }
 
-function createResponse(ok, operation, data, message, extra = {}) {
+function response(cmd, ok, data, message, extra = {}) {
   return {
     ok,
-    operation,
+    operation: cmd.operation,
+    engine: cmd.engine,
+    dbName: cmd.dbName,
+    namespace: cmd.namespace,
     data,
     message,
-    engine: config().engine,
-    dbName: config().dbName,
-    namespace: config().namespace,
     timestamp: new Date().toISOString(),
     ...extra,
   };
 }
-
-function setResult(result) {
-  el.result.textContent = JSON.stringify(result, null, 2);
-  el.status.textContent = result.ok ? "Success" : "Error";
-  el.status.className = "pill " + (result.ok ? "success" : "error");
+function requireKey(cmd) {
+  if (!cmd.key) throw new Error(`Operation "${cmd.operation}" requires a key.`);
 }
-
-function addLog(result) {
-  activity.unshift(result);
-  activity.splice(40);
-  el.logCount.textContent = activity.length + " logs";
-  el.activityLog.innerHTML = activity
-    .map((item) => {
-      const time = new Date(item.timestamp).toLocaleTimeString();
-      return (
-        "<li><strong>" +
-        escapeHtml(item.operation) +
-        "</strong> · " +
-        escapeHtml(item.engine) +
-        "<br><small>" +
-        escapeHtml(item.message) +
-        " · " +
-        time +
-        "</small></li>"
-      );
-    })
-    .join("");
+function watcherId(cmd, key) {
+  return `${cmd.engine}|${cmd.dbName}|${cmd.namespace}|${key}`;
 }
-
-function triggerWatchers(key, newValue, oldValue) {
-  const watcherKey =
-    config().engine +
-    "|" +
-    config().dbName +
-    "|" +
-    config().namespace +
-    "|" +
-    key;
-  if (!watchers.has(watcherKey)) return;
-
-  const log = createResponse(
-    true,
-    "watch:callback",
-    { key, newValue, oldValue },
-    "Watcher callback triggered.",
+function triggerWatcher(cmd, key, newValue, oldValue) {
+  if (!watchers.has(watcherId(cmd, key))) return;
+  addLog(
+    response(
+      { ...cmd, operation: "watch:callback" },
+      true,
+      { key, newValue, oldValue },
+      "Watcher callback triggered.",
+    ),
   );
-  addLog(log);
 }
 
-async function runOperation() {
-  const operation = el.operation.value;
-  const key = config().key;
-  const value = valuePayload();
-  const keys = keyList();
-  let result;
-
-  if (
-    [
-      "create",
-      "save",
-      "update",
-      "insert",
-      "set",
-      "find",
-      "findOne",
-      "destroy",
-      "delete",
-      "remove",
-      "describe",
-      "watch",
-    ].includes(operation) &&
-    !key
-  ) {
-    throw new Error("Key is required for this operation.");
+async function execute(cmd) {
+  ensureRunnable(cmd);
+  const op = cmd.operation;
+  if (["create", "insert"].includes(op)) {
+    requireKey(cmd);
+    if ((await getItem(cmd, cmd.key)) !== null)
+      return response(cmd, false, null, "Key already exists.", {
+        key: cmd.key,
+      });
+    await setItem(cmd, cmd.key, cmd.value);
+    return response(cmd, true, cmd.value, "Data created.", { key: cmd.key });
   }
-
-  if (operation === "create" || operation === "insert") {
-    const existing = await getItem(key);
-    if (existing !== null) {
-      result = createResponse(false, operation, null, "Key already exists.", {
-        key,
-      });
-    } else {
-      await setItem(key, value);
-      result = createResponse(true, operation, value, "Data created.", { key });
-    }
-  } else if (operation === "save" || operation === "set") {
-    await setItem(key, value);
-    result = createResponse(true, operation, value, "Data saved.", { key });
-  } else if (operation === "update") {
-    const existing = await getItem(key);
-    if (existing === null) {
-      result = createResponse(false, operation, null, "Key not found.", {
-        key,
-      });
-    } else {
-      await setItem(key, value);
-      result = createResponse(true, operation, value, "Data updated.", { key });
-    }
-  } else if (operation === "find" || operation === "findOne") {
-    const stored = await getItem(key);
-    result = createResponse(
+  if (["save", "set", "namespace"].includes(op)) {
+    requireKey(cmd);
+    await setItem(cmd, cmd.key, cmd.value);
+    return response(cmd, true, cmd.value, "Data saved.", { key: cmd.key });
+  }
+  if (op === "update") {
+    requireKey(cmd);
+    if ((await getItem(cmd, cmd.key)) === null)
+      return response(cmd, false, null, "Key not found.", { key: cmd.key });
+    await setItem(cmd, cmd.key, cmd.value);
+    return response(cmd, true, cmd.value, "Data updated.", { key: cmd.key });
+  }
+  if (["find", "findOne"].includes(op)) {
+    requireKey(cmd);
+    const stored = await getItem(cmd, cmd.key);
+    return response(
+      cmd,
       stored !== null,
-      operation,
       parseStored(stored),
       stored === null ? "Key not found." : "Data found.",
-      { key },
+      { key: cmd.key },
     );
-  } else if (operation === "findAll") {
-    const data = await allData();
-    result = createResponse(
+  }
+  if (op === "findAll") {
+    const data = await allData(cmd);
+    return response(
+      cmd,
       true,
-      operation,
       data,
-      Object.keys(data).length + " item(s) found.",
+      `${Object.keys(data).length} item(s) found.`,
     );
-  } else if (operation === "saveMany") {
-    for (const [itemKey, itemValue] of Object.entries(value || {}))
-      await setItem(itemKey, itemValue);
-    result = createResponse(
+  }
+  if (op === "saveMany") {
+    for (const [key, value] of Object.entries(cmd.items || {}))
+      await setItem(cmd, key, value);
+    return response(
+      cmd,
       true,
-      operation,
-      value,
-      Object.keys(value || {}).length + " item(s) saved.",
+      cmd.items || {},
+      `${Object.keys(cmd.items || {}).length} item(s) saved.`,
     );
-  } else if (operation === "createMany") {
-    const created = {};
-    const skipped = [];
-    for (const [itemKey, itemValue] of Object.entries(value || {})) {
-      if ((await getItem(itemKey)) !== null) skipped.push(itemKey);
+  }
+  if (op === "createMany") {
+    const created = {},
+      skipped = [];
+    for (const [key, value] of Object.entries(cmd.items || {})) {
+      if ((await getItem(cmd, key)) !== null) skipped.push(key);
       else {
-        await setItem(itemKey, itemValue);
-        created[itemKey] = itemValue;
+        await setItem(cmd, key, value);
+        created[key] = value;
       }
     }
-    result = createResponse(
+    return response(
+      cmd,
       skipped.length === 0,
-      operation,
       { created, skipped },
-      Object.keys(created).length + " item(s) created.",
+      `${Object.keys(created).length} item(s) created.`,
     );
-  } else if (operation === "findMany") {
+  }
+  if (op === "findMany") {
     const found = {};
-    for (const itemKey of keys)
-      found[itemKey] = parseStored(await getItem(itemKey));
-    result = createResponse(
+    for (const key of cmd.keys || [])
+      found[key] = parseStored(await getItem(cmd, key));
+    return response(
+      cmd,
       true,
-      operation,
       found,
-      keys.length + " key(s) read.",
+      `${(cmd.keys || []).length} key(s) read.`,
     );
-  } else if (
-    operation === "destroy" ||
-    operation === "delete" ||
-    operation === "remove"
-  ) {
-    const oldValue = await removeItem(key);
-    result = createResponse(
+  }
+  if (["destroy", "delete", "remove"].includes(op)) {
+    requireKey(cmd);
+    const oldValue = await removeItem(cmd, cmd.key);
+    return response(
+      cmd,
       oldValue !== null,
-      operation,
       oldValue,
       oldValue === null ? "Key not found." : "Data deleted.",
-      { key },
+      { key: cmd.key },
     );
-  } else if (operation === "destroyMany") {
+  }
+  if (op === "destroyMany") {
     const removed = {};
-    for (const itemKey of keys) removed[itemKey] = await removeItem(itemKey);
-    result = createResponse(
+    for (const key of cmd.keys || []) removed[key] = await removeItem(cmd, key);
+    return response(
+      cmd,
       true,
-      operation,
       removed,
-      keys.length + " key(s) deleted.",
+      `${(cmd.keys || []).length} key(s) deleted.`,
     );
-  } else if (operation === "truncate") {
-    const keysToDelete = await allFullKeys();
-    const prefix = namespacePrefix();
-    for (const fullKey of keysToDelete)
-      await removeItem(fullKey.replace(prefix, ""));
-    result = createResponse(
+  }
+  if (op === "truncate") {
+    const allKeys = await keys(cmd);
+    for (const key of allKeys)
+      await removeItem(cmd, key.replace(prefix(cmd), ""));
+    return response(
+      cmd,
       true,
-      operation,
-      { deleted: keysToDelete.length },
+      { deleted: allKeys.length },
       "Namespace truncated.",
     );
-  } else if (operation === "describe") {
-    const stored = await getItem(key);
+  }
+  if (op === "describe") {
+    requireKey(cmd);
+    const stored = await getItem(cmd, cmd.key);
     const data = parseStored(stored);
-    result = createResponse(
+    return response(
+      cmd,
       stored !== null,
-      operation,
       {
-        key,
+        key: cmd.key,
         exists: stored !== null,
         type:
           data === null ? "null" : Array.isArray(data) ? "array" : typeof data,
         estimatedBytes: stored ? new Blob([stored]).size : 0,
       },
       stored === null ? "Key not found." : "Metadata generated.",
-      { key },
     );
-  } else if (operation === "getStatistic" || operation === "getStatistics") {
-    const data = await allData();
+  }
+  if (["getStatistic", "getStatistics"].includes(op)) {
+    const data = await allData(cmd);
     const bytes = new Blob([JSON.stringify(data)]).size;
-    result = createResponse(
+    return response(
+      cmd,
       true,
-      operation,
       {
-        engine: config().engine,
         totalKeys: Object.keys(data).length,
         estimatedBytes: bytes,
         estimatedKb: Number((bytes / 1024).toFixed(2)),
       },
       "Statistics generated.",
     );
-  } else if (operation === "namespace") {
-    await setItem(key, value);
-    result = createResponse(
+  }
+  if (op === "transaction") {
+    for (const [key, value] of Object.entries(cmd.items || {}))
+      await setItem(cmd, key, value);
+    return response(
+      cmd,
       true,
-      operation,
-      { namespace: config().namespace, key, value },
-      "Saved data inside the selected namespace.",
-      { key },
-    );
-  } else if (operation === "transaction") {
-    for (const [itemKey, itemValue] of Object.entries(value || {}))
-      await setItem(itemKey, itemValue);
-    result = createResponse(
-      true,
-      operation,
-      value,
+      cmd.items || {},
       "Transaction simulation completed.",
     );
-  } else if (operation === "watch") {
-    const watcherKey =
-      config().engine +
-      "|" +
-      config().dbName +
-      "|" +
-      config().namespace +
-      "|" +
-      key;
-    watchers.set(watcherKey, true);
-    await setItem(key, value);
-    result = createResponse(
+  }
+  if (op === "watch") {
+    requireKey(cmd);
+    watchers.add(watcherId(cmd, cmd.key));
+    await setItem(cmd, cmd.key, cmd.value);
+    return response(
+      cmd,
       true,
-      operation,
-      { watchedKey: key, savedValue: value },
-      "Watcher registered and triggered by save.",
-      { key },
+      { watchedKey: cmd.key, savedValue: cmd.value },
+      "Watcher registered and triggered.",
     );
   }
-
-  setResult(result);
-  addLog(result);
-  await renderData();
+  throw new Error(`Unsupported operation "${op}".`);
 }
 
-async function seedData() {
-  const seed = {
+async function run() {
+  try {
+    const cmd = command();
+    el.engine.value = cmd.engine;
+    const result = await execute(cmd);
+    setResult(result);
+    addLog(result);
+    await renderData(cmd);
+  } catch (error) {
+    const result = response(safeCommand(), false, null, error.message);
+    setResult(result);
+    addLog(result);
+  }
+}
+
+async function seed() {
+  const cmd = { ...safeCommand(), operation: "seed" };
+  if (!runnableEngines.has(cmd.engine)) cmd.engine = "memory";
+  const data = {
     "user:1": { name: "Kang Cahya", role: "admin", active: true },
     "user:2": { name: "Dedy", role: "user", active: true },
     "product:1": { name: "Laptop", price: 1000 },
     "settings:theme": { mode: "dark", accent: "purple" },
   };
-  for (const [key, value] of Object.entries(seed)) await setItem(key, value);
-  const result = createResponse(true, "seed", seed, "Demo data inserted.");
+  for (const [key, value] of Object.entries(data))
+    await setItem(cmd, key, value);
+  const result = response(cmd, true, data, "Demo data inserted.");
   setResult(result);
   addLog(result);
-  await renderData();
+  await renderData(cmd);
 }
 
-async function renderData() {
-  const data = await allData();
-  const entries = Object.entries(data);
-  el.dataCount.textContent = entries.length + " items";
-
-  if (entries.length === 0) {
+async function renderData(cmd = safeCommand()) {
+  if (!runnableEngines.has(cmd.engine)) {
+    el.dataCount.textContent = "0 items";
     el.dataList.className = "data-list empty";
-    el.dataList.textContent = "No data in this namespace.";
+    el.dataList.textContent =
+      "Selected engine cannot run in this static playground.";
     return;
   }
-
+  const data = await allData(cmd);
+  const entries = Object.entries(data);
+  el.dataCount.textContent = `${entries.length} items`;
+  if (entries.length === 0) {
+    el.dataList.className = "data-list empty";
+    el.dataList.textContent = "No data in the selected namespace.";
+    return;
+  }
   el.dataList.className = "data-list";
   el.dataList.innerHTML = entries
-    .map(([key, value]) => {
-      return (
-        '<article class="data-item"><div class="data-key"><span>' +
-        escapeHtml(key) +
-        "</span><small>" +
-        escapeHtml(config().engine) +
-        '</small></div><pre class="data-value">' +
-        escapeHtml(JSON.stringify(value, null, 2)) +
-        "</pre></article>"
-      );
-    })
+    .map(
+      ([key, value]) =>
+        `<article class="data-item"><div class="data-head"><span>${esc(key)}</span><small>${esc(cmd.engine)}</small></div><pre>${esc(JSON.stringify(value, null, 2))}</pre></article>`,
+    )
     .join("");
 }
 
-function applyPreset() {
-  const preset = presets[el.operation.value] || presets.save;
-  el.key.value = preset.key;
-  el.value.value =
-    preset.value === null ? "" : JSON.stringify(preset.value, null, 2);
-  el.keys.value = JSON.stringify(preset.keys, null, 2);
+function setResult(result) {
+  el.result.textContent = JSON.stringify(result, null, 2);
+  el.status.textContent = result.ok ? "Success" : "Error";
+  el.status.className = `badge ${result.ok ? "success" : "error"}`;
 }
-
-function resetPlayground() {
-  el.operation.value = "save";
+function addLog(result) {
+  logs.unshift(result);
+  logs.splice(40);
+  el.logCount.textContent = `${logs.length} logs`;
+  el.activityLog.innerHTML = logs
+    .map(
+      (item) =>
+        `<li><strong>${esc(item.operation)}</strong> · ${esc(item.engine)}<br><small>${esc(item.message)} · ${new Date(item.timestamp).toLocaleTimeString()}</small></li>`,
+    )
+    .join("");
+}
+function reset() {
+  el.preset.value = "save";
   el.engine.value = "memory";
-  el.dbName.value = "demo_app";
-  el.namespace.value = "default";
   applyPreset();
+  el.status.textContent = "Ready";
+  el.status.className = "badge";
+  el.result.textContent = "Choose a preset and click Run Command.";
 }
-
-function escapeHtml(value) {
+function esc(value) {
   return String(value)
     .replaceAll("&", "&amp;")
     .replaceAll("<", "&lt;")
@@ -594,36 +713,18 @@ function escapeHtml(value) {
     .replaceAll("'", "&#039;");
 }
 
-document.querySelector("#run-operation").addEventListener("click", async () => {
-  try {
-    await runOperation();
-  } catch (error) {
-    const result = createResponse(
-      false,
-      el.operation.value,
-      null,
-      error.message,
-    );
-    setResult(result);
-    addLog(result);
-  }
-});
-
-document.querySelector("#seed").addEventListener("click", seedData);
-document.querySelector("#refresh-data").addEventListener("click", renderData);
+init();
+el.preset.addEventListener("change", applyPreset);
+el.engine.addEventListener("change", syncEngine);
+document.querySelector("#run").addEventListener("click", run);
+document.querySelector("#seed").addEventListener("click", seed);
+document
+  .querySelector("#refresh")
+  .addEventListener("click", () => renderData());
 document.querySelector("#clear-log").addEventListener("click", () => {
-  activity.length = 0;
+  logs.length = 0;
   el.activityLog.innerHTML = "";
   el.logCount.textContent = "0 logs";
 });
-document
-  .querySelector("#reset-demo")
-  .addEventListener("click", resetPlayground);
-el.operation.addEventListener("change", applyPreset);
-for (const field of [el.engine, el.dbName, el.namespace]) {
-  field.addEventListener("change", renderData);
-  field.addEventListener("input", renderData);
-}
-
-resetPlayground();
+document.querySelector("#reset").addEventListener("click", reset);
 renderData();
