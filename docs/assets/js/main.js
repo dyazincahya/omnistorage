@@ -22,20 +22,8 @@ function renderMarkdown(markdown) {
 function renderPageLoader() {
   return `
     <div class="page-loader" role="status" aria-live="polite" aria-label="Loading documentation page">
-      <div class="page-loader-head">
-        <span class="page-loader-spinner" aria-hidden="true"></span>
-        <div>
-          <span class="page-loader-title">Loading documentation</span>
-          <span class="page-loader-subtitle">Preparing the latest OmniStorage content...</span>
-        </div>
-      </div>
-      <div class="page-loader-skeleton" aria-hidden="true">
-        <span class="skeleton-line title"></span>
-        <span class="skeleton-line"></span>
-        <span class="skeleton-line"></span>
-        <span class="skeleton-line short"></span>
-        <span class="skeleton-card"></span>
-      </div>
+      <span class="page-loader-spinner" aria-hidden="true"></span>
+      <span class="page-loader-text">Loading...</span>
     </div>
   `;
 }
