@@ -8,6 +8,12 @@ By default, OmniStorage uses `memory` when no engine is selected globally with `
 
 `memory` is the safest universal default because it works in both browsers and Node.js without requiring platform-specific APIs. Use `.use(engineType)` when you want a different global default.
 
+Engine priority is:
+
+1. Local engine from `.engine(engineType)`
+2. Global engine from `.use(engineType)`
+3. Built-in fallback: `memory`
+
 ## <i class="ri-arrow-left-right-line"></i> Switching Engines
 
 You can change the engine globally or only for a specific chain of operations.

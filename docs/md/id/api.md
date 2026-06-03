@@ -18,6 +18,8 @@ store.db("my_app");
 
 Mengatur engine penyimpanan default secara global.
 
+> Jika tidak ada engine global yang diatur dengan `.use()` dan tidak ada engine lokal yang dipilih dengan `.engine()`, OmniStorage menggunakan `memory` secara default.
+
 ```javascript
 import store from "@x-labs-myid/omnistorage";
 

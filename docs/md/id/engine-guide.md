@@ -8,6 +8,12 @@ Secara default, OmniStorage menggunakan `memory` ketika tidak ada engine yang di
 
 `memory` adalah default universal yang paling aman karena bisa berjalan di browser dan Node.js tanpa membutuhkan API platform tertentu. Gunakan `.use(engineType)` jika ingin default global yang berbeda.
 
+Prioritas engine adalah:
+
+1. Engine lokal dari `.engine(engineType)`
+2. Engine global dari `.use(engineType)`
+3. Fallback bawaan: `memory`
+
 ## <i class="ri-arrow-left-right-line"></i> Mengganti Engine
 
 Anda dapat mengganti engine secara global atau hanya untuk rangkaian operasi tertentu.
