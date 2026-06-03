@@ -6,11 +6,28 @@ const runnableEngines = new Set([
   "memory",
   "local",
   "session",
+  "cookie",
+  "cache",
   "indexeddb",
   "sqlite-client",
 ]);
 const sqliteConnections = new Map();
+const cacheConnections = new Map();
 let sqlite3Module = null;
+
+const ENGINE_LIMITS = {
+  local: 5 * 1024 * 1024,
+  session: 5 * 1024 * 1024,
+  cookie: 20 * 4096,
+  cache: 50 * 1024 * 1024,
+  memory: 50 * 1024 * 1024,
+  indexeddb: 500 * 1024 * 1024,
+  "sqlite-client": 256 * 1024 * 1024,
+};
+
+const ITEM_LIMITS = {
+  cookie: 4096,
+};
 let editors = null;
 let isApplyingPreset = false;
 
@@ -370,6 +387,127 @@ function ensureRunnable(cmd) {
   }
 }
 
+function estimateBytes(value) {
+  return new TextEncoder().encode(String(value ?? "")).length;
+}
+
+async function estimateCurrentStorageSize(cmd) {
+  let total = 0;
+  for (const key of await keys(cmd)) {
+    const item = await rawGet(cmd, key);
+    if (item) total += estimateBytes(item);
+  }
+  return total;
+}
+
+async function validateStorageLimit(cmd, key, value, oldStored = null) {
+  const stored = JSON.stringify(value);
+  const itemLimit = ITEM_LIMITS[cmd.engine];
+
+  if (cmd.engine === "cookie") {
+    const serialized = serializeCookie(fullKey(cmd, key), stored);
+    const cookieSize = estimateBytes(serialized);
+    if (itemLimit && cookieSize > itemLimit) {
+      throw new Error(
+        `Cookie item too large. Limit: ${(itemLimit / 1024).toFixed(
+          2,
+        )}KB. Actual: ${(cookieSize / 1024).toFixed(2)}KB.`,
+      );
+    }
+  }
+
+  const limit = ENGINE_LIMITS[cmd.engine];
+  if (!limit) return;
+
+  const currentSize = await estimateCurrentStorageSize(cmd);
+  const oldSize = oldStored ? estimateBytes(oldStored) : 0;
+  const newDataSize = estimateBytes(stored);
+  const totalSize = currentSize - oldSize + newDataSize;
+
+  if (totalSize > limit) {
+    throw new Error(
+      `Storage capacity full for engine "${cmd.engine}". Limit: ${(
+        limit /
+        1024 /
+        1024
+      ).toFixed(2)}MB. Current: ${(currentSize / 1024 / 1024).toFixed(
+        2,
+      )}MB. New data: ${(newDataSize / 1024).toFixed(2)}KB.`,
+    );
+  }
+}
+
+function encodeCookiePart(value) {
+  return encodeURIComponent(value);
+}
+
+function decodeCookiePart(value) {
+  return decodeURIComponent(value);
+}
+
+function serializeCookie(name, value, options = {}) {
+  const settings = { path: "/", sameSite: "Lax", ...options };
+  const parts = [`${encodeCookiePart(name)}=${encodeCookiePart(value)}`];
+
+  if (settings.maxAge !== undefined) parts.push(`Max-Age=${settings.maxAge}`);
+  if (settings.expires) parts.push(`Expires=${settings.expires.toUTCString()}`);
+  if (settings.path) parts.push(`Path=${settings.path}`);
+  if (settings.sameSite) parts.push(`SameSite=${settings.sameSite}`);
+  if (settings.secure) parts.push("Secure");
+
+  return parts.join("; ");
+}
+
+function cookieEntries() {
+  if (!document.cookie) return [];
+  return document.cookie.split("; ").map((cookie) => {
+    const separatorIndex = cookie.indexOf("=");
+    const rawName =
+      separatorIndex >= 0 ? cookie.slice(0, separatorIndex) : cookie;
+    const rawValue =
+      separatorIndex >= 0 ? cookie.slice(separatorIndex + 1) : "";
+    return [decodeCookiePart(rawName), decodeCookiePart(rawValue)];
+  });
+}
+
+function cookieGet(key) {
+  return cookieEntries().find(([name]) => name === key)?.[1] ?? null;
+}
+
+function cookieSet(key, value) {
+  document.cookie = serializeCookie(key, value);
+}
+
+function cookieRemove(key) {
+  document.cookie = serializeCookie(key, "", {
+    expires: new Date(0),
+    maxAge: 0,
+  });
+}
+
+async function cacheStorage(cmd) {
+  if (!("caches" in window)) {
+    throw new Error("Cache Storage API is not available in this browser.");
+  }
+
+  const cacheName = `omnistorage-${cmd.dbName}`;
+  if (!cacheConnections.has(cacheName)) {
+    cacheConnections.set(cacheName, await caches.open(cacheName));
+  }
+  return cacheConnections.get(cacheName);
+}
+
+function cacheUrl(key) {
+  return `${location.origin}${location.pathname.replace(/\/[^/]*$/, "/")}__omnistorage__/${encodeURIComponent(key)}`;
+}
+
+function keyFromCacheUrl(url) {
+  const marker = "/__omnistorage__/";
+  const index = url.indexOf(marker);
+  if (index === -1) return null;
+  return decodeURIComponent(url.slice(index + marker.length));
+}
+
 async function sqliteDb(cmd) {
   if (sqliteConnections.has(cmd.dbName))
     return sqliteConnections.get(cmd.dbName);
@@ -401,6 +539,12 @@ async function rawGet(cmd, key) {
   if (cmd.engine === "memory") return memoryStore.get(key) ?? null;
   if (cmd.engine === "local") return localStorage.getItem(key);
   if (cmd.engine === "session") return sessionStorage.getItem(key);
+  if (cmd.engine === "cookie") return cookieGet(key);
+  if (cmd.engine === "cache") {
+    const cache = await cacheStorage(cmd);
+    const response = await cache.match(cacheUrl(key));
+    return response ? response.text() : null;
+  }
   if (cmd.engine === "indexeddb") {
     const row = await idb(cmd, "readonly", (store) => store.get(key));
     return row ? row.value : null;
@@ -423,12 +567,21 @@ async function getItem(cmd, key) {
 async function setItem(cmd, key, value) {
   ensureRunnable(cmd);
   const fk = fullKey(cmd, key);
-  const oldValue = parseStored(await rawGet(cmd, fk));
+  const oldStored = await rawGet(cmd, fk);
+  await validateStorageLimit(cmd, key, value, oldStored);
+  const oldValue = parseStored(oldStored);
   const stored = JSON.stringify(value);
   if (cmd.engine === "memory") memoryStore.set(fk, stored);
   else if (cmd.engine === "local") localStorage.setItem(fk, stored);
   else if (cmd.engine === "session") sessionStorage.setItem(fk, stored);
-  else if (cmd.engine === "indexeddb")
+  else if (cmd.engine === "cookie") cookieSet(fk, stored);
+  else if (cmd.engine === "cache") {
+    const cache = await cacheStorage(cmd);
+    await cache.put(
+      cacheUrl(fk),
+      new Response(stored, { headers: { "Content-Type": "application/json" } }),
+    );
+  } else if (cmd.engine === "indexeddb")
     await idb(cmd, "readwrite", (store) =>
       store.put({ key: fk, value: stored }),
     );
@@ -449,7 +602,11 @@ async function removeItem(cmd, key) {
   if (cmd.engine === "memory") memoryStore.delete(fk);
   else if (cmd.engine === "local") localStorage.removeItem(fk);
   else if (cmd.engine === "session") sessionStorage.removeItem(fk);
-  else if (cmd.engine === "indexeddb")
+  else if (cmd.engine === "cookie") cookieRemove(fk);
+  else if (cmd.engine === "cache") {
+    const cache = await cacheStorage(cmd);
+    await cache.delete(cacheUrl(fk));
+  } else if (cmd.engine === "indexeddb")
     await idb(cmd, "readwrite", (store) => store.delete(fk));
   else {
     const db = await sqliteDb(cmd);
@@ -471,6 +628,17 @@ async function keys(cmd) {
     return Object.keys(localStorage).filter((key) => key.startsWith(p));
   if (cmd.engine === "session")
     return Object.keys(sessionStorage).filter((key) => key.startsWith(p));
+  if (cmd.engine === "cookie")
+    return cookieEntries()
+      .map(([key]) => key)
+      .filter((key) => key.startsWith(p));
+  if (cmd.engine === "cache") {
+    const cache = await cacheStorage(cmd);
+    const requests = await cache.keys();
+    return requests
+      .map((request) => keyFromCacheUrl(request.url))
+      .filter((key) => key && key.startsWith(p));
+  }
   if (cmd.engine === "indexeddb")
     return (await idb(cmd, "readonly", (store) => store.getAllKeys()))
       .map(String)

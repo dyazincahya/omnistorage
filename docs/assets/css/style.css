@@ -446,8 +446,6 @@ pre code {
 }
 
 .home-hero,
-.features-container,
-.home-engines,
 .site-footer {
   background: transparent !important; /* Ensure all components are transparent */
 }
@@ -460,8 +458,7 @@ pre code {
   padding: 0;
 }
 
-.home-mode #home-hero-wrapper,
-.home-mode #home-features-wrapper {
+.home-mode #home-hero-wrapper {
   flex: 0 0 auto;
   width: 100%;
 }
@@ -571,160 +568,6 @@ pre code {
 
 .copy-btn.copied {
   color: #2da44e;
-}
-
-/* Compact Feature Cards */
-.features-container {
-  max-width: 1012px; /* GitHub's standard container width */
-  margin: 0 auto;
-  padding: 0 16px;
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 16px;
-  width: 100%;
-}
-
-@media (max-width: 1012px) {
-  .features-container {
-    grid-template-columns: repeat(2, 1fr);
-  }
-}
-
-@media (max-width: 544px) {
-  .features-container {
-    grid-template-columns: 1fr;
-  }
-}
-
-.feature-card {
-  background: var(--color-canvas-default);
-  border: 1px solid var(--color-border-default);
-  border-radius: 8px;
-  padding: 16px 20px;
-  transition: all 0.2s ease;
-  text-decoration: none;
-  color: inherit;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.feature-card:hover {
-  border-color: var(--primary);
-  transform: translateY(-2px);
-}
-
-.feature-card-icon {
-  font-size: 18px;
-  width: 36px;
-  height: 36px;
-  background: var(--color-canvas-subtle);
-  border-radius: 6px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: var(--primary);
-}
-
-.feature-card h3 {
-  margin: 0;
-  font-size: 14px;
-  font-weight: 700;
-  border: none;
-}
-
-.feature-card p {
-  margin: 0;
-  color: var(--color-fg-muted);
-  font-size: 12px;
-  line-height: 1.4;
-}
-
-.home-engines {
-  width: 100%;
-  max-width: 1012px;
-  margin: 20px auto 0;
-  padding: 0 16px;
-}
-
-.home-engines-header {
-  margin-bottom: 12px;
-  text-align: center;
-}
-
-.home-engines-header h2 {
-  margin: 0 0 6px;
-  border: none;
-  font-size: 18px;
-  font-weight: 800;
-}
-
-.home-engines-header p {
-  max-width: 640px;
-  margin: 0 auto;
-  color: var(--color-fg-muted);
-  font-size: 13px;
-}
-
-.engine-grid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 12px;
-}
-
-.engine-card {
-  padding: 14px 16px;
-  border: 1px solid var(--color-border-default);
-  border-radius: 8px;
-  background: var(--color-canvas-default);
-}
-
-.engine-card-title {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin-bottom: 10px;
-}
-
-.engine-card-icon {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 28px;
-  height: 28px;
-  border-radius: 6px;
-  background: var(--color-canvas-subtle);
-  color: var(--primary);
-  font-size: 16px;
-}
-
-.engine-card h3 {
-  margin: 0;
-  border: none;
-  font-size: 13px;
-  font-weight: 700;
-}
-
-.engine-badges {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-}
-
-.engine-badges code {
-  padding: 3px 7px;
-  border: 1px solid var(--color-border-default);
-  border-radius: 999px;
-  background: var(--color-canvas-subtle);
-  color: var(--color-fg-default);
-  font-size: 12px;
-  font-weight: 600;
-}
-
-@media (max-width: 1012px) {
-  .engine-grid {
-    grid-template-columns: 1fr;
-  }
 }
 
 /* Footer Sticky at Bottom */
@@ -895,13 +738,6 @@ pre code {
     width: 100%;
     text-align: center;
     padding: 12px;
-  }
-
-  .features-container {
-    grid-template-columns: 1fr;
-    margin-bottom: 40px;
-    padding: 0 16px;
-    gap: 12px;
   }
 
   .site-footer {

@@ -18,7 +18,7 @@
 
     <!-- Remix Icon -->
     <link
-      href="https://cdn.jsdelivr.net/npm/remixicon@4.2.0/fonts/remixicon.css"
+      href="https://cdn.jsdelivr.net/npm/remixicon@4.9.1/fonts/remixicon.css"
       rel="stylesheet"
     />
 
@@ -75,8 +75,57 @@
         </div>
         <div class="nav-section">
           <div class="nav-title"><i class="ri-stack-line"></i> Core</div>
-          <a href="#engines" class="nav-item" data-page="engines"
-            >Storage Engines</a
+          <div class="nav-item-group">
+            <a href="#engines" class="nav-item" data-page="engines"
+              >Storage Engines</a
+            >
+            <div class="nav-submenu">
+              <a href="#engines:local" class="nav-subitem" data-anchor="local"
+                >LocalStorage</a
+              >
+              <a
+                href="#engines:session"
+                class="nav-subitem"
+                data-anchor="session"
+                >SessionStorage</a
+              >
+              <a href="#engines:cookie" class="nav-subitem" data-anchor="cookie"
+                >Cookies</a
+              >
+              <a href="#engines:cache" class="nav-subitem" data-anchor="cache"
+                >Cache Storage</a
+              >
+              <a
+                href="#engines:indexeddb"
+                class="nav-subitem"
+                data-anchor="indexeddb"
+                >IndexedDB</a
+              >
+              <a href="#engines:memory" class="nav-subitem" data-anchor="memory"
+                >In-Memory</a
+              >
+              <a href="#engines:file" class="nav-subitem" data-anchor="file"
+                >File System</a
+              >
+              <a
+                href="#engines:sqlite-server"
+                class="nav-subitem"
+                data-anchor="sqlite-server"
+                >SQLite Server</a
+              >
+              <a
+                href="#engines:sqlite-client"
+                class="nav-subitem"
+                data-anchor="sqlite-client"
+                >SQLite WASM</a
+              >
+            </div>
+          </div>
+          <a href="#engine-guide" class="nav-item" data-page="engine-guide"
+            >Engine Guide</a
+          >
+          <a href="#interfaces" class="nav-item" data-page="interfaces"
+            >Exports & Interfaces</a
           >
           <div class="nav-item-group">
             <a href="#api" class="nav-item" data-page="api">API Reference</a>
@@ -112,15 +161,81 @@
           <div class="nav-title">
             <i class="ri-lightbulb-line"></i> Examples
           </div>
-          <a href="#examples" class="nav-item" data-page="examples"
-            >Use Cases</a
-          >
+          <div class="nav-item-group">
+            <a href="#examples" class="nav-item" data-page="examples"
+              >Use Cases</a
+            >
+            <div class="nav-submenu">
+              <a href="#examples:auth" class="nav-subitem" data-anchor="auth"
+                >Authentication</a
+              >
+              <a
+                href="#examples:preferences"
+                class="nav-subitem"
+                data-anchor="preferences"
+                >Preferences</a
+              >
+              <a
+                href="#examples:multi-tab"
+                class="nav-subitem"
+                data-anchor="multi-tab"
+                >Multi-Tab Sync</a
+              >
+              <a
+                href="#examples:shopping-cart"
+                class="nav-subitem"
+                data-anchor="shopping-cart"
+                >Shopping Cart</a
+              >
+              <a
+                href="#examples:api-cache"
+                class="nav-subitem"
+                data-anchor="api-cache"
+                >API Cache</a
+              >
+              <a
+                href="#examples:form-draft"
+                class="nav-subitem"
+                data-anchor="form-draft"
+                >Form Draft</a
+              >
+              <a
+                href="#examples:cookie-consent"
+                class="nav-subitem"
+                data-anchor="cookie-consent"
+                >Cookie Consent</a
+              >
+              <a
+                href="#examples:server-settings"
+                class="nav-subitem"
+                data-anchor="server-settings"
+                >Server Settings</a
+              >
+              <a
+                href="#examples:audit-log"
+                class="nav-subitem"
+                data-anchor="audit-log"
+                >Audit Log</a
+              >
+              <a
+                href="#examples:browser-sqlite"
+                class="nav-subitem"
+                data-anchor="browser-sqlite"
+                >Browser SQLite</a
+              >
+              <a
+                href="#examples:testing"
+                class="nav-subitem"
+                data-anchor="testing"
+                >Testing</a
+              >
+            </div>
+          </div>
         </div>
       </aside>
 
       <main id="content-wrapper">
         <div id="home-hero-wrapper"></div>
-        <div id="home-features-wrapper"></div>
         <div id="doc-content" class="markdown-body">
           <!-- Content injected here -->
         </div>

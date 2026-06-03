@@ -11,6 +11,8 @@ import SessionEngine from "./engines/session/index.js";
 import MemoryEngine from "./engines/memory/index.js";
 import FileEngine from "./engines/file/index.js";
 import IndexedDBEngine from "./engines/indexeddb/index.js";
+import CookieEngine from "./engines/cookie/index.js";
+import CacheEngine from "./engines/cache/index.js";
 import SQLiteServerEngine from "./engines/sqlite-server/index.js";
 import SQLiteClientEngine from "./engines/sqlite-client/index.js";
 import { logger } from "./log/index.js";
@@ -95,6 +97,8 @@ class StoreManager {
       memory: new MemoryEngine(this._dbName),
       file: new FileEngine(this._dbName),
       indexeddb: new IndexedDBEngine(this._dbName),
+      cookie: new CookieEngine(this._dbName),
+      cache: new CacheEngine(this._dbName),
       "sqlite-server": new SQLiteServerEngine(this._dbName),
       "sqlite-client": new SQLiteClientEngine(this._dbName),
     };
@@ -643,7 +647,7 @@ class StoreManager {
       if (is.null(existing)) {
         results.push({ key, ok: false, message: "Not found" });
       } else {
-        const filteredValue = filterInput(value);
+        const filteredValue = formatPayload(value);
         toUpdate[key] = JSON.stringify(filteredValue);
         results.push({ key, value: filteredValue, ok: true });
       }
@@ -727,12 +731,6 @@ class StoreManager {
   // Aliases for convenience
   async setMany(items, engine = this.defaultEngine) {
     return await this.saveMany(items, engine);
-  }
-  async createMany(items, engine = this.defaultEngine) {
-    return await this.createMany(items, engine);
-  }
-  async updateMany(items, engine = this.defaultEngine) {
-    return await this.updateMany(items, engine);
   }
   async getMany(keys, options, engine = this.defaultEngine) {
     return await this.findMany(keys, options, engine);

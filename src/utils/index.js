@@ -6,11 +6,19 @@ import is from "is";
  */
 
 const DEFAULT_LIMITS = {
-  local: 5 * 1024 * 1024, // 5MB
-  session: 5 * 1024 * 1024, // 5MB
-  memory: 50 * 1024 * 1024, // 50MB (Arbitrary for RAM)
-  file: 100 * 1024 * 1024, // 100MB
-  indexeddb: 500 * 1024 * 1024, // 500MB
+  local: 5 * 1024 * 1024, // 5MB, common Web Storage practical limit
+  session: 5 * 1024 * 1024, // 5MB, common Web Storage practical limit
+  cookie: 20 * 4096, // ~80KB, conservative 20 cookies/origin × 4KB each
+  cache: 50 * 1024 * 1024, // 50MB soft guard; browser quota is best-effort
+  memory: 50 * 1024 * 1024, // 50MB soft guard for in-process runtime cache
+  file: 100 * 1024 * 1024, // 100MB soft guard for JSON file-backed storage
+  indexeddb: 500 * 1024 * 1024, // 500MB soft guard; real quota is browser-dependent
+  "sqlite-server": 1024 * 1024 * 1024, // 1GB soft guard for local SQLite files
+  "sqlite-client": 256 * 1024 * 1024, // 256MB soft guard; OPFS/browser quota varies
+};
+
+const ITEM_LIMITS = {
+  cookie: 4096, // 4KB, common practical maximum for a single cookie
 };
 
 /**
@@ -81,7 +89,17 @@ export const validateLimit = (
   engineType = "local",
 ) => {
   const limit = DEFAULT_LIMITS[engineType] || DEFAULT_LIMITS.local;
+  const itemLimit = ITEM_LIMITS[engineType];
   const totalSize = currentSize + newDataSize;
+
+  if (itemLimit && newDataSize > itemLimit) {
+    return {
+      ok: false,
+      message: `Storage item too large for engine "${engineType}". Item limit: ${(
+        itemLimit / 1024
+      ).toFixed(2)}KB. New data: ${(newDataSize / 1024).toFixed(2)}KB.`,
+    };
+  }
 
   if (totalSize > limit) {
     return {

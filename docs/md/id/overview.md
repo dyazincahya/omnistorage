@@ -4,82 +4,31 @@
 
 `OmniStorage` adalah library wrapper penyimpanan data key-value yang universal, ringan, dan _type-safe_ untuk JavaScript dan Node.js.
 
-Library ini dirancang untuk memberikan pengalaman pengembangan yang konsisten di berbagai platform, menangani perbedaan antara penyimpanan browser (seperti `localStorage`, `IndexedDB`, dan `SQLite WASM`), penyimpanan server (seperti `SQLite` dan `File System`), serta penyimpanan runtime universal seperti `Memory`.
+Library ini menyediakan satu API asynchronous yang konsisten untuk menyimpan data di browser, server, dan runtime bersama.
 
 ## <i class="ri-question-line"></i> Mengapa Menggunakan Library Ini?
 
-1.  <i class="ri-global-line"></i> **Universal API**: Gunakan kode yang sama untuk penyimpanan di Browser dan Node.js.
-2.  <i class="ri-code-box-line"></i> **ORM-Like Syntax**: Menggunakan istilah yang akrab bagi pengembang seperti `create`, `find`, `update`, dan `save`.
-3.  <i class="ri-shield-check-line"></i> **Type Safety**: Validasi tipe data bawaan saat pengambilan data.
-4.  <i class="ri-plug-line"></i> **Engine Pluggable**: Pilih engine yang sesuai dengan kebutuhan Anda (Local, Session, Memory, IndexedDB, SQLite Client/Server, File).
-5.  <i class="ri-history-line"></i> **Pelacakan Aktivitas**: Logging SQLite bawaan untuk memantau semua operasi penyimpanan untuk debugging dan audit.
+1. <i class="ri-global-line"></i> **API Universal**: Gunakan API penyimpanan yang sama di Browser dan Node.js.
+2. <i class="ri-code-box-line"></i> **Sintaks ORM-Like**: Gunakan method yang familiar seperti `create`, `find`, `update`, dan `save`.
+3. <i class="ri-shield-check-line"></i> **Type Safety**: Validasi tipe data saat mengambil nilai yang tersimpan.
+4. <i class="ri-plug-line"></i> **Engine Pluggable**: Ganti backend penyimpanan tanpa mengubah alur aplikasi.
+5. <i class="ri-history-line"></i> **Pelacakan Aktivitas**: Pantau operasi penyimpanan untuk debugging dan audit.
 
 ---
 
-## <i class="ri-layout-grid-line"></i> Perbandingan Engine Penyimpanan
+## <i class="ri-layout-grid-line"></i> Engine yang Tersedia
 
-`OmniStorage` menyatukan berbagai engine. Berikut adalah rincian mendalam tentang bagaimana setiap engine bekerja untuk membantu Anda memilih yang tepat sesuai kebutuhan.
+`OmniStorage` saat ini mendukung engine berikut:
 
-### <i class="ri-window-line"></i> Engine Berbasis Browser
+- **Hybrid / Universal**: `memory`
+- **Client-side / Browser**: `local`, `session`, `cookie`, `cache`, `indexeddb`, `sqlite-client`
+- **Server-only / Node.js**: `file`, `sqlite-server`
 
-*   **LocalStorage (`local`)**
-    *   **Persistensi**: Permanen (sampai dihapus).
-    *   **Kapasitas**: Kecil (~5-10MB).
-    *   **Logika**: Menggunakan `dbName` sebagai prefix global dan `namespace` sebagai infix.
-*   **SessionStorage (`session`)**
-    *   **Persistensi**: Hanya sesi tab (hilang saat tab ditutup).
-    *   **Kapasitas**: Kecil (~5-10MB).
-    *   **Logika**: Menggunakan `dbName` sebagai prefix global dan `namespace` sebagai infix.
-*   **IndexedDB (`indexeddb`)**
-    *   **Persistensi**: Permanen.
-    *   **Kapasitas**: Sangat Besar (GB).
-    *   **Logika**: Menggunakan `dbName` sebagai nama database fisik.
-*   **SQLite WASM (`sqlite-client`)**
-    *   **Persistensi**: Database SQLite sisi browser.
-    *   **Kapasitas**: Besar (tergantung browser/storage).
-    *   **Logika**: SQLite sisi klien melalui WebAssembly.
-
-### <i class="ri-git-branch-line"></i> Engine Hybrid / Universal
-
-*   **Memory (`memory`)**
-    *   **Persistensi**: Volatile (terhapus saat halaman browser atau proses Node.js aktif berakhir).
-    *   **Kapasitas**: Terbatas oleh RAM runtime yang sedang aktif.
-    *   **Logika**: Penyimpanan in-process hybrid/universal (Browser/Node). Menggunakan `dbName` sebagai prefix.
-
-### <i class="ri-server-line"></i> Engine Server
-
-*   **File System (`file`)**
-    *   **Persistensi**: Permanen.
-    *   **Kapasitas**: Besar (Tergantung disk).
-    *   **Logika**: Khusus Node.js. Menggunakan `dbName` sebagai prefix file/folder.
-*   **SQLite Server (`sqlite-server`)**
-    *   **Persistensi**: Permanen.
-    *   **Kapasitas**: Besar (tergantung disk).
-    *   **Logika**: SQLite Node.js yang menggunakan `dbName` sebagai file database fisik (`.sqlite`).
+Untuk detail perilaku, use case, dan kebutuhan setiap engine, lihat halaman **Engine Penyimpanan**.
 
 ---
 
-## <i class="ri-focus-2-line"></i> Konsep Utama
-
-Untuk menjaga konsistensi API di seluruh platform, library menggunakan strategi berikut:
-
-### <i class="ri-database-2-line"></i> Nama Database (`dbName`)
-
-`dbName` adalah identifier utama untuk instance storage Anda.
-
-- **Di Local/Session/Memory/File**: Ia bertindak sebagai **Namespace Global** (Prefix paling depan). Jika `dbName` adalah `app1`, maka key `user` akan disimpan sebagai `app1_user`.
-- **Di IndexedDB/SQLite**: Ia bertindak sebagai **Nama Database/File Fisik**. Sistem akan membuat database atau file nyata dengan nama tersebut.
-
-### <i class="ri-node-tree"></i> Namespacing
-
-`namespace` adalah pengelompokan logis di dalam sebuah database.
-
-- **Di Local/Session/Memory/File**: Ia bertindak sebagai **Sub-Prefix**. Jika Anda menggunakan `store.db('app1').namespace('auth')`, maka key `token` akan disimpan sebagai `app1_auth:token`.
-- **Di IndexedDB/SQLite**: Karena engine ini sudah terisolasi di tingkat `dbName`, maka `namespace` hanya bertindak sebagai **Key Prefix** di dalam tabel penyimpanan.
-
-> <i class="ri-information-line"></i> **Penting**: Meskipun secara native beberapa engine bersifat synchronous (seperti LocalStorage), library ini membungkus semuanya dalam **Asynchronous API (Promise)** agar cara aksesnya seragam dan tidak memblokir _main thread_.
-
-### <i class="ri-checkbox-circle-line"></i> Respon Standar
+## <i class="ri-checkbox-circle-line"></i> Respon Standar
 
 Semua operasi mengembalikan objek respon standar untuk penanganan yang konsisten:
 

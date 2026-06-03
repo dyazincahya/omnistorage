@@ -1,119 +1,289 @@
-# <i class="ri-lightbulb-flash-line"></i> Contoh Kasus Lanjutan
+# <i class="ri-lightbulb-flash-line"></i> Contoh Kasus
 
-Halaman ini menyediakan pola implementasi mendetail untuk kebutuhan aplikasi yang kompleks menggunakan `OmniStorage`.
+Halaman ini menyediakan pola implementasi praktis untuk kebutuhan aplikasi umum menggunakan `OmniStorage`. Setiap contoh dimulai dari import agar mudah disalin ke project dan disesuaikan.
 
-## <i class="ri-user-settings-line"></i> 1. Alur Autentikasi Aman
-Mengelola sesi pengguna dengan pembersihan otomatis dan penggunaan namespace.
+<h2 id="auth"><i class="ri-user-settings-line"></i> Alur Autentikasi Aman</h2>
+
+Gunakan engine `session` untuk data sesi browser dan namespace agar key autentikasi tetap terisolasi.
 
 ```javascript
 import store from "@x-labs-myid/omnistorage";
 
-// Konfigurasi penyimpanan sesi khusus untuk auth
 const auth = store.config("session").namespace("v1/auth");
 
-/**
- * Menangani persistensi data setelah login
- */
 async function handleLogin(token, userProfile) {
-  // Simpan token dan profil secara atomik
   const tokenRes = await auth.save("jwt", token);
-  const profileRes = await auth.save("me", {
-    nama: "Kang Cahya",
-    alamat: "Jawa Barat, Indonesia",
-    email: "cahya.dev@random.com"
-  });
+  const profileRes = await auth.save("me", userProfile);
 
   if (tokenRes.ok && profileRes.ok) {
     console.log("Sesi dimulai menggunakan engine:", tokenRes.engine);
   }
 }
 
-/**
- * Perpindahan tema reaktif berdasarkan preferensi tersimpan
- */
-const settings = store.namespace("app/settings");
-settings.watch("theme", (themeBaru) => {
-  document.documentElement.setAttribute("data-theme", themeBaru);
+async function handleLogout() {
+  await auth.truncate();
+}
+
+await handleLogin("session-token", {
+  name: "Kang Cahya",
+  address: "Jawa Barat, Indonesia",
+  email: "cahya.dev@random.com",
 });
 ```
 
 ---
 
-## <i class="ri-refresh-line"></i> 2. Sinkronisasi Real-time Antar Tab
-Sinkronisasi state di beberapa tab browser secara bersamaan menggunakan sistem watcher bawaan.
+<h2 id="preferences"><i class="ri-palette-line"></i> Preferensi Pengguna</h2>
+
+Gunakan `local` untuk preferensi kecil yang harus tetap tersedia setelah reload atau browser restart.
 
 ```javascript
-const sharedState = store.namespace("cloud/sync");
+import store from "@x-labs-myid/omnistorage";
 
-// Kode ini berjalan di semua tab yang terbuka
-sharedState.watch("aktivitas_terakhir", (data) => {
-  console.log("Aktivitas terdeteksi di tab lain:", data.aksi);
+const preferences = store.config("local").namespace("app/preferences");
+
+async function savePreferences() {
+  await preferences.save("theme", "dark");
+  await preferences.save("language", "id");
+  await preferences.save("sidebar_collapsed", false);
+}
+
+async function applyTheme() {
+  const theme = await preferences.find("theme", { defaultValue: "light" });
+  document.documentElement.setAttribute("data-theme", theme.data);
+}
+
+preferences.watch("theme", (newTheme) => {
+  document.documentElement.setAttribute("data-theme", newTheme);
+});
+```
+
+---
+
+<h2 id="multi-tab"><i class="ri-refresh-line"></i> Sinyal State Antar Tab</h2>
+
+Gunakan namespace bersama untuk menulis sinyal kecil ketika satu tab mengubah sesuatu yang penting. Bagian aplikasi lain dapat memantau key tersebut.
+
+```javascript
+import store from "@x-labs-myid/omnistorage";
+
+const sharedState = store.config("local").namespace("cloud/sync");
+
+sharedState.watch("last_activity", (data) => {
+  console.log("Aktivitas terdeteksi:", data.action);
   updateUI(data.payload);
 });
 
-// Pemicu sinkronisasi dari tab mana pun
-async function broadcastAction(namaAksi, data) {
-  await sharedState.save("aktivitas_terakhir", {
-    aksi: namaAksi,
-    payload: data,
-    timestamp: Date.now()
+async function broadcastAction(actionName, payload) {
+  await sharedState.save("last_activity", {
+    action: actionName,
+    payload,
+    timestamp: Date.now(),
   });
 }
 ```
 
 ---
 
-## <i class="ri-shopping-cart-2-line"></i> 3. Keranjang Belanja Offline-First
-Menggunakan `indexeddb` untuk dataset besar dan persisten yang tetap bekerja tanpa koneksi internet.
+<h2 id="shopping-cart"><i class="ri-shopping-cart-2-line"></i> Keranjang Belanja Offline-First</h2>
+
+Gunakan `indexeddb` untuk keranjang sisi browser yang durable dan bisa disinkronkan nanti.
 
 ```javascript
+import store from "@x-labs-myid/omnistorage";
+
 const cart = store.config("indexeddb").namespace("shop/cart");
 
-async function syncCartWithServer() {
-  const itemsRes = await cart.findAll();
-  
-  if (itemsRes.data.length > 0) {
-    const success = await api.post("/sync", itemsRes.data);
-    if (success) {
-      // Kosongkan keranjang lokal setelah berhasil sinkron ke server
-      await cart.truncate();
-    }
-  }
+async function addItem(product) {
+  const current = await cart.find("items", { defaultValue: [] });
+  const updated = [...current.data, product];
+
+  return await cart.save("items", updated);
 }
 
-// Tambah item dengan validasi
-async function addItem(produk) {
-  const current = await cart.find("items", { defaultValue: [] });
-  const updated = [...current.data, produk];
-  
-  const res = await cart.save("items", updated);
-  console.log(`Berhasil menyimpan ${updated.length} item ke ${res.engine}`);
+async function syncCartWithServer(api) {
+  const itemsRes = await cart.find("items", { defaultValue: [] });
+
+  if (itemsRes.data.length === 0) return;
+
+  const success = await api.post("/cart/sync", itemsRes.data);
+  if (success) {
+    await cart.destroy("items");
+  }
 }
 ```
 
 ---
 
-## <i class="ri-speed-mini-line"></i> 4. Caching API Performa Tinggi
-Mengimplementasikan pola Time-To-Live (TTL) menggunakan engine `memory` untuk respon yang sangat cepat.
+<h2 id="api-cache"><i class="ri-speed-mini-line"></i> Cache Response API</h2>
+
+Gunakan `cache` untuk snapshot API yang ramah offline atau `memory` untuk cache runtime yang sangat singkat.
 
 ```javascript
-const cache = store.config("memory").namespace("api/v2");
+import store from "@x-labs-myid/omnistorage";
 
-async function fetchWithCache(endpoint) {
-  // 1. Cek memori lokal terlebih dahulu
-  const cached = await cache.find(endpoint);
-  
-  // 2. Kembalikan jika data masih segar (logika kustom)
-  if (cached.ok && (Date.now() - cached.timestamp < 60000)) {
+const apiCache = store.config("cache").namespace("api/products");
+
+async function fetchProducts() {
+  const cached = await apiCache.find("list", { defaultValue: null });
+
+  if (cached.ok && cached.data) {
     return cached.data;
   }
 
-  // 3. Ambil dari jaringan jika tidak ada di cache
-  const response = await fetch(endpoint);
-  const freshData = await response.json();
+  const response = await fetch("/api/products");
+  const products = await response.json();
 
-  // 4. Perbarui cache
-  await cache.save(endpoint, freshData);
-  return freshData;
+  await apiCache.save("list", products);
+  return products;
+}
+```
+
+---
+
+<h2 id="form-draft"><i class="ri-file-edit-line"></i> Draft Form Multi-Step</h2>
+
+Gunakan `session` ketika draft hanya perlu hidup selama tab/sesi browser saat ini.
+
+```javascript
+import store from "@x-labs-myid/omnistorage";
+
+const formDraft = store.config("session").namespace("checkout/draft");
+
+async function saveStep(step, data) {
+  await formDraft.save(`step:${step}`, data);
+  await formDraft.save("current_step", step);
+}
+
+async function loadDraft() {
+  const currentStep = await formDraft.find("current_step", { defaultValue: 1 });
+  const data = await formDraft.find(`step:${currentStep.data}`, {
+    defaultValue: {},
+  });
+
+  return {
+    currentStep: currentStep.data,
+    data: data.data,
+  };
+}
+```
+
+---
+
+<h2 id="cookie-consent"><i class="ri-cookie-line"></i> Flag Persetujuan Cookie</h2>
+
+Gunakan `cookie` hanya untuk nilai sangat kecil yang mungkin perlu diketahui server. Hindari data besar atau sensitif.
+
+```javascript
+import store from "@x-labs-myid/omnistorage";
+
+const consent = store.config("cookie").namespace("site/consent");
+
+async function acceptCookies() {
+  await consent.save("analytics", "accepted");
+}
+
+async function canLoadAnalytics() {
+  const result = await consent.find("analytics", { defaultValue: "rejected" });
+  return result.data === "accepted";
+}
+```
+
+---
+
+<h2 id="server-settings"><i class="ri-folder-open-line"></i> File Pengaturan Lokal Node.js</h2>
+
+Gunakan `file` untuk persistensi server-side sederhana ketika tidak membutuhkan database server.
+
+```javascript
+import store from "@x-labs-myid/omnistorage";
+
+const settings = store.config("file").namespace("service/settings");
+
+async function saveServiceConfig(config) {
+  await settings.save("runtime", {
+    port: config.port,
+    logLevel: config.logLevel,
+    updatedAt: new Date().toISOString(),
+  });
+}
+
+async function loadServiceConfig() {
+  const result = await settings.find("runtime", {
+    defaultValue: { port: 3000, logLevel: "info" },
+  });
+
+  return result.data;
+}
+```
+
+---
+
+<h2 id="audit-log"><i class="ri-shield-check-line"></i> Audit Log Durable</h2>
+
+Gunakan `sqlite-server` untuk data server-side durable yang harus bertahan setelah restart dengan reliabilitas database.
+
+```javascript
+import store from "@x-labs-myid/omnistorage";
+
+const audit = store.config("sqlite-server").namespace("audit/events");
+
+async function recordAuditEvent(event) {
+  const key = `${Date.now()}:${event.type}`;
+
+  await audit.create(key, {
+    ...event,
+    recordedAt: new Date().toISOString(),
+  });
+}
+
+async function listAuditEvents() {
+  return await audit.findAll();
+}
+```
+
+---
+
+<h2 id="browser-sqlite"><i class="ri-database-2-line"></i> Workspace SQLite Browser</h2>
+
+Gunakan `sqlite-client` ketika aplikasi browser mendapat manfaat dari persistensi lokal berbasis SQLite dan siap menerima biaya tambahan WebAssembly.
+
+```javascript
+import store from "@x-labs-myid/omnistorage";
+
+const workspace = store.config("sqlite-client").namespace("workspace/docs");
+
+async function saveDocument(documentId, content) {
+  await workspace.save(documentId, {
+    content,
+    updatedAt: Date.now(),
+  });
+}
+
+async function loadDocument(documentId) {
+  return await workspace.find(documentId, {
+    defaultValue: { content: "", updatedAt: null },
+  });
+}
+```
+
+---
+
+<h2 id="testing"><i class="ri-flask-line"></i> Penyimpanan Test dan Demo</h2>
+
+Gunakan `memory` untuk test, demo, dan state sementara yang hilang ketika runtime berakhir.
+
+```javascript
+import store from "@x-labs-myid/omnistorage";
+
+const demoStore = store.config("memory").namespace("demo/users");
+
+async function seedDemoUsers() {
+  await demoStore.saveMany({
+    "user:1": { name: "Ayu", role: "admin" },
+    "user:2": { name: "Budi", role: "viewer" },
+  });
+
+  return await demoStore.findAll();
 }
 ```

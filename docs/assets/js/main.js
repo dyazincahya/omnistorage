@@ -1,6 +1,6 @@
 const contentDiv = document.getElementById("doc-content");
 const heroWrapper = document.getElementById("home-hero-wrapper");
-const featuresWrapper = document.getElementById("home-features-wrapper");
+
 const footerWrapper = document.getElementById("site-footer-wrapper");
 
 function configureMarkdownRenderer() {
@@ -54,7 +54,14 @@ const translations = {
         {
           icon: "ri-window-line",
           title: "Client-side / Browser",
-          engines: ["local", "session", "indexeddb", "sqlite-client"],
+          engines: [
+            "local",
+            "session",
+            "cookie",
+            "cache",
+            "indexeddb",
+            "sqlite-client",
+          ],
         },
         {
           icon: "ri-server-line",
@@ -78,9 +85,22 @@ const translations = {
       installation: "Installation",
       core: "Core",
       engines: "Storage Engines",
+      engineGuide: "Engine Guide",
+      interfaces: "Exports & Interfaces",
       api: "API Reference",
       cookbook: "Cookbook",
       usecases: "Use Cases",
+      engineSub: {
+        local: "LocalStorage",
+        session: "SessionStorage",
+        cookie: "Cookies",
+        cache: "Cache Storage",
+        indexeddb: "IndexedDB",
+        memory: "In-Memory",
+        file: "File System",
+        "sqlite-server": "SQLite Server",
+        "sqlite-client": "SQLite WASM",
+      },
       apiSub: {
         config: "Configuration",
         basic: "Basic Operations",
@@ -88,6 +108,19 @@ const translations = {
         deletion: "Deletion",
         batch: "Batch Operations",
         advanced: "Advanced Features",
+      },
+      examplesSub: {
+        auth: "Authentication",
+        preferences: "Preferences",
+        "multi-tab": "Multi-Tab Sync",
+        "shopping-cart": "Shopping Cart",
+        "api-cache": "API Cache",
+        "form-draft": "Form Draft",
+        "cookie-consent": "Cookie Consent",
+        "server-settings": "Server Settings",
+        "audit-log": "Audit Log",
+        "browser-sqlite": "Browser SQLite",
+        testing: "Testing",
       },
     },
   },
@@ -122,7 +155,14 @@ const translations = {
         {
           icon: "ri-window-line",
           title: "Client-side / Browser",
-          engines: ["local", "session", "indexeddb", "sqlite-client"],
+          engines: [
+            "local",
+            "session",
+            "cookie",
+            "cache",
+            "indexeddb",
+            "sqlite-client",
+          ],
         },
         {
           icon: "ri-server-line",
@@ -143,10 +183,23 @@ const translations = {
       installation: "Instalasi",
       core: "Inti",
       engines: "Engine Penyimpanan",
+      engineGuide: "Panduan Engine",
+      interfaces: "Export & Interface",
       api: "Referensi API",
       cookbook: "Buku Resep",
       usecases: "Contoh Kasus",
       logsStats: "Log & Statistik",
+      engineSub: {
+        local: "LocalStorage",
+        session: "SessionStorage",
+        cookie: "Cookies",
+        cache: "Cache Storage",
+        indexeddb: "IndexedDB",
+        memory: "In-Memory",
+        file: "File System",
+        "sqlite-server": "SQLite Server",
+        "sqlite-client": "SQLite WASM",
+      },
       apiSub: {
         config: "Konfigurasi",
         basic: "Operasi Dasar",
@@ -154,6 +207,19 @@ const translations = {
         deletion: "Penghapusan",
         batch: "Operasi Batch",
         advanced: "Fitur Lanjutan",
+      },
+      examplesSub: {
+        auth: "Autentikasi",
+        preferences: "Preferensi",
+        "multi-tab": "Sinkron Antar Tab",
+        "shopping-cart": "Keranjang Belanja",
+        "api-cache": "Cache API",
+        "form-draft": "Draft Form",
+        "cookie-consent": "Persetujuan Cookie",
+        "server-settings": "Pengaturan Server",
+        "audit-log": "Audit Log",
+        "browser-sqlite": "SQLite Browser",
+        testing: "Testing",
       },
     },
   },
@@ -182,6 +248,8 @@ function updateUIStrings() {
     overview: t.sidebar.overview,
     installation: t.sidebar.installation,
     engines: t.sidebar.engines,
+    "engine-guide": t.sidebar.engineGuide,
+    interfaces: t.sidebar.interfaces,
     api: t.sidebar.api,
     examples: t.sidebar.usecases,
   };
@@ -191,8 +259,12 @@ function updateUIStrings() {
     if (el) el.innerText = text;
   });
 
-  // Sidebar Sub-items (API)
-  Object.entries(t.sidebar.apiSub).forEach(([anchor, text]) => {
+  // Sidebar Sub-items (Storage Engines, API & Examples)
+  Object.entries({
+    ...t.sidebar.engineSub,
+    ...t.sidebar.apiSub,
+    ...t.sidebar.examplesSub,
+  }).forEach(([anchor, text]) => {
     const el = document.querySelector(`[data-anchor="${anchor}"]`);
     if (el) el.innerText = text;
   });
@@ -228,7 +300,7 @@ let scrollSpyObserver = null;
 
 function initScrollSpy(pageName) {
   if (scrollSpyObserver) scrollSpyObserver.disconnect();
-  if (pageName !== "api") return;
+  if (!["api", "engines", "examples"].includes(pageName)) return;
 
   const headers = contentDiv.querySelectorAll("h2[id]");
   if (headers.length === 0) return;
@@ -284,50 +356,8 @@ window.loadPage = async function (pageName, anchor) {
                 </div>
             </div>
         `;
-    const engineCards = t.engines.categories
-      .map(
-        (category) => `
-                <div class="engine-card">
-                    <div class="engine-card-title">
-                        <span class="engine-card-icon"><i class="${category.icon}"></i></span>
-                        <h3>${category.title}</h3>
-                    </div>
-                    <div class="engine-badges">
-                        ${category.engines.map((engine) => `<code>${engine}</code>`).join("")}
-                    </div>
-                </div>`,
-      )
-      .join("");
-
-    featuresWrapper.innerHTML = `
-            <div class="features-container">
-                <div class="feature-card">
-                    <div class="feature-card-icon"><i class="ri-global-line"></i></div>
-                    <h3>${t.features.universal.title}</h3>
-                    <p>${t.features.universal.desc}</p>
-                </div>
-                <div class="feature-card">
-                    <div class="feature-card-icon"><i class="ri-shield-check-line"></i></div>
-                    <h3>${t.features.typesafe.title}</h3>
-                    <p>${t.features.typesafe.desc}</p>
-                </div>
-                <div class="feature-card">
-                    <div class="feature-card-icon"><i class="ri-plug-2-line"></i></div>
-                    <h3>${t.features.pluggable.title}</h3>
-                    <p>${t.features.pluggable.desc}</p>
-                </div>
-            </div>
-            <section class="home-engines" aria-labelledby="home-engines-title">
-                <div class="home-engines-header">
-                    <h2 id="home-engines-title">${t.engines.title}</h2>
-                    <p>${t.engines.desc}</p>
-                </div>
-                <div class="engine-grid">${engineCards}</div>
-            </section>
-        `;
   } else {
     heroWrapper.innerHTML = "";
-    featuresWrapper.innerHTML = "";
   }
 
   // Global Footer
@@ -383,16 +413,16 @@ window.loadPage = async function (pageName, anchor) {
 
 function scrollToAnchor(anchorId) {
   const element = document.getElementById(anchorId);
-  if (element) {
-    const headerOffset = 80;
-    const elementPosition = element.getBoundingClientRect().top;
-    const offsetPosition = elementPosition + window.pageYOffset - headerOffset;
+  if (!element) return;
 
-    window.scrollTo({
-      top: offsetPosition,
-      behavior: "smooth",
-    });
-  }
+  const headerOffset = 80;
+  const elementPosition = element.getBoundingClientRect().top;
+  const offsetPosition = elementPosition + window.pageYOffset - headerOffset;
+
+  window.scrollTo({
+    top: offsetPosition,
+    behavior: "smooth",
+  });
 }
 
 // Antigravity Background Logic
@@ -512,8 +542,27 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
+  // Handle submenu anchors explicitly so page:section links scroll reliably.
+  document.querySelectorAll(".nav-subitem").forEach((link) => {
+    link.addEventListener("click", (event) => {
+      const href = link.getAttribute("href");
+      if (!href || !href.startsWith("#") || !href.includes(":")) return;
+
+      event.preventDefault();
+      const hash = href.slice(1);
+      const [page, anchor] = hash.split(":");
+
+      if (window.location.hash !== href) {
+        history.pushState(null, "", href);
+      }
+
+      loadPage(page, anchor);
+    });
+  });
+
   // Listen for back/forward navigation
   window.addEventListener("hashchange", handleRoute);
+  window.addEventListener("popstate", handleRoute);
 
   // Initial trigger
   handleRoute();

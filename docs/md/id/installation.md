@@ -14,14 +14,16 @@ npm install @x-labs-myid/omnistorage
 
 Library ini dibangun di atas beberapa library hebat lainnya untuk mendukung berbagai engine penyimpanan:
 
-| Library                   | Kegunaan                                              |
-| :------------------------ | :---------------------------------------------------- |
-| `localStorage`            | Penyimpanan bawaan browser untuk data persisten.      |
-| `sessionStorage`          | Penyimpanan bawaan browser untuk data sesi saja.      |
-| `dexie` & `idb`           | Menjalankan engine IndexedDB di browser.              |
-| `cacheable`               | Engine Memory yang cepat dengan fitur caching.        |
-| `better-sqlite3`          | Engine SQLite untuk lingkungan Node.js.               |
-| `@sqlite.org/sqlite-wasm` | Engine SQLite untuk lingkungan Browser (WASM).        |
+| Library                   | Kegunaan                                              | Referensi |
+| :------------------------ | :---------------------------------------------------- | :-------- |
+| `localStorage`            | Penyimpanan bawaan browser untuk data persisten.      | [MDN Web Docs](https://developer.mozilla.org/en-US/docs/Web/API/Window/localStorage) |
+| `sessionStorage`          | Penyimpanan bawaan browser untuk data sesi saja.      | [MDN Web Docs](https://developer.mozilla.org/en-US/docs/Web/API/Window/sessionStorage) |
+| `document.cookie`         | API bawaan browser untuk penyimpanan cookie kecil.    | [MDN Web Docs](https://developer.mozilla.org/en-US/docs/Web/API/Document/cookie) |
+| `CacheStorage`            | API bawaan browser untuk cache bergaya response.      | [MDN Web Docs](https://developer.mozilla.org/en-US/docs/Web/API/CacheStorage) |
+| `dexie` & `idb`           | Menjalankan engine IndexedDB di browser.              | [Dexie](https://dexie.org/) · [idb](https://www.npmjs.com/package/idb) |
+| `cacheable`               | Engine Memory yang cepat dengan fitur caching.        | [npm](https://www.npmjs.com/package/cacheable) |
+| `better-sqlite3`          | Engine SQLite untuk lingkungan Node.js.               | [GitHub](https://github.com/WiseLibs/better-sqlite3) · [npm](https://www.npmjs.com/package/better-sqlite3) |
+| `@sqlite.org/sqlite-wasm` | Engine SQLite untuk lingkungan Browser (WASM).        | [SQLite WASM](https://sqlite.org/wasm/doc/trunk/index.md) · [npm](https://www.npmjs.com/package/@sqlite.org/sqlite-wasm) |
 
 ## <i class="ri-shield-check-line"></i> Kompatibilitas
 

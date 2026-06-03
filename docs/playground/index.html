@@ -6,7 +6,7 @@
     <title>OmniStorage Playground</title>
     <link rel="icon" type="image/png" href="../assets/images/icon.png" />
     <link
-      href="https://cdn.jsdelivr.net/npm/remixicon@4.2.0/fonts/remixicon.css"
+      href="https://cdn.jsdelivr.net/npm/remixicon@4.9.1/fonts/remixicon.css"
       rel="stylesheet"
     />
     <link
@@ -56,9 +56,10 @@
           <div>
             <strong>GitHub Pages mode</strong>
             <p>
-              Hybrid engine: <code>memory</code> runs in both browser and Node.js.
-              In this Playground it uses browser runtime RAM. Client engines use
-              browser storage/WASM, while server engines require a Node.js backend.
+              Hybrid engine: <code>memory</code> runs in both browser and
+              Node.js. In this Playground it uses browser runtime RAM. Client
+              engines use browser storage/WASM, while server engines require a
+              Node.js backend.
             </p>
           </div>
         </aside>
@@ -91,11 +92,15 @@
               Engine
               <select id="engine">
                 <optgroup label="Hybrid / universal">
-                  <option value="memory">Memory (browser runtime in Playground)</option>
+                  <option value="memory">
+                    Memory (browser runtime in Playground)
+                  </option>
                 </optgroup>
                 <optgroup label="Client-side / browser">
                   <option value="local">LocalStorage</option>
                   <option value="session">SessionStorage</option>
+                  <option value="cookie">Cookies</option>
+                  <option value="cache">Cache Storage</option>
                   <option value="indexeddb">IndexedDB</option>
                   <option value="sqlite-client">SQLite Client WASM</option>
                 </optgroup>

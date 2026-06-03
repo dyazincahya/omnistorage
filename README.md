@@ -21,7 +21,7 @@ The library is designed for projects that need flexible storage options without 
 ## Key Features
 
 - **Universal API** — use one consistent interface across browser and Node.js environments.
-- **Pluggable engines** — supports browser storage, in-memory storage, file-based storage, IndexedDB, and SQLite.
+- **Pluggable engines** — supports browser storage, cookies, Cache Storage, in-memory storage, file-based storage, IndexedDB, and SQLite.
 - **ORM-like operations** — work with familiar storage methods such as create, save, find, update, and delete.
 - **Type-safe retrieval** — validate data types when reading stored values.
 - **Namespacing support** — organize and isolate data across apps, modules, or features.
@@ -48,13 +48,8 @@ import store from "@x-labs-myid/omnistorage";
 OmniStorage supports multiple engines across browser, Node.js, and shared runtime use cases:
 
 - **Hybrid / Universal**: `memory`
-- **Client-side / Browser**: `local`, `session`, `indexeddb`, `sqlite-client`
+- **Client-side / Browser**: `local`, `session`, `cookie`, `cache`, `indexeddb`, `sqlite-client`
 - **Server-only / Node.js**: `file`, `sqlite-server`
-
-## Publishing
-
-Publishing to npm is handled by `.github/workflows/publish-package.yml`.
-Push a semver tag such as `1.0.0` to publish the package and create a GitHub Release.
 
 ## Documentation
 
