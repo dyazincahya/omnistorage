@@ -626,8 +626,40 @@ pre code {
   font-size: 20px;
   color: var(--color-fg-muted);
   max-width: 800px;
-  margin: 0 auto 32px;
+  margin: 0 auto 20px;
   line-height: 1.5;
+}
+
+.home-badges {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin: 0 auto 24px;
+}
+
+.home-badges a {
+  display: inline-flex;
+  line-height: 0;
+  text-decoration: none;
+  transition:
+    transform 0.2s ease,
+    opacity 0.2s ease;
+}
+
+.home-badges a:hover {
+  opacity: 0.88;
+  transform: translateY(-1px);
+}
+
+.home-badges img {
+  display: block;
+  height: 20px;
+  width: auto;
+  margin: 0;
+  border-radius: 0;
+  box-shadow: none;
 }
 
 .home-hero-btns {
@@ -850,6 +882,11 @@ pre code {
 
   .home-hero p {
     font-size: 16px;
+  }
+
+  .home-badges {
+    gap: 6px;
+    padding: 0 12px;
   }
 
   .home-quick-install {

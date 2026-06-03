@@ -6,9 +6,17 @@
 
 <p align="center">
   A lightweight, type-safe, universal storage layer for JavaScript.
-  <br>
+  <br />
   Store data across browser and Node.js environments with one consistent API.
 </p>
+
+<div align="center">
+
+[![npm version](https://img.shields.io/npm/v/@x-labs-myid/omnistorage?color=cb3837&label=npm&logo=npm)](https://www.npmjs.com/package/@x-labs-myid/omnistorage)
+[![npm downloads](https://img.shields.io/npm/dm/@x-labs-myid/omnistorage?color=2ea44f&label=downloads)](https://www.npmjs.com/package/@x-labs-myid/omnistorage)
+[![docs](https://img.shields.io/badge/docs-omnistorage.js.org-5340c8)](https://omnistorage.js.org)
+
+</div>
 
 ---
 
@@ -55,7 +63,7 @@ OmniStorage supports multiple engines across browser, Node.js, and shared runtim
 
 Detailed installation guides, API reference, engine configuration, and advanced examples are available on the official documentation site:
 
-👉 **[OmniStorage Official Documentation](https://x-labs-myid.github.io/omnistorage/store/docs/index.html)**
+👉 **[OmniStorage Official Documentation](https://omnistorage.js.org)**
 
 ## License
 

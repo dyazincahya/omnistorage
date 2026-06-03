@@ -519,6 +519,10 @@ window.loadPage = async function (pageName, anchor) {
                 <img src="assets/images/icon.png" alt="OmniStorage logo">
                 <h1>OmniStorage</h1>
                 <p>${t.tagline}</p>
+                <div class="home-badges" aria-label="OmniStorage package badges">
+                    <a href="https://www.npmjs.com/package/@x-labs-myid/omnistorage" target="_blank" rel="noopener noreferrer"><img src="https://img.shields.io/npm/v/@x-labs-myid/omnistorage?color=cb3837&label=npm&logo=npm" alt="npm version"></a>
+                    <a href="https://www.npmjs.com/package/@x-labs-myid/omnistorage" target="_blank" rel="noopener noreferrer"><img src="https://img.shields.io/npm/dm/@x-labs-myid/omnistorage?color=2ea44f&label=downloads" alt="npm downloads"></a>
+                </div>
                 <div class="home-quick-install">
                     <code>npm install @x-labs-myid/omnistorage</code>
                     <a class="install-action npm-link" href="https://www.npmjs.com/package/@x-labs-myid/omnistorage" target="_blank" rel="noopener noreferrer" aria-label="View OmniStorage package on npm" title="View on npm"><i class="ri-npmjs-line" aria-hidden="true"></i></a>
