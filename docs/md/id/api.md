@@ -24,15 +24,17 @@ import store from "@x-labs-myid/omnistorage";
 store.use("session"); // local, session, cookie, cache, memory, file, indexeddb, sqlite-server, sqlite-client
 ```
 
-### <i class="ri-equalizer-line"></i> `.config(engineType)`
+### <i class="ri-equalizer-line"></i> `.engine(engineType)`
 
 Beralih sementara ke engine tertentu untuk serangkaian operasi tanpa mengubah default global.
 
 ```javascript
 import store from "@x-labs-myid/omnistorage";
 
-await store.config("memory").save("temp_key", "value");
+await store.engine("memory").save("temp_key", "value");
 ```
+
+> `.config(engineType)` masih didukung sebagai alias backward-compatible.
 
 ### <i class="ri-folder-shield-line"></i> `.namespace(name)`
 

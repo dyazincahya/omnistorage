@@ -2,14 +2,11 @@
 
 This page explains how OmniStorage chooses a default engine, how to switch engines, and how to decide which engine is suitable for your use case.
 
-## <i class="ri-radar-line"></i> Default Engine Detection
+## <i class="ri-radar-line"></i> Default Engine
 
-By default, OmniStorage detects the runtime environment:
+By default, OmniStorage uses `memory` when no engine is selected globally with `.use()` or locally with `.engine()`.
 
-- <i class="ri-chrome-line"></i> **Browser**: Uses `local`.
-- <i class="ri-nodejs-line"></i> **Node.js**: Uses `memory`.
-
-This default is designed to keep the library usable immediately without requiring configuration.
+`memory` is the safest universal default because it works in both browsers and Node.js without requiring platform-specific APIs. Use `.use(engineType)` when you want a different global default.
 
 ## <i class="ri-arrow-left-right-line"></i> Switching Engines
 
@@ -32,19 +29,21 @@ await store.save("profile", {
 
 ### Per-operation engine
 
-Use `.config(engineType)` when you only want to use a specific engine temporarily.
+Use `.engine(engineType)` when you only want to use a specific engine temporarily.
 
 ```javascript
 import store from "@x-labs-myid/omnistorage";
 
 const users = [{ id: 1, name: "Cahya" }];
 
-await store.config("session").save("checkout_step", 2);
-await store.config("cookie").save("locale", "id");
-await store.config("cache").save("users_snapshot", users);
+await store.engine("session").save("checkout_step", 2);
+await store.engine("cookie").save("locale", "id");
+await store.engine("cache").save("users_snapshot", users);
 ```
 
 This is useful when one application needs different storage behavior for different kinds of data.
+
+> `.config(engineType)` is still available as a backward-compatible alias for `.engine(engineType)`.
 
 ## <i class="ri-database-2-line"></i> Database Name and Namespacing
 
@@ -98,7 +97,7 @@ await store.save("language", "en");
 ```javascript
 import store from "@x-labs-myid/omnistorage";
 
-await store.config("session").save("checkout", {
+await store.engine("session").save("checkout", {
   step: 2,
   selectedShipping: "regular",
 });
@@ -109,7 +108,7 @@ await store.config("session").save("checkout", {
 ```javascript
 import store from "@x-labs-myid/omnistorage";
 
-await store.config("cookie").save("locale", "id");
+await store.engine("cookie").save("locale", "id");
 ```
 
 ### Offline API snapshot
@@ -122,7 +121,7 @@ const products = [
   { id: 2, name: "Mouse" },
 ];
 
-await store.config("cache").save("products", products);
+await store.engine("cache").save("products", products);
 ```
 
 ### Large browser dataset

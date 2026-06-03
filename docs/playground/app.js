@@ -31,18 +31,22 @@ const ITEM_LIMITS = {
 let editors = null;
 let isApplyingPreset = false;
 
-const el = {
-  preset: document.querySelector("#preset"),
-  engine: document.querySelector("#engine"),
-  codePreview: document.querySelector("#code-preview"),
-  command: document.querySelector("#command"),
-  result: document.querySelector("#result"),
-  status: document.querySelector("#status"),
-  dataList: document.querySelector("#data-list"),
-  dataCount: document.querySelector("#data-count"),
-  activityLog: document.querySelector("#activity-log"),
-  logCount: document.querySelector("#log-count"),
+const $el = {
+  preset: $("#preset"),
+  engine: $("#engine"),
+  codePreview: $("#code-preview"),
+  command: $("#command"),
+  result: $("#result"),
+  status: $("#status"),
+  dataList: $("#data-list"),
+  dataCount: $("#data-count"),
+  activityLog: $("#activity-log"),
+  logCount: $("#log-count"),
 };
+
+const el = Object.fromEntries(
+  Object.entries($el).map(([key, value]) => [key, value[0]]),
+);
 
 const base = { engine: "memory", dbName: "demo_app", namespace: "default" };
 const presets = {
@@ -173,14 +177,16 @@ const presetGroups = [
 ];
 
 function init() {
-  el.preset.innerHTML = presetGroups
-    .map(([groupName, keys]) => {
-      const options = keys
-        .map((key) => `<option value="${key}">${presets[key][0]}</option>`)
-        .join("");
-      return `<optgroup label="${groupName}">${options}</optgroup>`;
-    })
-    .join("");
+  $el.preset.html(
+    presetGroups
+      .map(([groupName, keys]) => {
+        const options = keys
+          .map((key) => `<option value="${key}">${presets[key][0]}</option>`)
+          .join("");
+        return `<optgroup label="${groupName}">${options}</optgroup>`;
+      })
+      .join(""),
+  );
   initCodeEditors();
   reset();
 }
@@ -211,7 +217,7 @@ function initCodeEditors() {
     if (isApplyingPreset) return;
     try {
       const data = command();
-      el.engine.value = data.engine;
+      $el.engine.val(data.engine);
       setCodePreview(buildCodePreview(data));
       renderData(data).catch(() => {});
     } catch {
@@ -221,24 +227,24 @@ function initCodeEditors() {
 }
 
 function getPayloadText() {
-  return editors?.command ? editors.command.getValue() : el.command.value;
+  return editors?.command ? editors.command.getValue() : $el.command.val();
 }
 
 function setPayload(data) {
   const text = JSON.stringify(data, null, 2);
   if (editors?.command) editors.command.setValue(text);
-  else el.command.value = text;
+  else $el.command.val(text);
 }
 
 function setCodePreview(code) {
   if (editors?.codePreview) editors.codePreview.setValue(code);
-  else el.codePreview.value = code;
+  else $el.codePreview.val(code);
 }
 
 function command() {
   const parsed = JSON.parse(getPayloadText());
   return {
-    engine: parsed.engine || el.engine.value,
+    engine: parsed.engine || $el.engine.val(),
     dbName: parsed.dbName || "demo_app",
     namespace: parsed.namespace || "default",
     ...parsed,
@@ -249,13 +255,13 @@ function safeCommand() {
   try {
     return command();
   } catch {
-    return { ...base, operation: "invalid", engine: el.engine.value };
+    return { ...base, operation: "invalid", engine: $el.engine.val() };
   }
 }
 
 function applyPreset() {
-  const data = structuredClone(presets[el.preset.value][1]);
-  data.engine = el.engine.value;
+  const data = structuredClone(presets[$el.preset.val()][1]);
+  data.engine = $el.engine.val();
   isApplyingPreset = true;
   setPayload(data);
   setCodePreview(buildCodePreview(data));
@@ -266,7 +272,7 @@ function applyPreset() {
 function syncEngine() {
   try {
     const data = command();
-    data.engine = el.engine.value;
+    data.engine = $el.engine.val();
     isApplyingPreset = true;
     setPayload(data);
     setCodePreview(buildCodePreview(data));
@@ -280,7 +286,7 @@ function js(value) {
 }
 
 function storeExpr(cmd) {
-  const baseExpr = `store.db(${JSON.stringify(cmd.dbName)}).config(${JSON.stringify(cmd.engine)})`;
+  const baseExpr = `store.db(${JSON.stringify(cmd.dbName)}).engine(${JSON.stringify(cmd.engine)})`;
   return cmd.namespace && cmd.namespace !== "default"
     ? `${baseExpr}.namespace(${JSON.stringify(cmd.namespace)})`
     : baseExpr;
@@ -313,7 +319,7 @@ function buildCodePreview(cmd) {
   }
 
   if (op === "namespace") {
-    return `import store from "@x-labs-myid/omnistorage";\n\nconst authStorage = store\n  .db(${JSON.stringify(cmd.dbName)})\n  .config(${JSON.stringify(cmd.engine)})\n  .namespace(${JSON.stringify(cmd.namespace)});\n\nconst result = await authStorage.save(\n  ${JSON.stringify(cmd.key)},\n  ${js(cmd.value)}\n);\n\nconsole.log(result);`;
+    return `import store from "@x-labs-myid/omnistorage";\n\nconst authStorage = store\n  .db(${JSON.stringify(cmd.dbName)})\n  .engine(${JSON.stringify(cmd.engine)})\n  .namespace(${JSON.stringify(cmd.namespace)});\n\nconst result = await authStorage.save(\n  ${JSON.stringify(cmd.key)},\n  ${js(cmd.value)}\n);\n\nconsole.log(result);`;
   }
 
   if (op === "transaction") {
@@ -865,7 +871,7 @@ async function execute(cmd) {
 async function run() {
   try {
     const cmd = command();
-    el.engine.value = cmd.engine;
+    $el.engine.val(cmd.engine);
     const result = await execute(cmd);
     setResult(result);
     addLog(result);
@@ -896,52 +902,58 @@ async function seed() {
 
 async function renderData(cmd = safeCommand()) {
   if (!runnableEngines.has(cmd.engine)) {
-    el.dataCount.textContent = "0 items";
-    el.dataList.className = "data-list empty";
-    el.dataList.textContent =
-      "Selected engine cannot run in this static playground.";
+    $el.dataCount.text("0 items");
+    $el.dataList
+      .attr("class", "data-list empty")
+      .text("Selected engine cannot run in this static playground.");
     return;
   }
   const data = await allData(cmd);
   const entries = Object.entries(data);
-  el.dataCount.textContent = `${entries.length} items`;
+  $el.dataCount.text(`${entries.length} items`);
   if (entries.length === 0) {
-    el.dataList.className = "data-list empty";
-    el.dataList.textContent = "No data in the selected namespace.";
+    $el.dataList
+      .attr("class", "data-list empty")
+      .text("No data in the selected namespace.");
     return;
   }
-  el.dataList.className = "data-list";
-  el.dataList.innerHTML = entries
-    .map(
-      ([key, value]) =>
-        `<article class="data-item"><div class="data-head"><span>${esc(key)}</span><small>${esc(cmd.engine)}</small></div><pre>${esc(JSON.stringify(value, null, 2))}</pre></article>`,
-    )
-    .join("");
+  $el.dataList
+    .attr("class", "data-list")
+    .html(
+      entries
+        .map(
+          ([key, value]) =>
+            `<article class="data-item"><div class="data-head"><span>${esc(key)}</span><small>${esc(cmd.engine)}</small></div><pre>${esc(JSON.stringify(value, null, 2))}</pre></article>`,
+        )
+        .join(""),
+    );
 }
 
 function setResult(result) {
-  el.result.textContent = JSON.stringify(result, null, 2);
-  el.status.textContent = result.ok ? "Success" : "Error";
-  el.status.className = `badge ${result.ok ? "success" : "error"}`;
+  $el.result.text(JSON.stringify(result, null, 2));
+  $el.status
+    .text(result.ok ? "Success" : "Error")
+    .attr("class", `badge ${result.ok ? "success" : "error"}`);
 }
 function addLog(result) {
   logs.unshift(result);
   logs.splice(40);
-  el.logCount.textContent = `${logs.length} logs`;
-  el.activityLog.innerHTML = logs
-    .map(
-      (item) =>
-        `<li><strong>${esc(item.operation)}</strong> Â· ${esc(item.engine)}<br><small>${esc(item.message)} Â· ${new Date(item.timestamp).toLocaleTimeString()}</small></li>`,
-    )
-    .join("");
+  $el.logCount.text(`${logs.length} logs`);
+  $el.activityLog.html(
+    logs
+      .map(
+        (item) =>
+          `<li><strong>${esc(item.operation)}</strong> · ${esc(item.engine)}<br><small>${esc(item.message)} · ${new Date(item.timestamp).toLocaleTimeString()}</small></li>`,
+      )
+      .join(""),
+  );
 }
 function reset() {
-  el.preset.value = "save";
-  el.engine.value = "memory";
+  $el.preset.val("save");
+  $el.engine.val("memory");
   applyPreset();
-  el.status.textContent = "Ready";
-  el.status.className = "badge";
-  el.result.textContent = "Choose a preset and click Run Command.";
+  $el.status.text("Ready").attr("class", "badge");
+  $el.result.text("Choose a preset and click Run Command.");
 }
 function esc(value) {
   return String(value)
@@ -952,18 +964,18 @@ function esc(value) {
     .replaceAll("'", "&#039;");
 }
 
-init();
-el.preset.addEventListener("change", applyPreset);
-el.engine.addEventListener("change", syncEngine);
-document.querySelector("#run").addEventListener("click", run);
-document.querySelector("#seed").addEventListener("click", seed);
-document
-  .querySelector("#refresh")
-  .addEventListener("click", () => renderData());
-document.querySelector("#clear-log").addEventListener("click", () => {
-  logs.length = 0;
-  el.activityLog.innerHTML = "";
-  el.logCount.textContent = "0 logs";
+$(() => {
+  init();
+  $el.preset.on("change", applyPreset);
+  $el.engine.on("change", syncEngine);
+  $("#run").on("click", run);
+  $("#seed").on("click", seed);
+  $("#refresh").on("click", () => renderData());
+  $("#clear-log").on("click", () => {
+    logs.length = 0;
+    $el.activityLog.empty();
+    $el.logCount.text("0 logs");
+  });
+  $("#reset").on("click", reset);
+  renderData();
 });
-document.querySelector("#reset").addEventListener("click", reset);
-renderData();

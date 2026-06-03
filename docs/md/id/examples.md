@@ -9,7 +9,7 @@ Gunakan engine `session` untuk data sesi browser dan namespace agar key autentik
 ```javascript
 import store from "@x-labs-myid/omnistorage";
 
-const auth = store.config("session").namespace("v1/auth");
+const auth = store.engine("session").namespace("v1/auth");
 
 async function handleLogin(token, userProfile) {
   const tokenRes = await auth.save("jwt", token);
@@ -40,7 +40,7 @@ Gunakan `local` untuk preferensi kecil yang harus tetap tersedia setelah reload 
 ```javascript
 import store from "@x-labs-myid/omnistorage";
 
-const preferences = store.config("local").namespace("app/preferences");
+const preferences = store.engine("local").namespace("app/preferences");
 
 async function savePreferences() {
   await preferences.save("theme", "dark");
@@ -67,7 +67,7 @@ Gunakan namespace bersama untuk menulis sinyal kecil ketika satu tab mengubah se
 ```javascript
 import store from "@x-labs-myid/omnistorage";
 
-const sharedState = store.config("local").namespace("cloud/sync");
+const sharedState = store.engine("local").namespace("cloud/sync");
 
 sharedState.watch("last_activity", (data) => {
   console.log("Aktivitas terdeteksi:", data.action);
@@ -92,7 +92,7 @@ Gunakan `indexeddb` untuk keranjang sisi browser yang durable dan bisa disinkron
 ```javascript
 import store from "@x-labs-myid/omnistorage";
 
-const cart = store.config("indexeddb").namespace("shop/cart");
+const cart = store.engine("indexeddb").namespace("shop/cart");
 
 async function addItem(product) {
   const current = await cart.find("items", { defaultValue: [] });
@@ -122,7 +122,7 @@ Gunakan `cache` untuk snapshot API yang ramah offline atau `memory` untuk cache 
 ```javascript
 import store from "@x-labs-myid/omnistorage";
 
-const apiCache = store.config("cache").namespace("api/products");
+const apiCache = store.engine("cache").namespace("api/products");
 
 async function fetchProducts() {
   const cached = await apiCache.find("list", { defaultValue: null });
@@ -148,7 +148,7 @@ Gunakan `session` ketika draft hanya perlu hidup selama tab/sesi browser saat in
 ```javascript
 import store from "@x-labs-myid/omnistorage";
 
-const formDraft = store.config("session").namespace("checkout/draft");
+const formDraft = store.engine("session").namespace("checkout/draft");
 
 async function saveStep(step, data) {
   await formDraft.save(`step:${step}`, data);
@@ -177,7 +177,7 @@ Gunakan `cookie` hanya untuk nilai sangat kecil yang mungkin perlu diketahui ser
 ```javascript
 import store from "@x-labs-myid/omnistorage";
 
-const consent = store.config("cookie").namespace("site/consent");
+const consent = store.engine("cookie").namespace("site/consent");
 
 async function acceptCookies() {
   await consent.save("analytics", "accepted");
@@ -198,7 +198,7 @@ Gunakan `file` untuk persistensi server-side sederhana ketika tidak membutuhkan 
 ```javascript
 import store from "@x-labs-myid/omnistorage";
 
-const settings = store.config("file").namespace("service/settings");
+const settings = store.engine("file").namespace("service/settings");
 
 async function saveServiceConfig(config) {
   await settings.save("runtime", {
@@ -226,7 +226,7 @@ Gunakan `sqlite-server` untuk data server-side durable yang harus bertahan setel
 ```javascript
 import store from "@x-labs-myid/omnistorage";
 
-const audit = store.config("sqlite-server").namespace("audit/events");
+const audit = store.engine("sqlite-server").namespace("audit/events");
 
 async function recordAuditEvent(event) {
   const key = `${Date.now()}:${event.type}`;
@@ -251,7 +251,7 @@ Gunakan `sqlite-client` ketika aplikasi browser mendapat manfaat dari persistens
 ```javascript
 import store from "@x-labs-myid/omnistorage";
 
-const workspace = store.config("sqlite-client").namespace("workspace/docs");
+const workspace = store.engine("sqlite-client").namespace("workspace/docs");
 
 async function saveDocument(documentId, content) {
   await workspace.save(documentId, {
@@ -276,7 +276,7 @@ Gunakan `memory` untuk test, demo, dan state sementara yang hilang ketika runtim
 ```javascript
 import store from "@x-labs-myid/omnistorage";
 
-const demoStore = store.config("memory").namespace("demo/users");
+const demoStore = store.engine("memory").namespace("demo/users");
 
 async function seedDemoUsers() {
   await demoStore.saveMany({

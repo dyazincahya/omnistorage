@@ -1,6 +1,6 @@
 {
   "name": "@x-labs-myid/omnistorage",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "description": "A lightweight, type-safe, and universal storage layer for JavaScript. Store anything, anywhere, with a single unified API.",
   "main": "src/index.js",
   "exports": "./src/index.js",
@@ -17,7 +17,7 @@
   "bugs": {
     "url": "https://github.com/x-labs-myid/omnistorage/issues"
   },
-  "homepage": "https://x-labs-myid.github.io/omnistorage/store/docs/index.html",
+  "homepage": "https://omnistorage.js.org",
   "publishConfig": {
     "access": "public"
   },

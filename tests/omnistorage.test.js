@@ -25,10 +25,8 @@ describe("StoreManager", () => {
     expect(store.getDbName()).toBe("newdb");
   });
 
-  test("should use memory engine by default if no window", () => {
-    // In jsdom, window.localStorage exists, so it might use local engine
-    const engineType = store.defaultEngine.engineType;
-    expect(["local", "memory"]).toContain(engineType);
+  test("should use memory engine by default", () => {
+    expect(store.defaultEngine.engineType).toBe("memory");
   });
 
   test("should set and get values using default engine", async () => {
@@ -57,12 +55,21 @@ describe("StoreManager", () => {
     expect(watchSpy).toHaveBeenCalledWith("newValue", null);
   });
 
-  test("should switch engines using config", async () => {
-    const memoryConfig = store.config("memory");
-    await memoryConfig.save("memKey", "memValue");
-    const result = await memoryConfig.find("memKey");
+  test("should switch engines using engine", async () => {
+    const memoryStore = store.engine("memory");
+    await memoryStore.save("memKey", "memValue");
+    const result = await memoryStore.find("memKey");
     expect(result.ok).toBe(true);
     expect(result.data).toBe("memValue");
+    expect(result.engine).toBe("memory");
+  });
+
+  test("should keep config as an alias for engine", async () => {
+    const memoryConfig = store.config("memory");
+    await memoryConfig.save("configKey", "configValue");
+    const result = await memoryConfig.find("configKey");
+    expect(result.ok).toBe(true);
+    expect(result.data).toBe("configValue");
     expect(result.engine).toBe("memory");
   });
 });

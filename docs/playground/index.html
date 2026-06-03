@@ -3,8 +3,54 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>OmniStorage Playground</title>
+    <title>OmniStorage Playground — Test JavaScript Storage Engines</title>
+    <meta
+      name="description"
+      content="Try OmniStorage in the browser playground. Build commands, switch storage engines, inspect responses, stored data, and activity logs."
+    />
+    <meta
+      name="keywords"
+      content="OmniStorage playground, JavaScript storage playground, IndexedDB demo, localStorage demo, SQLite WASM demo, Cache Storage demo"
+    />
+    <meta name="author" content="Kang Cahya" />
+    <meta name="robots" content="index, follow" />
+    <meta name="theme-color" content="#0f172a" />
+    <link rel="canonical" href="https://omnistorage.js.org/playground/" />
+
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="OmniStorage" />
+    <meta
+      property="og:title"
+      content="OmniStorage Playground — Test JavaScript Storage Engines"
+    />
+    <meta
+      property="og:description"
+      content="Run OmniStorage commands in the browser and inspect storage engine behavior interactively."
+    />
+    <meta property="og:url" content="https://omnistorage.js.org/playground/" />
+    <meta
+      property="og:image"
+      content="https://omnistorage.js.org/assets/images/logo.png"
+    />
+    <meta property="og:image:alt" content="OmniStorage logo" />
+    <meta property="og:locale" content="en_US" />
+
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta
+      name="twitter:title"
+      content="OmniStorage Playground — Test JavaScript Storage Engines"
+    />
+    <meta
+      name="twitter:description"
+      content="Build commands, switch engines, and inspect OmniStorage behavior in the browser."
+    />
+    <meta
+      name="twitter:image"
+      content="https://omnistorage.js.org/assets/images/logo.png"
+    />
+
     <link rel="icon" type="image/png" href="../assets/images/icon.png" />
+    <link rel="apple-touch-icon" href="../assets/images/icon.png" />
     <link
       href="https://cdn.jsdelivr.net/npm/remixicon@4.9.1/fonts/remixicon.css"
       rel="stylesheet"
@@ -32,7 +78,7 @@
         <a
           href="https://github.com/x-labs-myid/omnistorage"
           target="_blank"
-          rel="noreferrer"
+          rel="noopener noreferrer"
           >GitHub</a
         >
       </nav>
@@ -220,10 +266,28 @@ Choose a preset and click Run Command.</pre
       </section>
     </main>
 
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "WebApplication",
+        "name": "OmniStorage Playground",
+        "description": "Interactive browser playground for testing OmniStorage commands and storage engines.",
+        "applicationCategory": "DeveloperApplication",
+        "operatingSystem": "Any",
+        "url": "https://omnistorage.js.org/playground/",
+        "author": {
+          "@type": "Person",
+          "name": "Kang Cahya",
+          "url": "https://github.com/dyazincahya"
+        }
+      }
+    </script>
+
     <script src="https://cdn.jsdelivr.net/npm/codemirror@5.65.16/lib/codemirror.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/codemirror@5.65.16/mode/javascript/javascript.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/codemirror@5.65.16/addon/edit/matchbrackets.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/codemirror@5.65.16/addon/selection/active-line.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
     <script type="module" src="./app.js"></script>
   </body>
 </html>

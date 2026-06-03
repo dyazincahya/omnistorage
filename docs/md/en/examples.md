@@ -9,7 +9,7 @@ Use `session` storage for browser session data and a namespace to keep authentic
 ```javascript
 import store from "@x-labs-myid/omnistorage";
 
-const auth = store.config("session").namespace("v1/auth");
+const auth = store.engine("session").namespace("v1/auth");
 
 async function handleLogin(token, userProfile) {
   const tokenRes = await auth.save("jwt", token);
@@ -40,7 +40,7 @@ Use `local` for small preferences that should survive reloads and browser restar
 ```javascript
 import store from "@x-labs-myid/omnistorage";
 
-const preferences = store.config("local").namespace("app/preferences");
+const preferences = store.engine("local").namespace("app/preferences");
 
 async function savePreferences() {
   await preferences.save("theme", "dark");
@@ -67,7 +67,7 @@ Use a shared namespace to write a small signal whenever one tab changes somethin
 ```javascript
 import store from "@x-labs-myid/omnistorage";
 
-const sharedState = store.config("local").namespace("cloud/sync");
+const sharedState = store.engine("local").namespace("cloud/sync");
 
 sharedState.watch("last_activity", (data) => {
   console.log("Activity detected:", data.action);
@@ -92,7 +92,7 @@ Use `indexeddb` for a durable browser-side cart that can be synced later.
 ```javascript
 import store from "@x-labs-myid/omnistorage";
 
-const cart = store.config("indexeddb").namespace("shop/cart");
+const cart = store.engine("indexeddb").namespace("shop/cart");
 
 async function addItem(product) {
   const current = await cart.find("items", { defaultValue: [] });
@@ -122,7 +122,7 @@ Use `cache` for offline-friendly API snapshots or `memory` for very short-lived 
 ```javascript
 import store from "@x-labs-myid/omnistorage";
 
-const apiCache = store.config("cache").namespace("api/products");
+const apiCache = store.engine("cache").namespace("api/products");
 
 async function fetchProducts() {
   const cached = await apiCache.find("list", { defaultValue: null });
@@ -148,7 +148,7 @@ Use `session` when draft data should only live for the current tab/session.
 ```javascript
 import store from "@x-labs-myid/omnistorage";
 
-const formDraft = store.config("session").namespace("checkout/draft");
+const formDraft = store.engine("session").namespace("checkout/draft");
 
 async function saveStep(step, data) {
   await formDraft.save(`step:${step}`, data);
@@ -177,7 +177,7 @@ Use `cookie` only for very small values that may need server awareness. Avoid la
 ```javascript
 import store from "@x-labs-myid/omnistorage";
 
-const consent = store.config("cookie").namespace("site/consent");
+const consent = store.engine("cookie").namespace("site/consent");
 
 async function acceptCookies() {
   await consent.save("analytics", "accepted");
@@ -198,7 +198,7 @@ Use `file` for simple server-side persistence when you do not need a database se
 ```javascript
 import store from "@x-labs-myid/omnistorage";
 
-const settings = store.config("file").namespace("service/settings");
+const settings = store.engine("file").namespace("service/settings");
 
 async function saveServiceConfig(config) {
   await settings.save("runtime", {
@@ -226,7 +226,7 @@ Use `sqlite-server` for durable server-side data that should survive restarts wi
 ```javascript
 import store from "@x-labs-myid/omnistorage";
 
-const audit = store.config("sqlite-server").namespace("audit/events");
+const audit = store.engine("sqlite-server").namespace("audit/events");
 
 async function recordAuditEvent(event) {
   const key = `${Date.now()}:${event.type}`;
@@ -251,7 +251,7 @@ Use `sqlite-client` when a browser app benefits from SQLite-backed local persist
 ```javascript
 import store from "@x-labs-myid/omnistorage";
 
-const workspace = store.config("sqlite-client").namespace("workspace/docs");
+const workspace = store.engine("sqlite-client").namespace("workspace/docs");
 
 async function saveDocument(documentId, content) {
   await workspace.save(documentId, {
@@ -276,7 +276,7 @@ Use `memory` for tests, demos, and temporary state that should be cleared when t
 ```javascript
 import store from "@x-labs-myid/omnistorage";
 
-const demoStore = store.config("memory").namespace("demo/users");
+const demoStore = store.engine("memory").namespace("demo/users");
 
 async function seedDemoUsers() {
   await demoStore.saveMany({

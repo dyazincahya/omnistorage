@@ -82,7 +82,7 @@ async function runDemo() {
 
   // 5. Namespacing & Chaining
   console.log("[5] Namespacing & Chaining:");
-  const cache = store.config("memory").namespace("cache");
+  const cache = store.engine("memory").namespace("cache");
   await cache.save("temp_data", "I am in memory");
   const cacheDataRes = await cache.find("temp_data");
   console.log("Get from namespaced memory (data):", cacheDataRes.data);
@@ -104,7 +104,7 @@ async function runDemo() {
   // 7. Validasi Kapasitas
   console.log("[7] Validasi Kapasitas (Size Limit):");
   const bigData = "x".repeat(51 * 1024 * 1024); // 51MB (Limit memory 50MB)
-  const limitRes = await store.config("memory").save("too_big", bigData);
+  const limitRes = await store.engine("memory").save("too_big", bigData);
   if (!limitRes.ok) {
     console.log("Pesan Limit tercapai:", limitRes.message);
   }
@@ -148,13 +148,13 @@ async function runDemo() {
   console.log("[11] SQLite Engines:");
   if (is.undefined(globalThis.window)) {
     // Node.js: Coba sqlite-server
-    const sqlite = store.config("sqlite-server");
+    const sqlite = store.engine("sqlite-server");
     await sqlite.save("sql_key", { db: "sqlite-server" });
     const sqlData = await sqlite.find("sql_key");
     console.log("SQLite Server Data:", sqlData.data);
   } else {
     // Browser: Coba sqlite-client
-    const sqlite = store.config("sqlite-client");
+    const sqlite = store.engine("sqlite-client");
     await sqlite.save("sql_key", { db: "sqlite-client" });
     const sqlData = await sqlite.find("sql_key");
     console.log("SQLite Client Data:", sqlData.data);

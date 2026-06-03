@@ -23,7 +23,7 @@ Deklarasi bergaya TypeScript di bawah ini menjelaskan bentuk objek publik dan re
 
 ### Tipe engine
 
-Gunakan nilai ini pada `.use(engineType)` atau `.config(engineType)`:
+Gunakan nilai ini pada `.use(engineType)` atau `.engine(engineType)`:
 
 ```typescript
 type EngineType =
@@ -67,7 +67,8 @@ Berikut method publik yang bisa dipanggil developer melalui `store` atau instanc
 | `.db(name)` | `StoreManager` | Mengatur nama database dan menginisialisasi ulang engine dengan nama tersebut. |
 | `.getDbName()` | `string` | Mengambil nama database saat ini. |
 | `.use(engineType)` | `StoreManager` | Mengatur engine default secara global. |
-| `.config(engineType)` | `ConfiguredStore` | Mengembalikan interface operasi sementara yang terikat ke engine tertentu. |
+| `.engine(engineType)` | `ConfiguredStore` | Mengembalikan interface operasi sementara yang terikat ke engine tertentu. |
+| `.config(engineType)` | `ConfiguredStore` | Alias backward-compatible untuk `.engine(engineType)`. |
 | `.namespace(name)` | `NamespaceStore` | Mengembalikan interface operasi yang ter-scope namespace. |
 | `.create(key, value)` | `Promise<StoreResponse>` | Menyisipkan item baru dan gagal jika key sudah ada. |
 | `.insert(key, value)` | `Promise<StoreResponse>` | Alias untuk `.create()`. |
@@ -121,7 +122,7 @@ interface FindOptions<T = unknown> {
 
 ### Interface configured store
 
-`store.config(engineType)` mengembalikan interface operasi sementara yang terikat pada engine tersebut. Ini tidak mengubah engine default global secara permanen.
+`store.engine(engineType)` mengembalikan interface operasi sementara yang terikat pada engine tersebut. Ini tidak mengubah engine default global secara permanen. `store.config(engineType)` mengembalikan interface yang sama sebagai alias backward-compatible.
 
 ```typescript
 interface ConfiguredStore {

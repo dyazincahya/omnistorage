@@ -2,14 +2,11 @@
 
 Halaman ini menjelaskan bagaimana OmniStorage memilih engine default, cara mengganti engine, dan cara menentukan engine yang cocok untuk use case tertentu.
 
-## <i class="ri-radar-line"></i> Deteksi Engine Default
+## <i class="ri-radar-line"></i> Engine Default
 
-Secara default, OmniStorage mendeteksi lingkungan runtime:
+Secara default, OmniStorage menggunakan `memory` ketika tidak ada engine yang dipilih secara global dengan `.use()` atau secara lokal dengan `.engine()`.
 
-- <i class="ri-chrome-line"></i> **Browser**: Menggunakan `local`.
-- <i class="ri-nodejs-line"></i> **Node.js**: Menggunakan `memory`.
-
-Default ini dibuat agar library bisa langsung digunakan tanpa konfigurasi tambahan.
+`memory` adalah default universal yang paling aman karena bisa berjalan di browser dan Node.js tanpa membutuhkan API platform tertentu. Gunakan `.use(engineType)` jika ingin default global yang berbeda.
 
 ## <i class="ri-arrow-left-right-line"></i> Mengganti Engine
 
@@ -32,19 +29,21 @@ await store.save("profile", {
 
 ### Engine per operasi
 
-Gunakan `.config(engineType)` ketika hanya ingin memakai engine tertentu secara sementara.
+Gunakan `.engine(engineType)` ketika hanya ingin memakai engine tertentu secara sementara.
 
 ```javascript
 import store from "@x-labs-myid/omnistorage";
 
 const users = [{ id: 1, name: "Cahya" }];
 
-await store.config("session").save("checkout_step", 2);
-await store.config("cookie").save("locale", "id");
-await store.config("cache").save("users_snapshot", users);
+await store.engine("session").save("checkout_step", 2);
+await store.engine("cookie").save("locale", "id");
+await store.engine("cache").save("users_snapshot", users);
 ```
 
 Ini berguna ketika satu aplikasi membutuhkan perilaku penyimpanan berbeda untuk jenis data yang berbeda.
+
+> `.config(engineType)` masih tersedia sebagai alias backward-compatible untuk `.engine(engineType)`.
 
 ## <i class="ri-database-2-line"></i> Nama Database dan Namespacing
 
@@ -98,7 +97,7 @@ await store.save("language", "id");
 ```javascript
 import store from "@x-labs-myid/omnistorage";
 
-await store.config("session").save("checkout", {
+await store.engine("session").save("checkout", {
   step: 2,
   selectedShipping: "regular",
 });
@@ -109,7 +108,7 @@ await store.config("session").save("checkout", {
 ```javascript
 import store from "@x-labs-myid/omnistorage";
 
-await store.config("cookie").save("locale", "id");
+await store.engine("cookie").save("locale", "id");
 ```
 
 ### Snapshot API offline
@@ -122,7 +121,7 @@ const products = [
   { id: 2, name: "Mouse" },
 ];
 
-await store.config("cache").save("products", products);
+await store.engine("cache").save("products", products);
 ```
 
 ### Dataset besar di browser

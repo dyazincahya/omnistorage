@@ -3,10 +3,67 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>OmniStorage — Universal Storage Layer</title>
+    <title>OmniStorage — Universal Storage Layer for JavaScript</title>
+    <meta
+      name="description"
+      content="OmniStorage is a lightweight, type-safe, and universal JavaScript storage layer for LocalStorage, SessionStorage, cookies, Cache Storage, memory, files, IndexedDB, and SQLite."
+    />
+    <meta
+      name="keywords"
+      content="OmniStorage, JavaScript storage, localStorage, sessionStorage, IndexedDB, SQLite WASM, Cache Storage, cookies, Node.js storage, memory storage"
+    />
+    <meta name="author" content="Kang Cahya" />
+    <meta name="robots" content="index, follow" />
+    <meta name="theme-color" content="#0f172a" />
+    <link rel="canonical" href="https://omnistorage.js.org/" />
+    <link rel="alternate" hreflang="en" href="https://omnistorage.js.org/" />
+    <link
+      rel="alternate"
+      hreflang="id"
+      href="https://omnistorage.js.org/?lang=id"
+    />
+    <link
+      rel="alternate"
+      hreflang="x-default"
+      href="https://omnistorage.js.org/"
+    />
+
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="OmniStorage" />
+    <meta
+      property="og:title"
+      content="OmniStorage — Universal Storage Layer for JavaScript"
+    />
+    <meta
+      property="og:description"
+      content="A lightweight, type-safe, and universal storage layer for JavaScript. Store anything, anywhere, with one unified API."
+    />
+    <meta property="og:url" content="https://omnistorage.js.org/" />
+    <meta
+      property="og:image"
+      content="https://omnistorage.js.org/assets/images/logo.png"
+    />
+    <meta property="og:image:alt" content="OmniStorage logo" />
+    <meta property="og:locale" content="en_US" />
+    <meta property="og:locale:alternate" content="id_ID" />
+
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta
+      name="twitter:title"
+      content="OmniStorage — Universal Storage Layer for JavaScript"
+    />
+    <meta
+      name="twitter:description"
+      content="A lightweight, type-safe, and universal JavaScript storage layer for browser and Node.js runtimes."
+    />
+    <meta
+      name="twitter:image"
+      content="https://omnistorage.js.org/assets/images/logo.png"
+    />
 
     <!-- Favicon -->
     <link rel="icon" type="image/png" href="assets/images/icon.png" />
+    <link rel="apple-touch-icon" href="assets/images/icon.png" />
 
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -31,22 +88,39 @@
   </head>
 
   <body class="home-mode">
-    <div id="bg-canvas"></div>
+    <div id="bg-canvas" aria-hidden="true"></div>
 
     <header class="header">
-      <button class="mobile-menu-toggle" id="menu-toggle">
-        <i class="ri-menu-line"></i>
+      <button
+        class="mobile-menu-toggle"
+        id="menu-toggle"
+        type="button"
+        aria-label="Open navigation menu"
+        aria-controls="header-nav"
+        aria-expanded="false"
+      >
+        <i class="ri-menu-line" aria-hidden="true"></i>
       </button>
-      <a href="#" class="header-brand">
-        <img src="assets/images/icon.png" alt="Logo" />
+      <a href="#" class="header-brand" aria-label="OmniStorage home">
+        <img src="assets/images/icon.png" alt="OmniStorage logo" />
         <span>OmniStorage</span>
       </a>
-      <nav class="header-nav" id="header-nav">
+      <nav class="header-nav" id="header-nav" aria-label="Primary navigation">
         <div class="lang-switcher">
-          <button class="lang-btn" id="lang-en" onclick="changeLang('en')">
+          <button
+            class="lang-btn"
+            id="lang-en"
+            type="button"
+            onclick="changeLang('en')"
+          >
             EN
           </button>
-          <button class="lang-btn" id="lang-id" onclick="changeLang('id')">
+          <button
+            class="lang-btn"
+            id="lang-id"
+            type="button"
+            onclick="changeLang('id')"
+          >
             ID
           </button>
         </div>
@@ -57,13 +131,14 @@
           href="https://github.com/x-labs-myid/omnistorage"
           class="header-link"
           target="_blank"
+          rel="noopener noreferrer"
           >GitHub</a
         >
       </nav>
     </header>
 
     <div class="container-main">
-      <aside id="sidebar">
+      <aside id="sidebar" aria-label="Documentation navigation">
         <div class="nav-section">
           <div class="nav-title">
             <i class="ri-book-open-line"></i> Introduction
@@ -235,13 +310,35 @@
       </aside>
 
       <main id="content-wrapper">
-        <div id="home-hero-wrapper"></div>
-        <div id="doc-content" class="markdown-body">
+        <section
+          id="home-hero-wrapper"
+          aria-label="OmniStorage introduction"
+        ></section>
+        <article id="doc-content" class="markdown-body">
           <!-- Content injected here -->
-        </div>
+        </article>
         <div id="site-footer-wrapper"></div>
       </main>
     </div>
+
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "SoftwareSourceCode",
+        "name": "OmniStorage",
+        "description": "A lightweight, type-safe, and universal storage layer for JavaScript.",
+        "programmingLanguage": "JavaScript",
+        "runtimePlatform": ["Browser", "Node.js"],
+        "codeRepository": "https://github.com/x-labs-myid/omnistorage",
+        "url": "https://omnistorage.js.org/",
+        "license": "https://github.com/x-labs-myid/omnistorage/blob/main/LICENSE",
+        "author": {
+          "@type": "Person",
+          "name": "Kang Cahya",
+          "url": "https://github.com/dyazincahya"
+        }
+      }
+    </script>
 
     <!-- Scripts -->
     <!-- Markdown renderer: https://github.com/markedjs/marked -->
@@ -249,6 +346,8 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-javascript.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-bash.min.js"></script>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
 
     <!-- External JS -->
     <script src="assets/js/main.js"></script>

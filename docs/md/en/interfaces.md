@@ -23,7 +23,7 @@ The TypeScript-style declarations below describe the public objects and return s
 
 ### Engine types
 
-Use these values with `.use(engineType)` or `.config(engineType)`:
+Use these values with `.use(engineType)` or `.engine(engineType)`:
 
 ```typescript
 type EngineType =
@@ -67,7 +67,8 @@ These are the public methods developers can call on `store` or a `new StoreManag
 | `.db(name)` | `StoreManager` | Sets the database name and reinitializes engines with that name. |
 | `.getDbName()` | `string` | Returns the current database name. |
 | `.use(engineType)` | `StoreManager` | Sets the default engine globally. |
-| `.config(engineType)` | `ConfiguredStore` | Returns a temporary engine-bound operation interface. |
+| `.engine(engineType)` | `ConfiguredStore` | Returns a temporary engine-bound operation interface. |
+| `.config(engineType)` | `ConfiguredStore` | Backward-compatible alias for `.engine(engineType)`. |
 | `.namespace(name)` | `NamespaceStore` | Returns a namespace-scoped operation interface. |
 | `.create(key, value)` | `Promise<StoreResponse>` | Inserts a new item and fails if the key already exists. |
 | `.insert(key, value)` | `Promise<StoreResponse>` | Alias for `.create()`. |
@@ -121,7 +122,7 @@ interface FindOptions<T = unknown> {
 
 ### Configured store interface
 
-`store.config(engineType)` returns a temporary operation interface bound to that engine. It does not permanently change the global default engine.
+`store.engine(engineType)` returns a temporary operation interface bound to that engine. It does not permanently change the global default engine. `store.config(engineType)` returns the same interface as a backward-compatible alias.
 
 ```typescript
 interface ConfiguredStore {

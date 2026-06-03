@@ -103,11 +103,8 @@ class StoreManager {
       "sqlite-client": new SQLiteClientEngine(this._dbName),
     };
 
-    // Auto-detect default engine
-    this.defaultEngine =
-      !is.undefined(globalThis.window) && window.localStorage
-        ? this.engines.local
-        : this.engines.memory;
+    // Use memory as the universal default because it works in browsers and Node.js.
+    this.defaultEngine = this.engines.memory;
   }
 
   /**
@@ -165,9 +162,9 @@ class StoreManager {
 
   /**
    * Temporary switch to a specific engine (Chainable)
-   * @param {'local' | 'session' | 'memory' | 'file' | 'indexeddb'} type
+   * @param {'local' | 'session' | 'memory' | 'file' | 'indexeddb' | 'cookie' | 'cache' | 'sqlite-server' | 'sqlite-client'} type
    */
-  config(type) {
+  engine(type) {
     const engine = this.engines[type];
     if (!engine) {
       console.warn(`Engine ${type} not found, using default.`);
@@ -194,6 +191,14 @@ class StoreManager {
       transaction: async (callback) => await this.transaction(callback, type),
       namespace: (ns) => this.namespace(ns, engine),
     };
+  }
+
+  /**
+   * Alias for engine(type). Kept for backward compatibility.
+   * @param {'local' | 'session' | 'memory' | 'file' | 'indexeddb' | 'cookie' | 'cache' | 'sqlite-server' | 'sqlite-client'} type
+   */
+  config(type) {
+    return this.engine(type);
   }
 
   /**

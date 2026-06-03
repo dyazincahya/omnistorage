@@ -1,7 +1,7 @@
-const contentDiv = document.getElementById("doc-content");
-const heroWrapper = document.getElementById("home-hero-wrapper");
-
-const footerWrapper = document.getElementById("site-footer-wrapper");
+const $contentDiv = $("#doc-content");
+const $heroWrapper = $("#home-hero-wrapper");
+const $footerWrapper = $("#site-footer-wrapper");
+const contentDiv = $contentDiv[0];
 
 function configureMarkdownRenderer() {
   if (!window.marked) {
@@ -19,8 +19,32 @@ function renderMarkdown(markdown) {
   return marked.parse(markdown);
 }
 
+function renderPageLoader() {
+  return `
+    <div class="page-loader" role="status" aria-live="polite" aria-label="Loading documentation page">
+      <div class="page-loader-head">
+        <span class="page-loader-spinner" aria-hidden="true"></span>
+        <div>
+          <span class="page-loader-title">Loading documentation</span>
+          <span class="page-loader-subtitle">Preparing the latest OmniStorage content...</span>
+        </div>
+      </div>
+      <div class="page-loader-skeleton" aria-hidden="true">
+        <span class="skeleton-line title"></span>
+        <span class="skeleton-line"></span>
+        <span class="skeleton-line"></span>
+        <span class="skeleton-line short"></span>
+        <span class="skeleton-card"></span>
+      </div>
+    </div>
+  `;
+}
+
 // i18n
-let currentLang = localStorage.getItem("omnistorage_lang") || "en";
+const initialLang = new URLSearchParams(window.location.search).get("lang");
+let currentLang = ["en", "id"].includes(initialLang)
+  ? initialLang
+  : localStorage.getItem("omnistorage_lang") || "en";
 let lastLoadedLang = null;
 const translations = {
   en: {
@@ -225,22 +249,169 @@ const translations = {
   },
 };
 
+const SITE_URL = "https://omnistorage.js.org";
+const pageSeo = {
+  en: {
+    home: {
+      title: "OmniStorage — Universal Storage Layer for JavaScript",
+      description:
+        "A lightweight, type-safe, and universal storage layer for JavaScript. Store anything, anywhere, with one unified API.",
+    },
+    overview: {
+      title: "OmniStorage Overview — Universal JavaScript Storage",
+      description:
+        "Learn what OmniStorage is, which storage engines it supports, and how it unifies browser and Node.js storage APIs.",
+    },
+    installation: {
+      title: "Install OmniStorage — JavaScript Storage Library",
+      description:
+        "Install OmniStorage with npm and review its browser, Node.js, IndexedDB, Cache Storage, memory, and SQLite dependencies.",
+    },
+    engines: {
+      title: "OmniStorage Engines — LocalStorage, IndexedDB, SQLite, Memory",
+      description:
+        "Compare OmniStorage engines including localStorage, sessionStorage, cookies, Cache Storage, memory, files, IndexedDB, and SQLite.",
+    },
+    "engine-guide": {
+      title: "OmniStorage Engine Guide — Choose and Switch Storage Engines",
+      description:
+        "Understand OmniStorage's memory default, global .use() engine selection, and per-operation .engine() overrides.",
+    },
+    interfaces: {
+      title: "OmniStorage Exports and Interfaces",
+      description:
+        "Review OmniStorage public methods, response shapes, configured store interface, namespace interface, hooks, and engine types.",
+    },
+    api: {
+      title: "OmniStorage API Reference — ORM-like Storage Methods",
+      description:
+        "Explore OmniStorage API methods for create, save, find, update, delete, batch operations, namespaces, transactions, and statistics.",
+    },
+    "logs-stats": {
+      title: "OmniStorage Logs and Statistics",
+      description:
+        "Inspect OmniStorage activity logs and storage statistics for debugging and monitoring storage usage.",
+    },
+    examples: {
+      title: "OmniStorage Examples — JavaScript Storage Use Cases",
+      description:
+        "Browse OmniStorage examples for authentication, preferences, multi-tab sync, shopping carts, API cache, form drafts, audit logs, and testing.",
+    },
+  },
+  id: {
+    home: {
+      title: "OmniStorage — Storage Layer Universal untuk JavaScript",
+      description:
+        "Storage layer JavaScript yang ringan, type-safe, dan universal. Simpan data di berbagai engine dengan satu API terpadu.",
+    },
+    overview: {
+      title: "Gambaran Umum OmniStorage — Storage JavaScript Universal",
+      description:
+        "Pelajari OmniStorage, engine penyimpanan yang didukung, dan cara menyatukan API storage browser serta Node.js.",
+    },
+    installation: {
+      title: "Instalasi OmniStorage — Library Storage JavaScript",
+      description:
+        "Install OmniStorage dengan npm dan lihat dependensi browser, Node.js, IndexedDB, Cache Storage, memory, dan SQLite.",
+    },
+    engines: {
+      title: "Engine OmniStorage — LocalStorage, IndexedDB, SQLite, Memory",
+      description:
+        "Bandingkan engine OmniStorage termasuk localStorage, sessionStorage, cookies, Cache Storage, memory, file, IndexedDB, dan SQLite.",
+    },
+    "engine-guide": {
+      title: "Panduan Engine OmniStorage — Pilih dan Ganti Storage Engine",
+      description:
+        "Pahami default memory OmniStorage, pemilihan engine global dengan .use(), dan override per operasi dengan .engine().",
+    },
+    interfaces: {
+      title: "Export dan Interface OmniStorage",
+      description:
+        "Lihat method publik OmniStorage, bentuk respon, configured store, namespace, hook, dan tipe engine.",
+    },
+    api: {
+      title: "Referensi API OmniStorage — Method Storage Bergaya ORM",
+      description:
+        "Jelajahi API OmniStorage untuk create, save, find, update, delete, operasi batch, namespace, transaksi, dan statistik.",
+    },
+    "logs-stats": {
+      title: "Log dan Statistik OmniStorage",
+      description:
+        "Periksa log aktivitas dan statistik penyimpanan OmniStorage untuk debugging dan monitoring penggunaan storage.",
+    },
+    examples: {
+      title: "Contoh OmniStorage — Use Case Storage JavaScript",
+      description:
+        "Lihat contoh OmniStorage untuk autentikasi, preferensi, sync multi-tab, shopping cart, API cache, draft form, audit log, dan testing.",
+    },
+  },
+};
+
+function setMeta(name, content, attr = "name") {
+  let el = $(`meta[${attr}="${name}"]`)[0];
+  if (!el) {
+    el = document.createElement("meta");
+    el.setAttribute(attr, name);
+    $(document.head).append(el);
+  }
+  $(el).attr("content", content);
+}
+
+function setLink(rel, href, hreflang = null) {
+  const selector = hreflang
+    ? `link[rel="${rel}"][hreflang="${hreflang}"]`
+    : `link[rel="${rel}"]:not([hreflang])`;
+  let el = $(selector)[0];
+  if (!el) {
+    el = document.createElement("link");
+    el.setAttribute("rel", rel);
+    if (hreflang) el.setAttribute("hreflang", hreflang);
+    $(document.head).append(el);
+  }
+  $(el).attr("href", href);
+}
+
+function buildPageUrl(pageName, lang = "en") {
+  const query = lang === "id" ? "?lang=id" : "";
+  const hash = pageName === "home" ? "" : `#${pageName}`;
+  return `${SITE_URL}/${query}${hash}`;
+}
+
+function updateSeoMeta(pageName) {
+  const meta = pageSeo[currentLang]?.[pageName] || pageSeo[currentLang]?.home;
+  const url = buildPageUrl(pageName, currentLang);
+
+  document.documentElement.lang = currentLang;
+  document.title = meta.title;
+  setMeta("description", meta.description);
+  setLink("canonical", url);
+  setLink("alternate", buildPageUrl(pageName, "en"), "en");
+  setLink("alternate", buildPageUrl(pageName, "id"), "id");
+  setLink("alternate", buildPageUrl(pageName, "en"), "x-default");
+
+  setMeta("og:title", meta.title, "property");
+  setMeta("og:description", meta.description, "property");
+  setMeta("og:url", url, "property");
+  setMeta("og:locale", currentLang === "id" ? "id_ID" : "en_US", "property");
+  setMeta("twitter:title", meta.title);
+  setMeta("twitter:description", meta.description);
+}
+
 function updateUIStrings() {
   const t = translations[currentLang];
-  document.getElementById("nav-docs").innerText = t.nav.docs;
-  document.getElementById("nav-examples").innerText = t.nav.examples;
+  $("#nav-docs").text(t.nav.docs);
+  $("#nav-examples").text(t.nav.examples);
 
   // Sidebar Groups
-  document.querySelectorAll(".nav-section").forEach((section, index) => {
-    const title = section.querySelector(".nav-title");
-    if (title) {
-      if (index === 0)
-        title.innerHTML = `<i class="ri-book-open-line"></i> ${t.sidebar.intro}`;
-      if (index === 1)
-        title.innerHTML = `<i class="ri-stack-line"></i> ${t.sidebar.core}`;
-      if (index === 2)
-        title.innerHTML = `<i class="ri-lightbulb-line"></i> ${t.sidebar.cookbook}`;
-    }
+  $(".nav-section").each((index, section) => {
+    const $title = $(section).find(".nav-title");
+    if (!$title.length) return;
+    if (index === 0)
+      $title.html(`<i class="ri-book-open-line"></i> ${t.sidebar.intro}`);
+    if (index === 1)
+      $title.html(`<i class="ri-stack-line"></i> ${t.sidebar.core}`);
+    if (index === 2)
+      $title.html(`<i class="ri-lightbulb-line"></i> ${t.sidebar.cookbook}`);
   });
 
   // Sidebar Links
@@ -255,8 +426,7 @@ function updateUIStrings() {
   };
 
   Object.entries(sidebarLinks).forEach(([page, text]) => {
-    const el = document.querySelector(`[data-page="${page}"]`);
-    if (el) el.innerText = text;
+    $(`[data-page="${page}"]`).text(text);
   });
 
   // Sidebar Sub-items (Storage Engines, API & Examples)
@@ -265,34 +435,36 @@ function updateUIStrings() {
     ...t.sidebar.apiSub,
     ...t.sidebar.examplesSub,
   }).forEach(([anchor, text]) => {
-    const el = document.querySelector(`[data-anchor="${anchor}"]`);
-    if (el) el.innerText = text;
+    $(`[data-anchor="${anchor}"]`).text(text);
   });
 
   // Language Buttons
-  document
-    .querySelectorAll(".lang-btn")
-    .forEach((btn) => btn.classList.remove("active"));
-  const activeBtn = document.getElementById(`lang-${currentLang}`);
-  if (activeBtn) activeBtn.classList.add("active");
+  $(".lang-btn").removeClass("active");
+  $(`#lang-${currentLang}`).addClass("active");
 }
 
 window.changeLang = function (lang) {
   currentLang = lang;
   localStorage.setItem("omnistorage_lang", lang);
+
+  const url = new URL(window.location.href);
+  if (lang === "id") url.searchParams.set("lang", "id");
+  else url.searchParams.delete("lang");
+  history.replaceState(null, "", `${url.pathname}${url.search}${url.hash}`);
+
   updateUIStrings();
   handleRoute();
 };
 
 function updateActiveNav(pageName, anchor) {
   // Update Active Main Nav
-  document.querySelectorAll(".nav-item").forEach((el) => {
-    el.classList.toggle("active", el.dataset.page === pageName);
+  $(".nav-item").each((_, el) => {
+    $(el).toggleClass("active", el.dataset.page === pageName);
   });
 
   // Update Active Sub-items
-  document.querySelectorAll(".nav-subitem").forEach((el) => {
-    el.classList.toggle("active", el.dataset.anchor === anchor);
+  $(".nav-subitem").each((_, el) => {
+    $(el).toggleClass("active", el.dataset.anchor === anchor);
   });
 }
 
@@ -327,7 +499,7 @@ window.loadPage = async function (pageName, anchor) {
   }
 
   const isHome = pageName === "home";
-  const currentPage = document.querySelector(".nav-item.active")?.dataset.page;
+  const currentPage = $(".nav-item.active").data("page");
 
   // If already on the page and just moving to an anchor (and same language)
   if (currentPage === pageName && lastLoadedLang === currentLang && anchor) {
@@ -336,58 +508,59 @@ window.loadPage = async function (pageName, anchor) {
     return;
   }
 
-  document.body.className = isHome ? "home-mode" : "docs-mode";
+  $(document.body).attr("class", isHome ? "home-mode" : "docs-mode");
+  updateSeoMeta(pageName);
   const t = translations[currentLang];
 
   // Handle Home Components
   if (isHome) {
-    heroWrapper.innerHTML = `
+    $heroWrapper.html(`
             <div class="home-hero">
-                <img src="assets/images/icon.png" alt="Store Icon">
+                <img src="assets/images/icon.png" alt="OmniStorage logo">
                 <h1>OmniStorage</h1>
                 <p>${t.tagline}</p>
                 <div class="home-quick-install">
                     <code>npm install @x-labs-myid/omnistorage</code>
-                    <button class="copy-btn" onclick="copyInstallCmd(this)"><i class="ri-file-copy-line"></i></button>
+                    <a class="install-action npm-link" href="https://www.npmjs.com/package/@x-labs-myid/omnistorage" target="_blank" rel="noopener noreferrer" aria-label="View OmniStorage package on npm" title="View on npm"><i class="ri-npmjs-line" aria-hidden="true"></i></a>
+                    <button class="install-action copy-btn" type="button" aria-label="Copy installation command" title="Copy install command" onclick="copyInstallCmd(this)"><i class="ri-file-copy-line" aria-hidden="true"></i></button>
                 </div>
                 <div class="home-hero-btns">
                     <a href="#overview" class="btn-github btn-primary-github">${t.getStarted}</a>
-                    <a href="https://github.com/x-labs-myid/omnistorage" class="btn-github" target="_blank">${t.viewGithub}</a>
+                    <a href="https://github.com/x-labs-myid/omnistorage" class="btn-github" target="_blank" rel="noopener noreferrer">${t.viewGithub}</a>
                 </div>
             </div>
-        `;
+        `);
   } else {
-    heroWrapper.innerHTML = "";
+    $heroWrapper.empty();
   }
 
   // Global Footer
-  footerWrapper.innerHTML = `
+  $footerWrapper.html(`
         <footer class="site-footer">
-            <div>© 2026 OmniStorage. ${t.footer} Developed by <a href="https://github.com/dyazincahya" class="footer-link-credit" target="_blank">Kang Cahya</a></div>
-            <div class="footer-links">
-                <a href="https://github.com/x-labs-myid/omnistorage" class="footer-link" target="_blank">GitHub</a>
+            <div>© 2026 OmniStorage. ${t.footer} Developed by <a href="https://github.com/dyazincahya" class="footer-link-credit" target="_blank" rel="noopener noreferrer">Kang Cahya</a></div>
+            <nav class="footer-links" aria-label="Footer navigation">
+                <a href="https://github.com/x-labs-myid/omnistorage" class="footer-link" target="_blank" rel="noopener noreferrer">GitHub</a>
                 <a href="#overview" class="footer-link">${t.nav.docs}</a>
                 <a href="#examples" class="footer-link">${t.nav.examples}</a>
-            </div>
+            </nav>
         </footer>
-    `;
+    `);
 
   updateActiveNav(pageName, anchor);
 
   // Close mobile menus on page load
-  document.getElementById("header-nav")?.classList.remove("active");
-  document.getElementById("sidebar")?.classList.remove("active");
-  const toggleIcon = document.querySelector("#menu-toggle i");
-  if (toggleIcon) toggleIcon.className = "ri-menu-line";
+  $("#header-nav, #sidebar").removeClass("active");
+  $("#menu-toggle").attr("aria-expanded", "false");
+  $("#menu-toggle i").attr("class", "ri-menu-line");
 
   try {
-    contentDiv.innerHTML = "<p>Loading...</p>";
+    $contentDiv.html(renderPageLoader());
     const path = `./md/${currentLang}/${pageName}.md`;
     const response = await fetch(path);
     if (!response.ok) throw new Error("Page not found");
     const markdown = await response.text();
 
-    contentDiv.innerHTML = renderMarkdown(markdown);
+    $contentDiv.html(renderMarkdown(markdown));
     Prism.highlightAll();
     lastLoadedLang = currentLang;
     initScrollSpy(pageName);
@@ -407,16 +580,16 @@ window.loadPage = async function (pageName, anchor) {
       window.scrollTo(0, 0);
     }
   } catch (error) {
-    contentDiv.innerHTML = `<div style="color: red;">Error: ${error.message}</div>`;
+    $contentDiv.html(`<div style="color: red;">Error: ${error.message}</div>`);
   }
 };
 
 function scrollToAnchor(anchorId) {
-  const element = document.getElementById(anchorId);
-  if (!element) return;
+  const $element = $(`#${$.escapeSelector(anchorId)}`);
+  if (!$element.length) return;
 
   const headerOffset = 80;
-  const elementPosition = element.getBoundingClientRect().top;
+  const elementPosition = $element[0].getBoundingClientRect().top;
   const offsetPosition = elementPosition + window.pageYOffset - headerOffset;
 
   window.scrollTo({
@@ -427,7 +600,8 @@ function scrollToAnchor(anchorId) {
 
 // Antigravity Background Logic
 // ... (no changes here, keeping it for context)
-const bgCanvas = document.getElementById("bg-canvas");
+const $bgCanvas = $("#bg-canvas");
+const bgCanvas = $bgCanvas[0];
 const icons = [
   "ri-database-2-line",
   "ri-hard-drive-2-line",
@@ -441,14 +615,13 @@ const particleCount = 15;
 
 if (bgCanvas) {
   for (let i = 0; i < particleCount; i++) {
-    const el = document.createElement("i");
-    el.className = `floating-icon ${icons[Math.floor(Math.random() * icons.length)]}`;
-    const size = Math.random() * 40 + 20;
-    el.style.fontSize = `${size}px`;
-    bgCanvas.appendChild(el);
+    const $el = $("<i>", {
+      class: `floating-icon ${icons[Math.floor(Math.random() * icons.length)]}`,
+    }).css("font-size", `${Math.random() * 40 + 20}px`);
+    $bgCanvas.append($el);
 
     particles.push({
-      el,
+      el: $el[0],
       x: Math.random() * window.innerWidth,
       y: Math.random() * window.innerHeight,
       vx: (Math.random() - 0.5) * 1.5,
@@ -459,7 +632,7 @@ if (bgCanvas) {
   }
 
   function animate() {
-    if (document.body.classList.contains("home-mode")) {
+    if ($("body").hasClass("home-mode")) {
       particles.forEach((p) => {
         p.x += p.vx;
         p.y += p.vy;
@@ -470,7 +643,10 @@ if (bgCanvas) {
         if (p.y < -50) p.y = window.innerHeight + 50;
         if (p.y > window.innerHeight + 50) p.y = -50;
 
-        p.el.style.transform = `translate(${p.x}px, ${p.y}px) rotate(${p.rotation}deg)`;
+        $(p.el).css(
+          "transform",
+          `translate(${p.x}px, ${p.y}px) rotate(${p.rotation}deg)`,
+        );
       });
     }
     requestAnimationFrame(animate);
@@ -478,8 +654,8 @@ if (bgCanvas) {
 
   animate();
 
-  window.addEventListener("mousemove", (e) => {
-    if (!document.body.classList.contains("home-mode")) return;
+  $(window).on("mousemove", (e) => {
+    if (!$("body").hasClass("home-mode")) return;
     particles.forEach((p) => {
       const dx = p.x - e.clientX;
       const dy = p.y - e.clientY;
@@ -493,14 +669,15 @@ if (bgCanvas) {
 }
 
 window.copyInstallCmd = function (btn) {
+  const $btn = $(btn);
+  const $icon = $btn.find("i");
   const cmd = "npm install @x-labs-myid/omnistorage";
   navigator.clipboard.writeText(cmd).then(() => {
-    const icon = btn.querySelector("i");
-    icon.className = "ri-check-line";
-    btn.classList.add("copied");
+    $icon.attr("class", "ri-check-line");
+    $btn.addClass("copied");
     setTimeout(() => {
-      icon.className = "ri-file-copy-line";
-      btn.classList.remove("copied");
+      $icon.attr("class", "ri-file-copy-line");
+      $btn.removeClass("copied");
     }, 2000);
   });
 };
@@ -514,55 +691,45 @@ window.handleRoute = () => {
   loadPage(pageName, anchor);
 };
 
-document.addEventListener("DOMContentLoaded", () => {
+$(() => {
   updateUIStrings();
 
   // Mobile Menu Toggle
-  const menuToggle = document.getElementById("menu-toggle");
-  const headerNav = document.getElementById("header-nav");
-  const sidebar = document.getElementById("sidebar");
+  $("#menu-toggle").on("click", function () {
+    const isHome = $("body").hasClass("home-mode");
+    const $target = isHome ? $("#header-nav") : $("#sidebar");
+    const isActive = !$target.hasClass("active");
 
-  if (menuToggle) {
-    menuToggle.addEventListener("click", () => {
-      const isHome = document.body.classList.contains("home-mode");
-      const target = isHome ? headerNav : sidebar;
-      const isActive = target.classList.toggle("active");
+    $target.toggleClass("active", isActive);
+    $(this).attr("aria-expanded", String(isActive));
+    $(this)
+      .find("i")
+      .attr("class", isActive ? "ri-close-line" : "ri-menu-line");
 
-      // Update icon
-      const icon = menuToggle.querySelector("i");
-      if (icon) {
-        icon.className = isActive ? "ri-close-line" : "ri-menu-line";
-      }
-
-      // If opening sidebar, close header nav and vice versa
-      if (isActive) {
-        if (isHome) sidebar.classList.remove("active");
-        else headerNav.classList.remove("active");
-      }
-    });
-  }
+    if (isActive) {
+      if (isHome) $("#sidebar").removeClass("active");
+      else $("#header-nav").removeClass("active");
+    }
+  });
 
   // Handle submenu anchors explicitly so page:section links scroll reliably.
-  document.querySelectorAll(".nav-subitem").forEach((link) => {
-    link.addEventListener("click", (event) => {
-      const href = link.getAttribute("href");
-      if (!href || !href.startsWith("#") || !href.includes(":")) return;
+  $(".nav-subitem").on("click", function (event) {
+    const href = $(this).attr("href");
+    if (!href || !href.startsWith("#") || !href.includes(":")) return;
 
-      event.preventDefault();
-      const hash = href.slice(1);
-      const [page, anchor] = hash.split(":");
+    event.preventDefault();
+    const hash = href.slice(1);
+    const [page, anchor] = hash.split(":");
 
-      if (window.location.hash !== href) {
-        history.pushState(null, "", href);
-      }
+    if (window.location.hash !== href) {
+      history.pushState(null, "", href);
+    }
 
-      loadPage(page, anchor);
-    });
+    loadPage(page, anchor);
   });
 
   // Listen for back/forward navigation
-  window.addEventListener("hashchange", handleRoute);
-  window.addEventListener("popstate", handleRoute);
+  $(window).on("hashchange popstate", handleRoute);
 
   // Initial trigger
   handleRoute();
