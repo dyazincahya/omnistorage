@@ -59,7 +59,7 @@ Detailed installation guides, API reference, engine configuration, and advanced 
 
 ## License
 
-MIT
+[MIT](/LICENSE)
 
 ---
 
