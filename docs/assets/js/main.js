@@ -541,9 +541,8 @@ window.loadPage = async function (pageName, anchor) {
   updateActiveNav(pageName, anchor);
 
   // Close mobile menus on page load
-  $("#header-nav, #sidebar").removeClass("active");
-  $("#menu-toggle").attr("aria-expanded", "false");
-  $("#menu-toggle i").attr("class", "ri-menu-line");
+  $("#header-nav").removeClass("active");
+  closeMobileSidebar();
 
   try {
     $contentDiv.html(renderPageLoader());
@@ -575,6 +574,12 @@ window.loadPage = async function (pageName, anchor) {
     $contentDiv.html(`<div style="color: red;">Error: ${error.message}</div>`);
   }
 };
+
+function closeMobileSidebar() {
+  $("#sidebar").removeClass("active");
+  $("#menu-toggle").attr("aria-expanded", "false");
+  $("#menu-toggle i").attr("class", "ri-menu-line");
+}
 
 function scrollToAnchor(anchorId) {
   const $element = $(`#${$.escapeSelector(anchorId)}`);
@@ -687,21 +692,24 @@ $(() => {
   updateUIStrings();
 
   // Mobile Menu Toggle
-  $("#menu-toggle").on("click", function () {
-    const isHome = $("body").hasClass("home-mode");
-    const $target = isHome ? $("#header-nav") : $("#sidebar");
+  $("#menu-toggle").on("click", function (event) {
+    event.stopPropagation();
+    const $target = $("#sidebar");
     const isActive = !$target.hasClass("active");
 
     $target.toggleClass("active", isActive);
+    $("#header-nav").removeClass("active");
     $(this).attr("aria-expanded", String(isActive));
     $(this)
       .find("i")
       .attr("class", isActive ? "ri-close-line" : "ri-menu-line");
+  });
 
-    if (isActive) {
-      if (isHome) $("#sidebar").removeClass("active");
-      else $("#header-nav").removeClass("active");
-    }
+  $(document).on("click", (event) => {
+    const $sidebar = $("#sidebar");
+    if (!$sidebar.hasClass("active")) return;
+    if ($(event.target).closest("#sidebar, #menu-toggle").length) return;
+    closeMobileSidebar();
   });
 
   // Handle submenu anchors explicitly so page:section links scroll reliably.
@@ -717,6 +725,7 @@ $(() => {
       history.pushState(null, "", href);
     }
 
+    closeMobileSidebar();
     loadPage(page, anchor);
   });
 
