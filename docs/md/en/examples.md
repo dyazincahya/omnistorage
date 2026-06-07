@@ -6,6 +6,9 @@ This page provides practical implementation patterns for common application requ
 
 Use `session` storage for browser session data and a namespace to keep authentication keys isolated.
 
+:::code-tabs
+@tab Basic API
+
 ```javascript
 import store from "@x-labs-myid/omnistorage";
 
@@ -30,6 +33,50 @@ await handleLogin("session-token", {
   email: "cahya.dev@random.com",
 });
 ```
+
+@tab JSON Payload
+
+```javascript
+import store from "@x-labs-myid/omnistorage";
+
+const authCommand = {
+  engine: "session",
+  dbName: "my_app",
+  namespace: "v1/auth",
+};
+
+async function handleLogin(token, userProfile) {
+  const tokenRes = await store.command({
+    ...authCommand,
+    operation: "save",
+    key: "jwt",
+    value: token,
+  });
+
+  const profileRes = await store.command({
+    ...authCommand,
+    operation: "save",
+    key: "me",
+    value: userProfile,
+  });
+
+  if (tokenRes.ok && profileRes.ok) {
+    console.log("Session started on engine:", tokenRes.engine);
+  }
+}
+
+async function handleLogout() {
+  await store.command({ ...authCommand, operation: "truncate" });
+}
+
+await handleLogin("session-token", {
+  name: "Kang Cahya",
+  address: "Jawa Barat, Indonesia",
+  email: "cahya.dev@random.com",
+});
+```
+
+:::
 
 ---
 
@@ -266,6 +313,84 @@ async function loadDocument(documentId) {
   });
 }
 ```
+
+---
+
+<h2 id="command-runner"><i class="ri-terminal-box-line"></i> Admin JSON Command Runner</h2>
+
+Use `store.command(payload)` when your application needs a JSON-driven storage console, admin panel, automation workflow, test fixture runner, or low-code tool. The UI can send a structured payload without manually branching into every OmniStorage method.
+
+This pattern is useful when commands come from forms, saved presets, remote configuration, or a playground-like interface.
+
+```javascript
+import store from "@x-labs-myid/omnistorage";
+
+const allowedOperations = new Set([
+  "save",
+  "find",
+  "findAll",
+  "saveMany",
+  "destroy",
+  "truncate",
+]);
+
+async function runAdminStorageCommand(inputPayload) {
+  if (!allowedOperations.has(inputPayload.operation)) {
+    return {
+      ok: false,
+      message: `Operation "${inputPayload.operation}" is not allowed here.`,
+    };
+  }
+
+  // Optional: confirm destructive operations in your UI before this point.
+  return await store.command({
+    engine: inputPayload.engine || "memory",
+    dbName: inputPayload.dbName || "admin_tools",
+    namespace: inputPayload.namespace || "sandbox",
+    ...inputPayload,
+  });
+}
+
+const result = await runAdminStorageCommand({
+  operation: "save",
+  engine: "memory",
+  key: "user:1",
+  value: {
+    name: "Kang Cahya",
+    role: "developer",
+    active: true,
+  },
+});
+
+console.log(result.command);
+console.log(result.data);
+```
+
+Example payload presets can be stored and reused:
+
+```javascript
+const presets = {
+  saveUser: {
+    operation: "save",
+    engine: "local",
+    dbName: "demo_app",
+    namespace: "users",
+    key: "user:1",
+    value: { name: "Ayu", role: "admin" },
+  },
+  listUsers: {
+    operation: "findAll",
+    engine: "local",
+    dbName: "demo_app",
+    namespace: "users",
+  },
+};
+
+await store.command(presets.saveUser);
+const users = await store.command(presets.listUsers);
+```
+
+> For public-facing tools, whitelist allowed operations and ask for confirmation before destructive commands such as `destroy`, `destroyMany`, `truncate`, or `clear`.
 
 ---
 

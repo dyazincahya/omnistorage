@@ -276,8 +276,17 @@ p {
   min-width: 0;
   overflow: hidden;
   border: 1px solid var(--border);
-  border-radius: 8px;
+  border-radius: 10px;
   background: var(--canvas);
+  box-shadow: 0 1px 2px rgba(31, 35, 40, 0.04);
+}
+
+.basic-card {
+  border-top: 3px solid var(--primary);
+}
+
+.payload-card {
+  border-top: 3px solid var(--accent);
 }
 
 .editor-heading {
@@ -285,15 +294,16 @@ p {
   align-items: flex-start;
   justify-content: space-between;
   gap: 12px;
-  padding: 12px;
+  padding: 12px 14px;
   border-bottom: 1px solid var(--border);
-  background: var(--subtle);
+  background: linear-gradient(180deg, #ffffff 0%, var(--subtle) 100%);
 }
 
 .editor-heading strong {
   display: inline-flex;
   align-items: center;
   gap: 6px;
+  font-size: 14px;
 }
 
 .editor-heading p {
@@ -313,6 +323,18 @@ p {
   font-size: 11px;
   font-weight: 700;
   white-space: nowrap;
+}
+
+.basic-pill {
+  border-color: rgba(83, 64, 200, 0.24);
+  background: #f0effc;
+  color: var(--primary);
+}
+
+.payload-pill {
+  border-color: rgba(9, 105, 218, 0.24);
+  background: #ddf4ff;
+  color: var(--accent);
 }
 
 label {

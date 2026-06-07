@@ -29,6 +29,7 @@ body {
   color: var(--color-fg-default);
   background-color: var(--color-canvas-default);
   margin: 0;
+  padding-top: 64px;
   -webkit-font-smoothing: antialiased;
   font-optical-sizing: auto;
 }
@@ -67,8 +68,11 @@ pre code {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  position: sticky;
+  position: fixed;
   top: 0;
+  left: 0;
+  right: 0;
+  width: 100%;
   z-index: 1000;
 }
 
@@ -128,8 +132,11 @@ pre code {
   padding: 32px 16px;
   border-right: 1px solid var(--color-border-default);
   height: calc(100vh - 64px);
-  position: sticky;
+  position: fixed;
   top: 64px;
+  bottom: 0;
+  left: 0;
+  z-index: 900;
   background-color: var(--color-canvas-default);
   overflow-y: auto;
   display: none;
@@ -285,6 +292,7 @@ pre code {
 
 .docs-mode #content-wrapper {
   width: calc(100% - var(--sidebar-width));
+  margin-left: var(--sidebar-width);
 }
 
 .home-mode #content-wrapper {
@@ -444,6 +452,64 @@ pre code {
   padding: 0;
   background-color: transparent;
   font-size: 100%;
+}
+
+.code-tabs {
+  margin: 16px 0 20px;
+  border: 1px solid var(--color-border-default);
+  border-radius: 8px;
+  background-color: var(--color-canvas-default);
+  overflow: hidden;
+}
+
+.code-tab-buttons {
+  display: flex;
+  gap: 4px;
+  padding: 8px 8px 0;
+  border-bottom: 1px solid var(--color-border-default);
+  background-color: var(--color-canvas-subtle);
+  overflow-x: auto;
+}
+
+.code-tab-button {
+  appearance: none;
+  border: 1px solid transparent;
+  border-bottom: none;
+  border-radius: 6px 6px 0 0;
+  background: transparent;
+  color: var(--color-fg-muted);
+  cursor: pointer;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.4;
+  padding: 8px 12px;
+  white-space: nowrap;
+}
+
+.code-tab-button:hover {
+  color: var(--color-fg-default);
+  background-color: rgba(208, 215, 222, 0.32);
+}
+
+.code-tab-button.active {
+  color: var(--primary);
+  border-color: var(--color-border-default);
+  background-color: var(--color-canvas-default);
+}
+
+.code-tab-panel {
+  display: none;
+}
+
+.code-tab-panel.active {
+  display: block;
+}
+
+.markdown-body .code-tabs pre {
+  margin: 0;
+  border-radius: 0;
+  border: none;
 }
 
 /* Buttons */
@@ -862,6 +928,7 @@ pre code {
     width: 100% !important;
     max-width: 100% !important;
     min-width: 0;
+    margin-left: 0;
     padding: 24px 16px;
   }
 

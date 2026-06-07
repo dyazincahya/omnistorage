@@ -6,6 +6,9 @@ Halaman ini menyediakan pola implementasi praktis untuk kebutuhan aplikasi umum 
 
 Gunakan engine `session` untuk data sesi browser dan namespace agar key autentikasi tetap terisolasi.
 
+:::code-tabs
+@tab Basic API
+
 ```javascript
 import store from "@x-labs-myid/omnistorage";
 
@@ -30,6 +33,50 @@ await handleLogin("session-token", {
   email: "cahya.dev@random.com",
 });
 ```
+
+@tab JSON Payload
+
+```javascript
+import store from "@x-labs-myid/omnistorage";
+
+const authCommand = {
+  engine: "session",
+  dbName: "my_app",
+  namespace: "v1/auth",
+};
+
+async function handleLogin(token, userProfile) {
+  const tokenRes = await store.command({
+    ...authCommand,
+    operation: "save",
+    key: "jwt",
+    value: token,
+  });
+
+  const profileRes = await store.command({
+    ...authCommand,
+    operation: "save",
+    key: "me",
+    value: userProfile,
+  });
+
+  if (tokenRes.ok && profileRes.ok) {
+    console.log("Sesi dimulai menggunakan engine:", tokenRes.engine);
+  }
+}
+
+async function handleLogout() {
+  await store.command({ ...authCommand, operation: "truncate" });
+}
+
+await handleLogin("session-token", {
+  name: "Kang Cahya",
+  address: "Jawa Barat, Indonesia",
+  email: "cahya.dev@random.com",
+});
+```
+
+:::
 
 ---
 
@@ -266,6 +313,84 @@ async function loadDocument(documentId) {
   });
 }
 ```
+
+---
+
+<h2 id="command-runner"><i class="ri-terminal-box-line"></i> Admin JSON Command Runner</h2>
+
+Gunakan `store.command(payload)` ketika aplikasi membutuhkan storage console berbasis JSON, panel admin, workflow automation, runner fixture test, atau tool low-code. UI dapat mengirim payload terstruktur tanpa harus membuat percabangan manual untuk setiap method OmniStorage.
+
+Pola ini berguna ketika command berasal dari form, preset tersimpan, konfigurasi remote, atau interface seperti playground.
+
+```javascript
+import store from "@x-labs-myid/omnistorage";
+
+const allowedOperations = new Set([
+  "save",
+  "find",
+  "findAll",
+  "saveMany",
+  "destroy",
+  "truncate",
+]);
+
+async function runAdminStorageCommand(inputPayload) {
+  if (!allowedOperations.has(inputPayload.operation)) {
+    return {
+      ok: false,
+      message: `Operation "${inputPayload.operation}" tidak diizinkan di sini.`,
+    };
+  }
+
+  // Opsional: konfirmasi operasi destruktif di UI sebelum titik ini.
+  return await store.command({
+    engine: inputPayload.engine || "memory",
+    dbName: inputPayload.dbName || "admin_tools",
+    namespace: inputPayload.namespace || "sandbox",
+    ...inputPayload,
+  });
+}
+
+const result = await runAdminStorageCommand({
+  operation: "save",
+  engine: "memory",
+  key: "user:1",
+  value: {
+    name: "Kang Cahya",
+    role: "developer",
+    active: true,
+  },
+});
+
+console.log(result.command);
+console.log(result.data);
+```
+
+Contoh payload preset dapat disimpan dan digunakan ulang:
+
+```javascript
+const presets = {
+  saveUser: {
+    operation: "save",
+    engine: "local",
+    dbName: "demo_app",
+    namespace: "users",
+    key: "user:1",
+    value: { name: "Ayu", role: "admin" },
+  },
+  listUsers: {
+    operation: "findAll",
+    engine: "local",
+    dbName: "demo_app",
+    namespace: "users",
+  },
+};
+
+await store.command(presets.saveUser);
+const users = await store.command(presets.listUsers);
+```
+
+> Untuk tool yang dapat diakses publik, whitelist operasi yang boleh dijalankan dan minta konfirmasi sebelum command destruktif seperti `destroy`, `destroyMany`, `truncate`, atau `clear`.
 
 ---
 

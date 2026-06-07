@@ -26,6 +26,7 @@ class StoreManager {
   constructor() {
     this._dbName = this._initDbName();
     this._initEngines();
+    this._commandEngines = new Map();
     this._hooks = {
       onSet: [],
       onGet: [],
@@ -190,6 +191,11 @@ class StoreManager {
       watch: (key, cb) => this.watch(key, cb),
       transaction: async (callback) => await this.transaction(callback, type),
       namespace: (ns) => this.namespace(ns, engine),
+      command: async (payload) =>
+        await this.command({ ...payload, engine: type }),
+      execute: async (payload) =>
+        await this.command({ ...payload, engine: type }),
+      run: async (payload) => await this.command({ ...payload, engine: type }),
     };
   }
 
@@ -209,6 +215,263 @@ class StoreManager {
       this.defaultEngine = this.engines[type];
     }
     return this;
+  }
+
+  _createEngine(type, dbName = this._dbName) {
+    const factories = {
+      local: () => new LocalEngine(dbName),
+      session: () => new SessionEngine(dbName),
+      memory: () => new MemoryEngine(dbName),
+      file: () => new FileEngine(dbName),
+      indexeddb: () => new IndexedDBEngine(dbName),
+      cookie: () => new CookieEngine(dbName),
+      cache: () => new CacheEngine(dbName),
+      "sqlite-server": () => new SQLiteServerEngine(dbName),
+      "sqlite-client": () => new SQLiteClientEngine(dbName),
+    };
+
+    if (!factories[type]) return null;
+    return factories[type]();
+  }
+
+  _getCommandEngine(type, dbName = this._dbName) {
+    if (!type) return this.defaultEngine;
+    if (!this.engines[type]) return null;
+    if (dbName === this._dbName) return this.engines[type];
+
+    const cacheKey = `${type}:${dbName}`;
+    if (!this._commandEngines.has(cacheKey)) {
+      this._commandEngines.set(cacheKey, this._createEngine(type, dbName));
+    }
+
+    return this._commandEngines.get(cacheKey);
+  }
+
+  _normalizeCommandPayload(payload = {}) {
+    if (!payload || typeof payload !== "object" || Array.isArray(payload)) {
+      throw new Error("JSON payload must be a plain object.");
+    }
+
+    const operation = payload.operation || payload.action || payload.method;
+    if (!is.string(operation) || !operation.trim()) {
+      throw new Error(
+        'JSON payload requires an "operation", "action", or "method" field.',
+      );
+    }
+
+    return {
+      ...payload,
+      engine: payload.engine || this.defaultEngine.engineType,
+      dbName: payload.dbName || payload.database || this._dbName,
+      namespace: payload.namespace || "default",
+      operation: operation.trim(),
+      _engineProvided: Boolean(payload.engine),
+    };
+  }
+
+  _commandTarget(cmd, engine) {
+    if (cmd.namespace && cmd.namespace !== "default") {
+      return this.namespace(cmd.namespace, engine);
+    }
+
+    return {
+      create: async (key, value) =>
+        await this._set(key, value, engine, "insert"),
+      update: async (key, value) =>
+        await this._set(key, value, engine, "update"),
+      save: async (key, value) => await this._set(key, value, engine, "upsert"),
+      find: async (key, options) => await this._get(key, options, engine),
+      findOne: async (key, options) => await this._get(key, options, engine),
+      findAll: async () => {
+        const data = await engine.findAll();
+        return this._formatResponse({
+          ok: true,
+          data,
+          engine: engine.engineType,
+        });
+      },
+      saveMany: async (items) => await this.saveMany(items, engine),
+      createMany: async (items) => await this.createMany(items, engine),
+      updateMany: async (items) => await this.updateMany(items, engine),
+      findMany: async (keys, options) =>
+        await this.findMany(keys, options, engine),
+      destroy: async (key) => await this.destroy(key, engine),
+      destroyMany: async (keys) => await this.destroyMany(keys, engine),
+      truncate: async () => await this.truncate(engine),
+      describe: async (key) => await this.describe(key, engine),
+      watch: (key, cb) => this.watch(key, cb),
+      transaction: async (callback) =>
+        await this.transaction(callback, engine.engineType),
+    };
+  }
+
+  _requireCommandKey(cmd) {
+    if (!is.string(cmd.key) || !cmd.key.trim()) {
+      throw new Error(
+        `Operation "${cmd.operation}" requires a non-empty "key".`,
+      );
+    }
+  }
+
+  _requireCommandItems(cmd) {
+    if (
+      !cmd.items ||
+      typeof cmd.items !== "object" ||
+      Array.isArray(cmd.items)
+    ) {
+      throw new Error(
+        `Operation "${cmd.operation}" requires an "items" object.`,
+      );
+    }
+  }
+
+  _requireCommandKeys(cmd) {
+    if (!Array.isArray(cmd.keys)) {
+      throw new Error(`Operation "${cmd.operation}" requires a "keys" array.`);
+    }
+  }
+
+  _formatCommandResult(result, cmd) {
+    return {
+      ...result,
+      command: {
+        operation: cmd.operation,
+        engine: cmd.engine,
+        dbName: cmd.dbName,
+        namespace: cmd.namespace,
+      },
+    };
+  }
+
+  /**
+   * Execute a JSON JSON payload.
+   *
+   * This is the standard low-level command runner used by integrations and the
+   * Playground. It does not replace the regular ORM-like API; it maps a plain
+   * JSON payload to the same existing operations.
+   *
+   * @param {object} payload
+   * @returns {Promise<object>}
+   */
+  async command(payload = {}) {
+    let cmd;
+
+    try {
+      cmd = this._normalizeCommandPayload(payload);
+      const engine = this._getCommandEngine(cmd.engine, cmd.dbName);
+      if (!engine) throw new Error(`Engine ${cmd.engine} not found`);
+
+      const target = this._commandTarget(cmd, engine);
+      const op = cmd.operation;
+      let result;
+
+      if (["create", "insert"].includes(op)) {
+        this._requireCommandKey(cmd);
+        result = await target.create(cmd.key, cmd.value);
+      } else if (["save", "set", "namespace"].includes(op)) {
+        this._requireCommandKey(cmd);
+        result = await target.save(cmd.key, cmd.value);
+      } else if (op === "update") {
+        this._requireCommandKey(cmd);
+        result = await target.update(cmd.key, cmd.value);
+      } else if (
+        ["find", "findOne", "get", "getByKey", "getById"].includes(op)
+      ) {
+        this._requireCommandKey(cmd);
+        result = await target.find(cmd.key, cmd.options || {});
+      } else if (["findAll", "getAll", "all"].includes(op)) {
+        result = await target.findAll();
+      } else if (["saveMany", "setMany"].includes(op)) {
+        this._requireCommandItems(cmd);
+        result = await target.saveMany(cmd.items);
+      } else if (op === "createMany") {
+        this._requireCommandItems(cmd);
+        result = await target.createMany(cmd.items);
+      } else if (op === "updateMany") {
+        this._requireCommandItems(cmd);
+        result = await target.updateMany(cmd.items);
+      } else if (["findMany", "getMany"].includes(op)) {
+        this._requireCommandKeys(cmd);
+        result = await target.findMany(cmd.keys, cmd.options || {});
+      } else if (["destroy", "delete", "remove"].includes(op)) {
+        this._requireCommandKey(cmd);
+        result = await target.destroy(cmd.key);
+      } else if (["destroyMany", "deleteMany", "removeMany"].includes(op)) {
+        this._requireCommandKeys(cmd);
+        result = await target.destroyMany(cmd.keys);
+      } else if (["truncate", "clear"].includes(op)) {
+        result = await target.truncate();
+      } else if (["describe", "getMeta"].includes(op)) {
+        this._requireCommandKey(cmd);
+        result = await target.describe(cmd.key);
+      } else if (
+        ["getStatistic", "getStatistics", "statistics", "stats"].includes(op)
+      ) {
+        if (op === "getStatistics" && !cmd._engineProvided) {
+          result = await this.getStatistic();
+        } else {
+          result = this._formatResponse({
+            ok: true,
+            data: await engine.getStats(),
+            engine: engine.engineType,
+          });
+        }
+      } else if (op === "transaction") {
+        if (is.fn(cmd.callback)) {
+          result = await target.transaction(cmd.callback);
+        } else {
+          this._requireCommandItems(cmd);
+          result = await target.saveMany(cmd.items);
+          result = { ...result, message: "Command transaction completed" };
+        }
+      } else if (op === "watch") {
+        this._requireCommandKey(cmd);
+        if (!is.fn(cmd.callback)) {
+          throw new Error(
+            'Operation "watch" requires a JavaScript callback and cannot be represented by pure JSON only.',
+          );
+        }
+        const unwatch = target.watch(cmd.key, cmd.callback);
+        result = this._formatResponse({
+          ok: true,
+          data: { key: cmd.key, unwatch },
+          message: `Watcher registered for "${cmd.key}"`,
+          engine: engine.engineType,
+        });
+      } else {
+        throw new Error(`Unsupported command operation "${op}".`);
+      }
+
+      return this._formatCommandResult(result, cmd);
+    } catch (e) {
+      return this._formatCommandResult(
+        this._formatResponse({
+          ok: false,
+          message: e.message,
+          engine: cmd?.engine || this.defaultEngine.engineType,
+        }),
+        cmd || {
+          operation:
+            payload?.operation ||
+            payload?.action ||
+            payload?.method ||
+            "invalid",
+          engine: payload?.engine || this.defaultEngine.engineType,
+          dbName: payload?.dbName || payload?.database || this._dbName,
+          namespace: payload?.namespace || "default",
+        },
+      );
+    }
+  }
+
+  /** Alias for command(payload). */
+  async execute(payload = {}) {
+    return await this.command(payload);
+  }
+
+  /** Alias for command(payload). */
+  async run(payload = {}) {
+    return await this.command(payload);
   }
 
   async _set(key, value, engine = this.defaultEngine, mode = "upsert") {

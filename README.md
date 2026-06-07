@@ -65,6 +65,72 @@ Detailed installation guides, API reference, engine configuration, and advanced 
 
 👉 **[OmniStorage Official Documentation](https://omnistorage.js.org)**
 
+## Development
+
+Install project dependencies first:
+
+```bash
+npm install
+```
+
+### Run the documentation locally
+
+The documentation is a static site inside the `docs/` directory. Serve the project root with any local HTTP server, then open the docs page in your browser.
+
+Using Python:
+
+```bash
+python -m http.server 8000
+```
+
+Or using `serve` via npx:
+
+```bash
+npx serve .
+```
+
+Then open:
+
+```text
+http://localhost:8000/docs/
+```
+
+If you use `npx serve .`, open the local URL printed in the terminal and go to `/docs/`.
+
+Playground:
+
+```text
+http://localhost:8000/docs/playground/
+```
+
+> Avoid opening `docs/index.html` directly with `file://` because the docs load Markdown files with `fetch()`, which requires an HTTP server in most browsers.
+
+### Run checks and tests
+
+Run the source syntax check/build command:
+
+```bash
+npm run build
+```
+
+Run the configured typecheck command:
+
+```bash
+npm run typecheck
+```
+
+Run all tests:
+
+```bash
+npm test
+```
+
+Run a specific test file:
+
+```bash
+npm test -- tests/omnistorage.test.js
+```
+
 ## License
 
 [MIT](/LICENSE)

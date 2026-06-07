@@ -14,9 +14,55 @@ function configureMarkdownRenderer() {
   });
 }
 
+function escapeHtml(value) {
+  return String(value)
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#039;");
+}
+
+function transformCodeTabs(markdown) {
+  let groupIndex = 0;
+
+  return markdown.replace(/:::code-tabs\s*\n([\s\S]*?)\n:::/g, (_, block) => {
+    const tabs = [];
+    const tabRegex = /@tab\s+([^\n]+)\n\s*```([\w-]*)\n([\s\S]*?)```/g;
+    let match;
+
+    while ((match = tabRegex.exec(block)) !== null) {
+      tabs.push({
+        label: match[1].trim(),
+        language: match[2].trim() || "text",
+        code: match[3].replace(/\n$/, ""),
+      });
+    }
+
+    if (!tabs.length) return block;
+
+    const currentGroup = groupIndex++;
+    const buttons = tabs
+      .map(
+        (tab, index) =>
+          `<button type="button" class="code-tab-button${index === 0 ? " active" : ""}" role="tab" aria-selected="${index === 0 ? "true" : "false"}" data-code-tab-group="${currentGroup}" data-code-tab-index="${index}">${escapeHtml(tab.label)}</button>`,
+      )
+      .join("");
+
+    const panels = tabs
+      .map(
+        (tab, index) =>
+          `<div class="code-tab-panel${index === 0 ? " active" : ""}" role="tabpanel" data-code-tab-group="${currentGroup}" data-code-tab-index="${index}"><pre><code class="language-${escapeHtml(tab.language)}">${escapeHtml(tab.code)}</code></pre></div>`,
+      )
+      .join("");
+
+    return `<div class="code-tabs" data-code-tab-group="${currentGroup}"><div class="code-tab-buttons" role="tablist" aria-label="Code examples">${buttons}</div>${panels}</div>`;
+  });
+}
+
 function renderMarkdown(markdown) {
   configureMarkdownRenderer();
-  return marked.parse(markdown);
+  return marked.parse(transformCodeTabs(markdown));
 }
 
 function renderPageLoader() {
@@ -115,6 +161,7 @@ const translations = {
       },
       apiSub: {
         config: "Configuration",
+        "command-payload": "JSON Payload",
         basic: "Basic Operations",
         retrieval: "Data Retrieval",
         deletion: "Deletion",
@@ -132,6 +179,7 @@ const translations = {
         "server-settings": "Server Settings",
         "audit-log": "Audit Log",
         "browser-sqlite": "Browser SQLite",
+        "command-runner": "JSON Command Runner",
         testing: "Testing",
       },
     },
@@ -214,6 +262,7 @@ const translations = {
       },
       apiSub: {
         config: "Konfigurasi",
+        "command-payload": "JSON Payload",
         basic: "Operasi Dasar",
         retrieval: "Pengambilan Data",
         deletion: "Penghapusan",
@@ -231,6 +280,7 @@ const translations = {
         "server-settings": "Pengaturan Server",
         "audit-log": "Audit Log",
         "browser-sqlite": "SQLite Browser",
+        "command-runner": "JSON Command Runner",
         testing: "Testing",
       },
     },
@@ -273,7 +323,7 @@ const pageSeo = {
     api: {
       title: "OmniStorage API Reference — ORM-like Storage Methods",
       description:
-        "Explore OmniStorage API methods for create, save, find, update, delete, batch operations, namespaces, transactions, and statistics.",
+        "Explore OmniStorage API methods for JSON payloads, create, save, find, update, delete, batch operations, namespaces, transactions, and statistics.",
     },
     "logs-stats": {
       title: "OmniStorage Logs and Statistics",
@@ -283,7 +333,7 @@ const pageSeo = {
     examples: {
       title: "OmniStorage Examples — JavaScript Storage Use Cases",
       description:
-        "Browse OmniStorage examples for authentication, preferences, multi-tab sync, shopping carts, API cache, form drafts, audit logs, and testing.",
+        "Browse OmniStorage examples for authentication, preferences, multi-tab sync, shopping carts, API cache, form drafts, JSON command runners, audit logs, and testing.",
     },
   },
   id: {
@@ -320,7 +370,7 @@ const pageSeo = {
     api: {
       title: "Referensi API OmniStorage — Method Storage Bergaya ORM",
       description:
-        "Jelajahi API OmniStorage untuk create, save, find, update, delete, operasi batch, namespace, transaksi, dan statistik.",
+        "Jelajahi API OmniStorage untuk JSON payload, create, save, find, update, delete, operasi batch, namespace, transaksi, dan statistik.",
     },
     "logs-stats": {
       title: "Log dan Statistik OmniStorage",
@@ -330,7 +380,7 @@ const pageSeo = {
     examples: {
       title: "Contoh OmniStorage — Use Case Storage JavaScript",
       description:
-        "Lihat contoh OmniStorage untuk autentikasi, preferensi, sync multi-tab, shopping cart, API cache, draft form, audit log, dan testing.",
+        "Lihat contoh OmniStorage untuk autentikasi, preferensi, sync multi-tab, shopping cart, API cache, draft form, JSON command runner, audit log, dan testing.",
     },
   },
 };
@@ -553,6 +603,7 @@ window.loadPage = async function (pageName, anchor) {
 
     $contentDiv.html(renderMarkdown(markdown));
     Prism.highlightAll();
+    initCodeTabs();
     lastLoadedLang = currentLang;
     initScrollSpy(pageName);
 
@@ -574,6 +625,28 @@ window.loadPage = async function (pageName, anchor) {
     $contentDiv.html(`<div style="color: red;">Error: ${error.message}</div>`);
   }
 };
+
+function initCodeTabs() {
+  $(".code-tab-button")
+    .off("click.codeTabs")
+    .on("click.codeTabs", function () {
+      const $button = $(this);
+      const group = $button.data("code-tab-group");
+      const index = $button.data("code-tab-index");
+
+      $(`.code-tab-button[data-code-tab-group="${group}"]`)
+        .removeClass("active")
+        .attr("aria-selected", "false");
+      $button.addClass("active").attr("aria-selected", "true");
+
+      $(`.code-tab-panel[data-code-tab-group="${group}"]`).removeClass(
+        "active",
+      );
+      $(
+        `.code-tab-panel[data-code-tab-group="${group}"][data-code-tab-index="${index}"]`,
+      ).addClass("active");
+    });
+}
 
 function closeMobileSidebar() {
   $("#sidebar").removeClass("active");

@@ -93,8 +93,8 @@
           </div>
           <h1>Playground</h1>
           <p>
-            Pick a preset, edit the command payload, run it, then inspect the
-            response, stored data, and activity log.
+            Pick a preset, edit the standard JSON payload, run it, then inspect
+            the response, stored data, and activity log.
           </p>
         </div>
         <aside class="notice" aria-label="Engine availability">
@@ -163,19 +163,18 @@
           </div>
 
           <div class="editor-grid">
-            <section class="editor-card">
+            <section class="editor-card basic-card">
               <div class="editor-heading">
                 <div>
                   <strong
-                    ><i class="ri-javascript-line"></i> JavaScript
-                    preview</strong
+                    ><i class="ri-code-s-slash-line"></i> Basic API</strong
                   >
                   <p>
-                    Example usage for the selected preset. Editable for
-                    exploration.
+                    ORM-like JavaScript usage for the selected preset. Edits
+                    sync to JSON Payload when the template stays valid.
                   </p>
                 </div>
-                <span class="editor-pill">Preview only</span>
+                <span class="editor-pill basic-pill">Editable preview</span>
               </div>
               <textarea id="code-preview" spellcheck="false"></textarea>
             </section>
@@ -183,12 +182,13 @@
             <section class="editor-card payload-card">
               <div class="editor-heading">
                 <div>
-                  <strong
-                    ><i class="ri-braces-line"></i> Command payload</strong
-                  >
-                  <p>JSON input used by this static playground runner.</p>
+                  <strong><i class="ri-braces-line"></i> JSON Payload</strong>
+                  <p>
+                    Structured input for <code>store.command(payload)</code>.
+                    Edits sync back to Basic API automatically.
+                  </p>
                 </div>
-                <span class="editor-pill">Executable</span>
+                <span class="editor-pill payload-pill">Executable</span>
               </div>
               <textarea id="command" spellcheck="false"></textarea>
             </section>

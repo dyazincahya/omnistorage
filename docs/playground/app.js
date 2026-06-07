@@ -30,6 +30,10 @@ const ITEM_LIMITS = {
 };
 let editors = null;
 let isApplyingPreset = false;
+let isSyncingEditors = false;
+let commandSyncTimer = null;
+let codePreviewSyncTimer = null;
+let renderDataTimer = null;
 
 const $el = {
   preset: $("#preset"),
@@ -117,6 +121,17 @@ const presets = {
       items: { "batch:1": { value: "A" }, "batch:2": { value: "B" } },
     },
   ],
+  updateMany: [
+    "updateMany(items)",
+    {
+      ...base,
+      operation: "updateMany",
+      items: {
+        "user:1": { name: "Kang Cahya Updated", role: "maintainer" },
+        "user:2": { name: "Dedy Updated", role: "editor" },
+      },
+    },
+  ],
   findMany: [
     "findMany(keys)",
     { ...base, operation: "findMany", keys: ["user:1", "user:2", "product:1"] },
@@ -170,7 +185,7 @@ const presets = {
 const presetGroups = [
   ["Write operations", ["create", "save", "update", "insert", "set"]],
   ["Read operations", ["find", "findOne", "findAll", "findMany"]],
-  ["Batch operations", ["saveMany", "createMany", "destroyMany"]],
+  ["Batch operations", ["saveMany", "createMany", "updateMany", "destroyMany"]],
   ["Delete operations", ["destroy", "delete", "remove", "truncate"]],
   ["Utility operations", ["describe", "getStatistic", "getStatistics"]],
   ["Advanced operations", ["namespace", "transaction", "watch"]],
@@ -200,7 +215,7 @@ function initCodeEditors() {
       lineWrapping: true,
       matchBrackets: true,
       styleActiveLine: true,
-      viewportMargin: Infinity,
+      viewportMargin: 50,
     }),
     command: CodeMirror.fromTextArea(el.command, {
       mode: { name: "javascript", json: true },
@@ -209,20 +224,53 @@ function initCodeEditors() {
       lineWrapping: true,
       matchBrackets: true,
       styleActiveLine: true,
-      viewportMargin: Infinity,
+      viewportMargin: 50,
     }),
   };
 
   editors.command.on("change", () => {
-    if (isApplyingPreset) return;
-    try {
-      const data = command();
-      $el.engine.val(data.engine);
-      setCodePreview(buildCodePreview(data));
-      renderData(data).catch(() => {});
-    } catch {
-      // Keep invalid JSON editable; Run Command will show the parse error.
-    }
+    if (isApplyingPreset || isSyncingEditors) return;
+    clearTimeout(commandSyncTimer);
+    commandSyncTimer = setTimeout(() => {
+      try {
+        const data = command();
+        $el.engine.val(data.engine);
+        isSyncingEditors = true;
+        setCodePreview(buildCodePreview(data));
+        isSyncingEditors = false;
+        clearEditorError();
+        scheduleRenderData(data);
+      } catch (error) {
+        isSyncingEditors = false;
+        setEditorError("Invalid JSON Payload", error.message);
+      }
+    }, 250);
+  });
+
+  editors.codePreview.on("change", () => {
+    if (isApplyingPreset || isSyncingEditors) return;
+    clearTimeout(codePreviewSyncTimer);
+    codePreviewSyncTimer = setTimeout(() => {
+      try {
+        const data = parseBasicApiPreview(getCodePreviewText());
+        if (!data) {
+          setEditorError(
+            "Basic API Sync Error",
+            "The Basic API editor must keep the generated store.db(...).engine(...).operation(...) template to sync with JSON Payload.",
+          );
+          return;
+        }
+        $el.engine.val(data.engine);
+        isSyncingEditors = true;
+        setPayload(data);
+        isSyncingEditors = false;
+        clearEditorError();
+        scheduleRenderData(data);
+      } catch (error) {
+        isSyncingEditors = false;
+        setEditorError("Basic API Sync Error", error.message);
+      }
+    }, 400);
   });
 }
 
@@ -230,15 +278,35 @@ function getPayloadText() {
   return editors?.command ? editors.command.getValue() : $el.command.val();
 }
 
+function getCodePreviewText() {
+  return editors?.codePreview
+    ? editors.codePreview.getValue()
+    : $el.codePreview.val();
+}
+
 function setPayload(data) {
   const text = JSON.stringify(data, null, 2);
-  if (editors?.command) editors.command.setValue(text);
-  else $el.command.val(text);
+  if (editors?.command) {
+    if (editors.command.getValue() !== text) editors.command.setValue(text);
+  } else if ($el.command.val() !== text) {
+    $el.command.val(text);
+  }
 }
 
 function setCodePreview(code) {
-  if (editors?.codePreview) editors.codePreview.setValue(code);
-  else $el.codePreview.val(code);
+  if (editors?.codePreview) {
+    if (editors.codePreview.getValue() !== code)
+      editors.codePreview.setValue(code);
+  } else if ($el.codePreview.val() !== code) {
+    $el.codePreview.val(code);
+  }
+}
+
+function scheduleRenderData(data, delay = 300) {
+  clearTimeout(renderDataTimer);
+  renderDataTimer = setTimeout(() => {
+    renderData(data).catch(() => {});
+  }, delay);
 }
 
 function command() {
@@ -260,6 +328,9 @@ function safeCommand() {
 }
 
 function applyPreset() {
+  clearTimeout(commandSyncTimer);
+  clearTimeout(codePreviewSyncTimer);
+  clearTimeout(renderDataTimer);
   const data = structuredClone(presets[$el.preset.val()][1]);
   data.engine = $el.engine.val();
   isApplyingPreset = true;
@@ -270,6 +341,9 @@ function applyPreset() {
 }
 
 function syncEngine() {
+  clearTimeout(commandSyncTimer);
+  clearTimeout(codePreviewSyncTimer);
+  clearTimeout(renderDataTimer);
   try {
     const data = command();
     data.engine = $el.engine.val();
@@ -285,6 +359,109 @@ function js(value) {
   return JSON.stringify(value, null, 2);
 }
 
+function parseJsonValue(source) {
+  return JSON.parse(source.trim());
+}
+
+function splitTopLevelArgs(source) {
+  const args = [];
+  let current = "";
+  let depth = 0;
+  let inString = false;
+  let quote = "";
+  let escaped = false;
+
+  for (const char of source) {
+    if (inString) {
+      current += char;
+      if (escaped) {
+        escaped = false;
+      } else if (char === "\\") {
+        escaped = true;
+      } else if (char === quote) {
+        inString = false;
+      }
+      continue;
+    }
+
+    if (char === '"' || char === "'") {
+      inString = true;
+      quote = char;
+      current += char;
+      continue;
+    }
+
+    if (char === "{" || char === "[") depth++;
+    if (char === "}" || char === "]") depth--;
+
+    if (char === "," && depth === 0) {
+      args.push(current.trim());
+      current = "";
+      continue;
+    }
+
+    current += char;
+  }
+
+  if (current.trim()) args.push(current.trim());
+  return args;
+}
+
+function parseBasicApiPreview(code) {
+  const chainMatch = code.match(
+    /store\.db\(("(?:\\.|[^"])*"|'(?:\\.|[^'])*')\)\.engine\(("(?:\\.|[^"])*"|'(?:\\.|[^'])*')\)(?:\.namespace\(("(?:\\.|[^"])*"|'(?:\\.|[^'])*')\))?\.(\w+)\s*\(([\s\S]*?)\)\s*;\s*\n\s*console\.log\(result\)/,
+  );
+
+  if (!chainMatch) return null;
+
+  const [, dbNameRaw, engineRaw, namespaceRaw, operation, argsSource] =
+    chainMatch;
+  const data = {
+    engine: parseJsonValue(engineRaw),
+    dbName: parseJsonValue(dbNameRaw),
+    namespace: namespaceRaw ? parseJsonValue(namespaceRaw) : "default",
+    operation,
+  };
+  const args = splitTopLevelArgs(argsSource);
+
+  if (["create", "save", "update", "insert", "set"].includes(operation)) {
+    if (args.length < 2) return null;
+    data.key = parseJsonValue(args[0]);
+    data.value = parseJsonValue(args.slice(1).join(","));
+    return data;
+  }
+
+  if (
+    ["find", "findOne", "destroy", "delete", "remove", "describe"].includes(
+      operation,
+    )
+  ) {
+    if (!args.length) return null;
+    data.key = parseJsonValue(args[0]);
+    return data;
+  }
+
+  if (
+    ["findAll", "truncate", "getStatistic", "getStatistics"].includes(operation)
+  ) {
+    return data;
+  }
+
+  if (["saveMany", "createMany", "updateMany"].includes(operation)) {
+    if (!args.length) return null;
+    data.items = parseJsonValue(args[0]);
+    return data;
+  }
+
+  if (["findMany", "destroyMany"].includes(operation)) {
+    if (!args.length) return null;
+    data.keys = parseJsonValue(args[0]);
+    return data;
+  }
+
+  return null;
+}
+
 function storeExpr(cmd) {
   const baseExpr = `store.db(${JSON.stringify(cmd.dbName)}).engine(${JSON.stringify(cmd.engine)})`;
   return cmd.namespace && cmd.namespace !== "default"
@@ -297,44 +474,97 @@ function buildCodePreview(cmd) {
   const op = cmd.operation;
 
   if (["create", "save", "update", "insert", "set"].includes(op)) {
-    return `import store from "@x-labs-myid/omnistorage";\n\nconst result = await ${target}.${op}(\n  ${JSON.stringify(cmd.key)},\n  ${js(cmd.value)}\n);\n\nconsole.log(result);`;
+    return `import store from "@x-labs-myid/omnistorage";
+
+const result = await ${target}.${op}(
+  ${JSON.stringify(cmd.key)},
+  ${js(cmd.value)}
+);
+
+console.log(result);`;
   }
 
   if (
     ["find", "findOne", "destroy", "delete", "remove", "describe"].includes(op)
   ) {
-    return `import store from "@x-labs-myid/omnistorage";\n\nconst result = await ${target}.${op}(${JSON.stringify(cmd.key)});\n\nconsole.log(result);`;
+    return `import store from "@x-labs-myid/omnistorage";
+
+const result = await ${target}.${op}(${JSON.stringify(cmd.key)});
+
+console.log(result);`;
   }
 
   if (["findAll", "truncate", "getStatistic", "getStatistics"].includes(op)) {
-    return `import store from "@x-labs-myid/omnistorage";\n\nconst result = await ${target}.${op}();\n\nconsole.log(result);`;
+    return `import store from "@x-labs-myid/omnistorage";
+
+const result = await ${target}.${op}();
+
+console.log(result);`;
   }
 
-  if (["saveMany", "createMany"].includes(op)) {
-    return `import store from "@x-labs-myid/omnistorage";\n\nconst result = await ${target}.${op}(${js(cmd.items || {})});\n\nconsole.log(result);`;
+  if (["saveMany", "createMany", "updateMany"].includes(op)) {
+    return `import store from "@x-labs-myid/omnistorage";
+
+const result = await ${target}.${op}(${js(cmd.items || {})});
+
+console.log(result);`;
   }
 
   if (["findMany", "destroyMany"].includes(op)) {
-    return `import store from "@x-labs-myid/omnistorage";\n\nconst result = await ${target}.${op}(${js(cmd.keys || [])});\n\nconsole.log(result);`;
+    return `import store from "@x-labs-myid/omnistorage";
+
+const result = await ${target}.${op}(${js(cmd.keys || [])});
+
+console.log(result);`;
   }
 
   if (op === "namespace") {
-    return `import store from "@x-labs-myid/omnistorage";\n\nconst authStorage = store\n  .db(${JSON.stringify(cmd.dbName)})\n  .engine(${JSON.stringify(cmd.engine)})\n  .namespace(${JSON.stringify(cmd.namespace)});\n\nconst result = await authStorage.save(\n  ${JSON.stringify(cmd.key)},\n  ${js(cmd.value)}\n);\n\nconsole.log(result);`;
+    return `import store from "@x-labs-myid/omnistorage";
+
+const authStorage = store
+  .db(${JSON.stringify(cmd.dbName)})
+  .engine(${JSON.stringify(cmd.engine)})
+  .namespace(${JSON.stringify(cmd.namespace)});
+
+const result = await authStorage.save(
+  ${JSON.stringify(cmd.key)},
+  ${js(cmd.value)}
+);
+
+console.log(result);`;
   }
 
   if (op === "transaction") {
-    return `import store from "@x-labs-myid/omnistorage";\n\nconst result = await store.transaction(async (trx) => {\n${Object.entries(
-      cmd.items || {},
-    )
-      .map(
-        ([key, value]) =>
-          `  await trx.save(${JSON.stringify(key)}, ${js(value).replaceAll("\n", "\n  ")});`,
-      )
-      .join("\n")}\n}, ${JSON.stringify(cmd.engine)});\n\nconsole.log(result);`;
+    return `import store from "@x-labs-myid/omnistorage";
+
+const result = await store.transaction(async (trx) => {
+${Object.entries(cmd.items || {})
+  .map(
+    ([key, value]) =>
+      `  await trx.save(${JSON.stringify(key)}, ${js(value).replaceAll("\n", "\n  ")});`,
+  )
+  .join("\n")}
+}, ${JSON.stringify(cmd.engine)});
+
+console.log(result);`;
   }
 
   if (op === "watch") {
-    return `import store from "@x-labs-myid/omnistorage";\n\nconst unwatch = ${target}.watch(${JSON.stringify(cmd.key)}, (newValue, oldValue) => {\n  console.log({ newValue, oldValue });\n});\n\nawait ${target}.save(\n  ${JSON.stringify(cmd.key)},\n  ${js(cmd.value)}\n);\n\n// Later, stop watching:\n// unwatch();`;
+    return `import store from "@x-labs-myid/omnistorage";
+
+// Pure JSON payloads cannot carry callback functions.
+// Use the ORM-like watcher API for this operation.
+const unwatch = ${target}.watch(${JSON.stringify(cmd.key)}, (newValue, oldValue) => {
+  console.log({ newValue, oldValue });
+});
+
+await ${target}.save(
+  ${JSON.stringify(cmd.key)},
+  ${js(cmd.value)}
+);
+
+// Later, stop watching:
+// unwatch();`;
   }
 
   return `// Unsupported operation preview: ${op}`;
@@ -869,6 +1099,9 @@ async function execute(cmd) {
 }
 
 async function run() {
+  clearTimeout(commandSyncTimer);
+  clearTimeout(codePreviewSyncTimer);
+  clearTimeout(renderDataTimer);
   try {
     const cmd = command();
     $el.engine.val(cmd.engine);
@@ -884,6 +1117,7 @@ async function run() {
 }
 
 async function seed() {
+  clearTimeout(renderDataTimer);
   const cmd = { ...safeCommand(), operation: "seed" };
   if (!runnableEngines.has(cmd.engine)) cmd.engine = "memory";
   const data = {
@@ -935,6 +1169,30 @@ function setResult(result) {
     .text(result.ok ? "Success" : "Error")
     .attr("class", `badge ${result.ok ? "success" : "error"}`);
 }
+
+function setEditorError(title, message) {
+  $el.status.text("Editor Error").attr("class", "badge error");
+  $el.result.text(
+    JSON.stringify(
+      {
+        ok: false,
+        source: title,
+        message,
+        hint: "Fix the editor content or choose a preset to reset the generated template.",
+        timestamp: new Date().toISOString(),
+      },
+      null,
+      2,
+    ),
+  );
+}
+
+function clearEditorError() {
+  if ($el.status.text() === "Editor Error") {
+    $el.status.text("Ready").attr("class", "badge");
+  }
+}
+
 function addLog(result) {
   logs.unshift(result);
   logs.splice(40);

@@ -72,4 +72,86 @@ describe("StoreManager", () => {
     expect(result.data).toBe("configValue");
     expect(result.engine).toBe("memory");
   });
+
+  test("should execute save and find with JSON payload", async () => {
+    const saveResult = await store.command({
+      engine: "memory",
+      dbName: "demo_app",
+      namespace: "default",
+      operation: "save",
+      key: "user:1",
+      value: { name: "Kang Cahya", active: true },
+    });
+
+    expect(saveResult.ok).toBe(true);
+    expect(saveResult.data).toEqual({ name: "Kang Cahya", active: true });
+    expect(saveResult.command).toEqual({
+      operation: "save",
+      engine: "memory",
+      dbName: "demo_app",
+      namespace: "default",
+    });
+
+    const findResult = await store.command({
+      engine: "memory",
+      dbName: "demo_app",
+      operation: "find",
+      key: "user:1",
+    });
+
+    expect(findResult.ok).toBe(true);
+    expect(findResult.data).toEqual({ name: "Kang Cahya", active: true });
+  });
+
+  test("should execute JSON payload inside a namespace", async () => {
+    await store.command({
+      engine: "memory",
+      dbName: "demo_app",
+      namespace: "auth",
+      operation: "save",
+      key: "token",
+      value: "secure-token-value",
+    });
+
+    const authResult = await store.command({
+      engine: "memory",
+      dbName: "demo_app",
+      namespace: "auth",
+      operation: "find",
+      key: "token",
+    });
+
+    const defaultResult = await store.command({
+      engine: "memory",
+      dbName: "demo_app",
+      namespace: "default",
+      operation: "find",
+      key: "token",
+    });
+
+    expect(authResult.ok).toBe(true);
+    expect(authResult.data).toBe("secure-token-value");
+    expect(defaultResult.ok).toBe(false);
+  });
+
+  test("should expose execute and run as command aliases", async () => {
+    const executeResult = await store.execute({
+      operation: "save",
+      key: "alias:1",
+      value: "execute-value",
+    });
+    const runResult = await store.run({ operation: "find", key: "alias:1" });
+
+    expect(executeResult.ok).toBe(true);
+    expect(runResult.ok).toBe(true);
+    expect(runResult.data).toBe("execute-value");
+  });
+
+  test("should return standard error response for invalid JSON payload", async () => {
+    const result = await store.command({ operation: "save" });
+
+    expect(result.ok).toBe(false);
+    expect(result.message).toContain('requires a non-empty "key"');
+    expect(result.command.operation).toBe("save");
+  });
 });
