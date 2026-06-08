@@ -1,6 +1,7 @@
 const $contentDiv = $("#doc-content");
 const $heroWrapper = $("#home-hero-wrapper");
 const $footerWrapper = $("#site-footer-wrapper");
+const $pageToc = $("#page-toc");
 const contentDiv = $contentDiv[0];
 
 function configureMarkdownRenderer() {
@@ -86,6 +87,21 @@ const translations = {
       "A lightweight, type-safe, and universal storage layer for JavaScript. Store anything, anywhere, with a single unified API.",
     getStarted: "Get Started",
     viewGithub: "View on GitHub",
+    getStartedSection: {
+      title: "Get started any way you want",
+      subtitle:
+        "Install OmniStorage, pick a storage engine, and start saving data with the same Basic API across browser and Node.js runtimes.",
+      docsLink: "Read installation docs",
+      packageTitle: "Install via package manager",
+      packageDesc:
+        "Use npm to install the library. OmniStorage includes support for browser, memory, IndexedDB, Cache Storage, file, and SQLite engines.",
+      apiTitle: "Basic API",
+      apiDesc:
+        "Use ORM-like syntax to choose a database, select an engine, and save data.",
+      jsonTitle: "JSON Payload",
+      jsonDesc:
+        "Run the same save operation through a structured payload for admin tools, automation, and low-code workflows.",
+    },
     features: {
       universal: {
         title: "Universal API",
@@ -100,6 +116,7 @@ const translations = {
         desc: "Supports multiple storage engines. Switch engines easily without changing your app's logic flow.",
       },
     },
+    homeHeroTitle: "Build universal storage with one JavaScript API.",
     homeFlow: {
       title: "How OmniStorage works",
       subtitle:
@@ -214,6 +231,21 @@ const translations = {
       "Penyimpan data yang universal, ringan, dan aman untuk JavaScript. Simpan apa saja, di mana saja, dengan satu API terpadu.",
     getStarted: "Mulai Sekarang",
     viewGithub: "Lihat di GitHub",
+    getStartedSection: {
+      title: "Mulai dengan cara yang Anda pilih",
+      subtitle:
+        "Install OmniStorage, pilih engine penyimpanan, lalu simpan data dengan Basic API yang sama di browser maupun Node.js.",
+      docsLink: "Baca dokumentasi instalasi",
+      packageTitle: "Install lewat package manager",
+      packageDesc:
+        "Gunakan npm untuk menginstall library. OmniStorage mendukung engine browser, memory, IndexedDB, Cache Storage, file, dan SQLite.",
+      apiTitle: "Basic API",
+      apiDesc:
+        "Gunakan sintaks ORM-like untuk memilih database, menentukan engine, lalu menyimpan data.",
+      jsonTitle: "JSON Payload",
+      jsonDesc:
+        "Jalankan operasi save yang sama lewat payload terstruktur untuk admin tool, otomasi, dan workflow low-code.",
+    },
     features: {
       universal: {
         title: "API Universal",
@@ -228,6 +260,7 @@ const translations = {
         desc: "Mendukung berbagai engine penyimpanan. Ganti engine dengan mudah tanpa mengubah alur logika aplikasi Anda.",
       },
     },
+    homeHeroTitle: "Bangun storage universal dengan satu API JavaScript.",
     homeFlow: {
       title: "Cara kerja OmniStorage",
       subtitle:
@@ -487,8 +520,9 @@ function updateSeoMeta(pageName) {
 
 function updateUIStrings() {
   const t = translations[currentLang];
-  $("#nav-docs").text(t.nav.docs);
-  $("#nav-examples").text(t.nav.examples);
+  $("#nav-docs").html(
+    `<i class="ri-book-open-line" aria-hidden="true"></i><span>${t.nav.docs}</span>`,
+  );
 
   // Sidebar Groups
   $(".nav-section").each((index, section) => {
@@ -558,11 +592,45 @@ function updateActiveNav(pageName, anchor) {
 
 let scrollSpyObserver = null;
 
+function getHeadingText(heading) {
+  return $(heading).clone().find("i").remove().end().text().trim();
+}
+
+function renderPageToc(pageName) {
+  if (pageName === "home") {
+    $pageToc.empty();
+    return;
+  }
+
+  const headings = [...contentDiv.querySelectorAll("h2[id], h3[id]")].filter(
+    (heading) => getHeadingText(heading).length > 0,
+  );
+
+  if (!headings.length) {
+    $pageToc.empty();
+    return;
+  }
+
+  const items = headings
+    .map((heading) => {
+      const level = heading.tagName.toLowerCase();
+      const text = escapeHtml(getHeadingText(heading));
+      return `<a class="page-toc-link ${level === "h3" ? "is-nested" : ""}" href="#${pageName}:${heading.id}" data-toc-anchor="${heading.id}">${text}</a>`;
+    })
+    .join("");
+
+  $pageToc.html(`
+    <div class="page-toc-inner">
+      <div class="page-toc-title">On this page</div>
+      <nav class="page-toc-nav">${items}</nav>
+    </div>
+  `);
+}
+
 function initScrollSpy(pageName) {
   if (scrollSpyObserver) scrollSpyObserver.disconnect();
-  if (!["api", "engines", "examples"].includes(pageName)) return;
 
-  const headers = contentDiv.querySelectorAll("h2[id]");
+  const headers = contentDiv.querySelectorAll("h2[id], h3[id]");
   if (headers.length === 0) return;
 
   scrollSpyObserver = new IntersectionObserver(
@@ -571,10 +639,15 @@ function initScrollSpy(pageName) {
         if (entry.isIntersecting) {
           const anchor = entry.target.id;
           updateActiveNav(pageName, anchor);
+          $pageToc
+            .find(".page-toc-link")
+            .toggleClass("active", false)
+            .filter(`[data-toc-anchor="${anchor}"]`)
+            .addClass("active");
         }
       });
     },
-    { rootMargin: "-80px 0px -80% 0px" },
+    { rootMargin: "-90px 0px -78% 0px" },
   );
 
   headers.forEach((h) => scrollSpyObserver.observe(h));
@@ -597,6 +670,7 @@ window.loadPage = async function (pageName, anchor) {
   }
 
   $(document.body).attr("class", isHome ? "home-mode" : "docs-mode");
+  $(document.documentElement).toggleClass("home-mode-root", isHome);
   updateSeoMeta(pageName);
   const t = translations[currentLang];
 
@@ -610,8 +684,30 @@ window.loadPage = async function (pageName, anchor) {
       .join("");
 
     $heroWrapper.html(`
-            <div class="home-hero">
-                <section class="home-flow" aria-label="${t.homeFlow.title}">
+            <div class="home-hero home-bootstrap-home">
+                <section class="home-bootstrap-hero" aria-label="OmniStorage introduction">
+                    <img class="home-bootstrap-logo" src="assets/images/icon.png" alt="OmniStorage logo">
+                    <h1>${t.homeHeroTitle}</h1>
+                    <p>${t.tagline}</p>
+                    <div class="home-badges home-bootstrap-badges" aria-label="OmniStorage package badges">
+                        <a href="https://www.npmjs.com/package/@x-labs-myid/omnistorage" target="_blank" rel="noopener noreferrer"><img src="https://img.shields.io/npm/v/@x-labs-myid/omnistorage?color=cb3837&label=npm&logo=npm" alt="npm version"></a>
+                        <a href="https://www.npmjs.com/package/@x-labs-myid/omnistorage" target="_blank" rel="noopener noreferrer"><img src="https://img.shields.io/npm/dm/@x-labs-myid/omnistorage?color=2ea44f&label=downloads" alt="npm downloads"></a>
+                    </div>
+                    <div class="home-quick-install home-bootstrap-install">
+                        <code>npm install @x-labs-myid/omnistorage</code>
+                        <a class="install-action npm-link" href="https://www.npmjs.com/package/@x-labs-myid/omnistorage" target="_blank" rel="noopener noreferrer" aria-label="View OmniStorage package on npm" title="View on npm"><i class="ri-npmjs-line" aria-hidden="true"></i></a>
+                        <button class="install-action copy-btn" type="button" aria-label="Copy installation command" title="Copy install command" onclick="copyInstallCmd(this)"><i class="ri-file-copy-line" aria-hidden="true"></i></button>
+                    </div>
+                    <div class="home-bootstrap-actions">
+                        <a href="#overview" class="btn-github btn-primary-github">${t.getStarted}</a>
+                        <a href="playground/" class="btn-github">Playground</a>
+                    </div>
+                </section>
+                <section class="home-flow home-flow-showcase" aria-labelledby="home-flow-showcase-title">
+                    <div class="home-flow-showcase-heading">
+                        <h2 id="home-flow-showcase-title">${t.homeFlow.title}</h2>
+                        <p>${t.homeFlow.subtitle}</p>
+                    </div>
                     <div class="home-flow-diagram" aria-label="${t.homeFlow.title}">
                         <div class="home-flow-card home-flow-storage">
                             <div class="home-flow-card-title">
@@ -624,17 +720,7 @@ window.loadPage = async function (pageName, anchor) {
                         <div class="home-flow-core">
                             <img class="home-flow-core-logo" src="assets/images/icon.png" alt="OmniStorage logo">
                             <strong>${t.homeFlow.omniLabel}</strong>
-                            <p>${t.tagline}</p>
-                            <div class="home-badges home-flow-badges" aria-label="OmniStorage package badges">
-                                <a href="https://www.npmjs.com/package/@x-labs-myid/omnistorage" target="_blank" rel="noopener noreferrer"><img src="https://img.shields.io/npm/v/@x-labs-myid/omnistorage?color=cb3837&label=npm&logo=npm" alt="npm version"></a>
-                                <a href="https://www.npmjs.com/package/@x-labs-myid/omnistorage" target="_blank" rel="noopener noreferrer"><img src="https://img.shields.io/npm/dm/@x-labs-myid/omnistorage?color=2ea44f&label=downloads" alt="npm downloads"></a>
-                            </div>
-                            <div class="home-quick-install home-flow-install">
-                                <code>npm install @x-labs-myid/omnistorage</code>
-                                <a class="install-action npm-link" href="https://www.npmjs.com/package/@x-labs-myid/omnistorage" target="_blank" rel="noopener noreferrer" aria-label="View OmniStorage package on npm" title="View on npm"><i class="ri-npmjs-line" aria-hidden="true"></i></a>
-                                <button class="install-action copy-btn" type="button" aria-label="Copy installation command" title="Copy install command" onclick="copyInstallCmd(this)"><i class="ri-file-copy-line" aria-hidden="true"></i></button>
-                            </div>
-                            <a href="#overview" class="btn-github btn-primary-github home-flow-core-cta">${t.getStarted}</a>
+                            <p>${t.homeFlow.coreMeta}</p>
                         </div>
                         <div class="home-flow-connector home-flow-connector-right" aria-hidden="true"><span><i class="ri-arrow-right-line"></i></span></div>
                         <div class="home-flow-card home-flow-result home-flow-accordion">
@@ -679,20 +765,64 @@ window.loadPage = async function (pageName, anchor) {
                         </div>
                     </div>
                 </section>
+                <section class="home-start" aria-labelledby="home-start-title">
+                    <div class="home-start-header">
+                        <h2 id="home-start-title">${t.getStartedSection.title}</h2>
+                        <p>${t.getStartedSection.subtitle}</p>
+                        <a href="#installation">${t.getStartedSection.docsLink} <i class="ri-arrow-right-line" aria-hidden="true"></i></a>
+                    </div>
+                    <div class="home-start-install">
+                        <code>npm install @x-labs-myid/omnistorage</code>
+                        <button class="install-action copy-btn" type="button" aria-label="Copy installation command" title="Copy install command" onclick="copyInstallCmd(this)"><i class="ri-file-copy-line" aria-hidden="true"></i></button>
+                    </div>
+                    <div class="home-start-grid">
+                        <article class="home-start-card">
+                            <i class="ri-code-s-slash-line" aria-hidden="true"></i>
+                            <h3>${t.getStartedSection.apiTitle}</h3>
+                            <p>${t.getStartedSection.apiDesc}</p>
+                            <pre><code class="language-javascript">const result = await store
+  .db("demo_app")
+  .engine("memory")
+  .save("user:1", {
+    name: "Kang Cahya",
+    role: "developer"
+  });</code></pre>
+                        </article>
+                        <article class="home-start-card">
+                            <i class="ri-braces-line" aria-hidden="true"></i>
+                            <h3>${t.getStartedSection.jsonTitle}</h3>
+                            <p>${t.getStartedSection.jsonDesc}</p>
+                            <pre><code class="language-javascript">const result = await store.command({
+  operation: "save",
+  engine: "memory",
+  dbName: "demo_app",
+  key: "user:1",
+  value: {
+    name: "Kang Cahya",
+    role: "developer"
+  }
+});</code></pre>
+                        </article>
+                    </div>
+                </section>
             </div>
         `);
   } else {
     $heroWrapper.empty();
+    $pageToc.empty();
   }
 
   // Global Footer
   $footerWrapper.html(`
         <footer class="site-footer">
-            <div>© 2026 OmniStorage. ${t.footer} Developed by <a href="https://github.com/dyazincahya" class="footer-link-credit" target="_blank" rel="noopener noreferrer">Kang Cahya</a></div>
+            <div class="footer-brand">
+                <img src="assets/images/icon.png" alt="" aria-hidden="true">
+                <span>© 2026 OmniStorage. ${t.footer} Developed by <a href="https://github.com/dyazincahya" class="footer-link-credit" target="_blank" rel="noopener noreferrer">Kang Cahya</a></span>
+            </div>
             <nav class="footer-links" aria-label="Footer navigation">
-                <a href="https://github.com/x-labs-myid/omnistorage" class="footer-link" target="_blank" rel="noopener noreferrer">GitHub</a>
-                <a href="#overview" class="footer-link">${t.nav.docs}</a>
-                <a href="#examples" class="footer-link">${t.nav.examples}</a>
+                <a href="#overview" class="footer-link"><i class="ri-book-open-line" aria-hidden="true"></i><span>${t.nav.docs}</span></a>
+                <a href="playground/" class="footer-link"><i class="ri-play-circle-line" aria-hidden="true"></i><span>Playground</span></a>
+                <a href="https://github.com/x-labs-myid/omnistorage" class="footer-link" target="_blank" rel="noopener noreferrer"><i class="ri-github-line" aria-hidden="true"></i><span>GitHub</span></a>
             </nav>
         </footer>
     `);
@@ -713,6 +843,7 @@ window.loadPage = async function (pageName, anchor) {
     $contentDiv.html(renderMarkdown(markdown));
     Prism.highlightAll();
     initCodeTabs();
+    renderPageToc(pageName);
     lastLoadedLang = currentLang;
     initScrollSpy(pageName);
 
@@ -908,6 +1039,21 @@ $(() => {
 
     $block.addClass("active");
     $(this).attr("aria-expanded", "true");
+  });
+
+  $(document).on("click", ".page-toc-link", function (event) {
+    const href = $(this).attr("href");
+    if (!href || !href.startsWith("#") || !href.includes(":")) return;
+
+    event.preventDefault();
+    const hash = href.slice(1);
+    const [page, anchor] = hash.split(":");
+
+    if (window.location.hash !== href) {
+      history.pushState(null, "", href);
+    }
+
+    loadPage(page, anchor);
   });
 
   // Handle submenu anchors explicitly so page:section links scroll reliably.

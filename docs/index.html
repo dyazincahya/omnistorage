@@ -106,14 +106,15 @@
         <span>OmniStorage</span>
       </a>
       <nav class="header-nav" id="header-nav" aria-label="Primary navigation">
-        <div class="lang-switcher">
+        <div class="lang-switcher" role="group" aria-label="Language selector">
           <button
             class="lang-btn"
             id="lang-en"
             type="button"
             onclick="changeLang('en')"
           >
-            EN
+            <span class="lang-dot" aria-hidden="true">EN</span>
+            <span class="lang-label">English</span>
           </button>
           <button
             class="lang-btn"
@@ -121,18 +122,25 @@
             type="button"
             onclick="changeLang('id')"
           >
-            ID
+            <span class="lang-dot" aria-hidden="true">ID</span>
+            <span class="lang-label">Indonesia</span>
           </button>
         </div>
-        <a href="#overview" class="header-link" id="nav-docs">Docs</a>
-        <a href="#examples" class="header-link" id="nav-examples">Examples</a>
-        <a href="playground/" class="header-link">Playground</a>
+        <a href="#overview" class="header-link" id="nav-docs"
+          ><i class="ri-book-open-line" aria-hidden="true"></i
+          ><span>Docs</span></a
+        >
+        <a href="playground/" class="header-link"
+          ><i class="ri-play-circle-line" aria-hidden="true"></i
+          ><span>Playground</span></a
+        >
         <a
           href="https://github.com/x-labs-myid/omnistorage"
           class="header-link"
           target="_blank"
           rel="noopener noreferrer"
-          >GitHub</a
+          ><i class="ri-github-line" aria-hidden="true"></i
+          ><span>GitHub</span></a
         >
       </nav>
     </header>
@@ -329,6 +337,7 @@
         <article id="doc-content" class="markdown-body">
           <!-- Content injected here -->
         </article>
+        <aside id="page-toc" aria-label="On this page"></aside>
         <div id="site-footer-wrapper"></div>
       </main>
     </div>
