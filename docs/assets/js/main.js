@@ -100,6 +100,31 @@ const translations = {
         desc: "Supports multiple storage engines. Switch engines easily without changing your app's logic flow.",
       },
     },
+    homeFlow: {
+      title: "How OmniStorage works",
+      subtitle:
+        "Different storage engines go through one universal API, then return a consistent result shape.",
+      storagesLabel: "Supported Storage",
+      storagesDesc: "Multiple engines, one API",
+      omniLabel: "OmniStorage",
+      inputLabel: "Universal Input",
+      inputDesc: "Save / insert with Basic API syntax",
+      outputLabel: "Consistent Output",
+      outputDesc: "Always returns the same response shape",
+      coreDesc: "Universal API Layer",
+      coreMeta: "Routes • Normalizes • Returns",
+      storages: [
+        { name: "LocalStorage", icon: "ri-database-line" },
+        { name: "SessionStorage", icon: "ri-history-line" },
+        { name: "Cookies", icon: "ri-cookie-line" },
+        { name: "Cache Storage", icon: "ri-archive-line" },
+        { name: "IndexedDB", icon: "ri-hard-drive-2-line" },
+        { name: "Memory", icon: "ri-temp-hot-line" },
+        { name: "File System", icon: "ri-folder-open-line" },
+        { name: "SQLite Server", icon: "ri-server-line" },
+        { name: "SQLite Client WASM", icon: "ri-globe-line" },
+      ],
+    },
     engines: {
       title: "Supported Engines",
       desc: "Choose the right backend for browser apps, Node.js services, or shared runtime code.",
@@ -202,6 +227,31 @@ const translations = {
         title: "Engine Pluggable",
         desc: "Mendukung berbagai engine penyimpanan. Ganti engine dengan mudah tanpa mengubah alur logika aplikasi Anda.",
       },
+    },
+    homeFlow: {
+      title: "Cara kerja OmniStorage",
+      subtitle:
+        "Berbagai engine storage masuk lewat satu API universal, lalu menghasilkan format respon yang konsisten.",
+      storagesLabel: "Storage yang Didukung",
+      storagesDesc: "Banyak engine, satu API",
+      omniLabel: "OmniStorage",
+      inputLabel: "Input Universal",
+      inputDesc: "Save / insert dengan sintaks Basic API",
+      outputLabel: "Output Konsisten",
+      outputDesc: "Selalu mengembalikan bentuk respon yang sama",
+      coreDesc: "Universal API Layer",
+      coreMeta: "Routes • Normalizes • Returns",
+      storages: [
+        { name: "LocalStorage", icon: "ri-database-line" },
+        { name: "SessionStorage", icon: "ri-history-line" },
+        { name: "Cookies", icon: "ri-cookie-line" },
+        { name: "Cache Storage", icon: "ri-archive-line" },
+        { name: "IndexedDB", icon: "ri-hard-drive-2-line" },
+        { name: "Memory", icon: "ri-temp-hot-line" },
+        { name: "File System", icon: "ri-folder-open-line" },
+        { name: "SQLite Server", icon: "ri-server-line" },
+        { name: "SQLite Client WASM", icon: "ri-globe-line" },
+      ],
     },
     engines: {
       title: "Dukungan Engine",
@@ -552,24 +602,83 @@ window.loadPage = async function (pageName, anchor) {
 
   // Handle Home Components
   if (isHome) {
+    const storageItems = t.homeFlow.storages
+      .map(
+        (storage) =>
+          `<li><i class="${storage.icon}" aria-hidden="true"></i><span>${storage.name}</span></li>`,
+      )
+      .join("");
+
     $heroWrapper.html(`
             <div class="home-hero">
-                <img src="assets/images/icon.png" alt="OmniStorage logo">
-                <h1>OmniStorage</h1>
-                <p>${t.tagline}</p>
-                <div class="home-badges" aria-label="OmniStorage package badges">
-                    <a href="https://www.npmjs.com/package/@x-labs-myid/omnistorage" target="_blank" rel="noopener noreferrer"><img src="https://img.shields.io/npm/v/@x-labs-myid/omnistorage?color=cb3837&label=npm&logo=npm" alt="npm version"></a>
-                    <a href="https://www.npmjs.com/package/@x-labs-myid/omnistorage" target="_blank" rel="noopener noreferrer"><img src="https://img.shields.io/npm/dm/@x-labs-myid/omnistorage?color=2ea44f&label=downloads" alt="npm downloads"></a>
-                </div>
-                <div class="home-quick-install">
-                    <code>npm install @x-labs-myid/omnistorage</code>
-                    <a class="install-action npm-link" href="https://www.npmjs.com/package/@x-labs-myid/omnistorage" target="_blank" rel="noopener noreferrer" aria-label="View OmniStorage package on npm" title="View on npm"><i class="ri-npmjs-line" aria-hidden="true"></i></a>
-                    <button class="install-action copy-btn" type="button" aria-label="Copy installation command" title="Copy install command" onclick="copyInstallCmd(this)"><i class="ri-file-copy-line" aria-hidden="true"></i></button>
-                </div>
-                <div class="home-hero-btns">
-                    <a href="#overview" class="btn-github btn-primary-github">${t.getStarted}</a>
-                    <a href="https://github.com/x-labs-myid/omnistorage" class="btn-github" target="_blank" rel="noopener noreferrer">${t.viewGithub}</a>
-                </div>
+                <section class="home-flow" aria-label="${t.homeFlow.title}">
+                    <div class="home-flow-diagram" aria-label="${t.homeFlow.title}">
+                        <div class="home-flow-card home-flow-storage">
+                            <div class="home-flow-card-title">
+                                <span class="home-flow-card-icon"><i class="ri-database-2-line" aria-hidden="true"></i></span>
+                                <span><strong>${t.homeFlow.storagesLabel}</strong><small>${t.homeFlow.storagesDesc}</small></span>
+                            </div>
+                            <ul>${storageItems}</ul>
+                        </div>
+                        <div class="home-flow-connector home-flow-connector-left" aria-hidden="true"><span><i class="ri-arrow-right-line"></i></span></div>
+                        <div class="home-flow-core">
+                            <img class="home-flow-core-logo" src="assets/images/icon.png" alt="OmniStorage logo">
+                            <strong>${t.homeFlow.omniLabel}</strong>
+                            <p>${t.tagline}</p>
+                            <div class="home-badges home-flow-badges" aria-label="OmniStorage package badges">
+                                <a href="https://www.npmjs.com/package/@x-labs-myid/omnistorage" target="_blank" rel="noopener noreferrer"><img src="https://img.shields.io/npm/v/@x-labs-myid/omnistorage?color=cb3837&label=npm&logo=npm" alt="npm version"></a>
+                                <a href="https://www.npmjs.com/package/@x-labs-myid/omnistorage" target="_blank" rel="noopener noreferrer"><img src="https://img.shields.io/npm/dm/@x-labs-myid/omnistorage?color=2ea44f&label=downloads" alt="npm downloads"></a>
+                            </div>
+                            <div class="home-quick-install home-flow-install">
+                                <code>npm install @x-labs-myid/omnistorage</code>
+                                <a class="install-action npm-link" href="https://www.npmjs.com/package/@x-labs-myid/omnistorage" target="_blank" rel="noopener noreferrer" aria-label="View OmniStorage package on npm" title="View on npm"><i class="ri-npmjs-line" aria-hidden="true"></i></a>
+                                <button class="install-action copy-btn" type="button" aria-label="Copy installation command" title="Copy install command" onclick="copyInstallCmd(this)"><i class="ri-file-copy-line" aria-hidden="true"></i></button>
+                            </div>
+                            <a href="#overview" class="btn-github btn-primary-github home-flow-core-cta">${t.getStarted}</a>
+                        </div>
+                        <div class="home-flow-connector home-flow-connector-right" aria-hidden="true"><span><i class="ri-arrow-right-line"></i></span></div>
+                        <div class="home-flow-card home-flow-result home-flow-accordion">
+                            <div class="home-flow-io-block active">
+                                <button class="home-flow-accordion-toggle" type="button" aria-expanded="true">
+                                    <span class="home-flow-card-title">
+                                        <span class="home-flow-card-icon code"><i class="ri-code-s-slash-line" aria-hidden="true"></i></span>
+                                        <span><strong>${t.homeFlow.inputLabel}</strong><small>${t.homeFlow.inputDesc}</small></span>
+                                    </span>
+                                    <i class="ri-arrow-down-s-line" aria-hidden="true"></i>
+                                </button>
+                                <div class="home-flow-accordion-panel">
+                                    <pre><code class="language-javascript">const result = await store
+  .engine("indexeddb")
+  .save("user:1", {
+    name: "Kang Cahya",
+    role: "developer"
+  });</code></pre>
+                                </div>
+                            </div>
+                            <div class="home-flow-io-block">
+                                <button class="home-flow-accordion-toggle" type="button" aria-expanded="false">
+                                    <span class="home-flow-card-title">
+                                        <span class="home-flow-card-icon success"><i class="ri-check-line" aria-hidden="true"></i></span>
+                                        <span><strong>${t.homeFlow.outputLabel}</strong><small>${t.homeFlow.outputDesc}</small></span>
+                                    </span>
+                                    <i class="ri-arrow-down-s-line" aria-hidden="true"></i>
+                                </button>
+                                <div class="home-flow-accordion-panel">
+                                    <pre><code class="language-javascript">{
+  ok: true,
+  data: {
+    name: "Kang Cahya",
+    role: "developer"
+  },
+  message: "Upsert successful",
+  engine: "indexeddb",
+  timestamp: 1717200010000
+}</code></pre>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
             </div>
         `);
   } else {
@@ -783,6 +892,22 @@ $(() => {
     if (!$sidebar.hasClass("active")) return;
     if ($(event.target).closest("#sidebar, #menu-toggle").length) return;
     closeMobileSidebar();
+  });
+
+  $(document).on("click", ".home-flow-accordion-toggle", function () {
+    const $block = $(this).closest(".home-flow-io-block");
+    if ($block.hasClass("active")) return;
+
+    const $accordion = $block.closest(".home-flow-accordion");
+
+    $accordion
+      .find(".home-flow-io-block")
+      .removeClass("active")
+      .find(".home-flow-accordion-toggle")
+      .attr("aria-expanded", "false");
+
+    $block.addClass("active");
+    $(this).attr("aria-expanded", "true");
   });
 
   // Handle submenu anchors explicitly so page:section links scroll reliably.
