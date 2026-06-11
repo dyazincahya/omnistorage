@@ -4,15 +4,15 @@ Halaman ini menjelaskan bagaimana OmniStorage memilih engine default, cara mengg
 
 ## <i class="ri-radar-line"></i> Engine Default
 
-Secara default, OmniStorage menggunakan `memory` ketika tidak ada engine yang dipilih secara global dengan `.use()` atau secara lokal dengan `.engine()`.
+Secara default, OmniStorage menggunakan `sqlite` ketika tidak ada engine yang dipilih secara global dengan `.use()` atau secara lokal dengan `.engine()`.
 
-`memory` adalah default universal yang paling aman karena bisa berjalan di browser dan Node.js tanpa membutuhkan API platform tertentu. Gunakan `.use(engineType)` jika ingin default global yang berbeda.
+`sqlite` bersifat runtime-aware: otomatis menjadi `sqlite-server` di runtime Node.js/server dan `sqlite-client` di runtime browser/client. Gunakan `.use(engineType)` jika ingin default global yang berbeda.
 
 Prioritas engine adalah:
 
 1. Engine lokal dari `.engine(engineType)`
 2. Engine global dari `.use(engineType)`
-3. Fallback bawaan: `memory`
+3. Fallback bawaan: `sqlite`
 
 ## <i class="ri-arrow-left-right-line"></i> Mengganti Engine
 
@@ -68,23 +68,25 @@ Perilaku umum:
 
 - Pada `local`, `session`, `cookie`, `cache`, `memory`, dan `file`, `dbName` berfungsi sebagai prefix global key.
 - Pada engine seperti `indexeddb`, `sqlite-server`, dan `sqlite-client`, `dbName` digunakan sebagai nama database fisik atau scope database.
+- Data IndexedDB memakai object store `omnistorage_kv`, sedangkan data SQLite memakai table `omnistorage_kv`.
+- Untuk engine SQLite, jika `dbName` mengarah ke database existing, OmniStorage akan memakainya dan hanya membuat table OmniStorage jika belum ada. Jika database belum tersedia, SQLite akan membuatnya.
 - `namespace()` menambahkan lapisan logis lain untuk mengelompokkan key berdasarkan fitur atau modul.
 
 ## <i class="ri-route-line"></i> Memilih Engine yang Tepat
 
 Gunakan panduan singkat ini sebagai titik awal:
 
-| Kebutuhan | Engine yang Disarankan |
-| :--- | :--- |
-| Preferensi browser kecil yang persisten | `local` |
-| State sementara untuk tab saat ini | `session` |
-| Nilai browser sangat kecil yang mungkin perlu terlihat server | `cookie` |
-| Snapshot API atau cache offline-friendly | `cache` |
-| Data terstruktur lebih besar di browser | `indexeddb` |
-| Cache runtime sementara, test, atau demo | `memory` |
-| Persistensi disk sederhana di Node.js | `file` |
-| Penyimpanan durable Node.js dengan reliabilitas database | `sqlite-server` |
-| Perilaku mirip SQLite di browser | `sqlite-client` |
+| Kebutuhan                                                     | Engine yang Disarankan |
+| :------------------------------------------------------------ | :--------------------- |
+| Preferensi browser kecil yang persisten                       | `local`                |
+| State sementara untuk tab saat ini                            | `session`              |
+| Nilai browser sangat kecil yang mungkin perlu terlihat server | `cookie`               |
+| Snapshot API atau cache offline-friendly                      | `cache`                |
+| Data terstruktur lebih besar di browser                       | `indexeddb`            |
+| Cache runtime sementara, test, atau demo                      | `memory`               |
+| Persistensi disk sederhana di Node.js                         | `file`                 |
+| Penyimpanan durable Node.js dengan reliabilitas database      | `sqlite-server`        |
+| Perilaku mirip SQLite di browser                              | `sqlite-client`        |
 
 ## <i class="ri-lightbulb-line"></i> Contoh Praktis
 
@@ -155,7 +157,7 @@ const invoiceData = {
   status: "paid",
 };
 
-store.use("sqlite-server");
+store.use("sqlite");
 await store.save("invoice:INV-001", invoiceData);
 ```
 

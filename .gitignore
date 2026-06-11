@@ -21,7 +21,9 @@ version.txt
 *.sqlite3-*
 *.db
 *.db-*
-store_activities.sqlite
+.omnistorage/
+.omnistorage_test/
+omnistorage_logs.sqlite
 
 # Tooling
 .trae/

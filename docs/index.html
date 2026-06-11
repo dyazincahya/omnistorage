@@ -212,39 +212,242 @@
           >
           <div class="nav-item-group">
             <a href="#api" class="nav-item" data-page="api">API Reference</a>
-            <div class="nav-submenu">
-              <a href="#api:config" class="nav-subitem" data-anchor="config"
-                >Configuration</a
+            <div class="nav-submenu api-method-menu">
+              <div class="nav-subgroup-title" data-api-group="configuration">
+                Configuration
+              </div>
+              <a
+                href="#api:init"
+                class="nav-subitem api-method-item"
+                data-anchor="init"
+                >init(options)</a
               >
               <a
-                href="#api:command-payload"
-                class="nav-subitem"
-                data-anchor="command-payload"
-                >JSON Payload</a
-              >
-              <a href="#api:basic" class="nav-subitem" data-anchor="basic"
-                >Basic Operations</a
+                href="#api:db"
+                class="nav-subitem api-method-item"
+                data-anchor="db"
+                >db(name)</a
               >
               <a
-                href="#api:retrieval"
-                class="nav-subitem"
-                data-anchor="retrieval"
-                >Data Retrieval</a
+                href="#api:use"
+                class="nav-subitem api-method-item"
+                data-anchor="use"
+                >use(engineType)</a
               >
-              <a href="#api:deletion" class="nav-subitem" data-anchor="deletion"
-                >Deletion</a
+              <a
+                href="#api:engine"
+                class="nav-subitem api-method-item"
+                data-anchor="engine"
+                >engine(engineType)</a
               >
-              <a href="#api:batch" class="nav-subitem" data-anchor="batch"
-                >Batch Operations</a
+              <a
+                href="#api:namespace"
+                class="nav-subitem api-method-item"
+                data-anchor="namespace"
+                >namespace(name)</a
               >
-              <a href="#api:advanced" class="nav-subitem" data-anchor="advanced"
-                >Advanced Features</a
+              <a
+                href="#api:command"
+                class="nav-subitem api-method-item"
+                data-anchor="command"
+                >command(payload)</a
+              >
+
+              <div class="nav-subgroup-title" data-api-group="write">
+                Write operations
+              </div>
+              <a
+                href="#api:create"
+                class="nav-subitem api-method-item"
+                data-anchor="create"
+                >create(key, value)</a
+              >
+              <a
+                href="#api:save"
+                class="nav-subitem api-method-item"
+                data-anchor="save"
+                >save(key, value)</a
+              >
+              <a
+                href="#api:update"
+                class="nav-subitem api-method-item"
+                data-anchor="update"
+                >update(key, value)</a
+              >
+
+              <div class="nav-subgroup-title" data-api-group="read">
+                Read operations
+              </div>
+              <a
+                href="#api:find"
+                class="nav-subitem api-method-item"
+                data-anchor="find"
+                >find(key)</a
+              >
+              <a
+                href="#api:findAll"
+                class="nav-subitem api-method-item"
+                data-anchor="findAll"
+                >findAll()</a
+              >
+              <a
+                href="#api:findMany"
+                class="nav-subitem api-method-item"
+                data-anchor="findMany"
+                >findMany(keys)</a
+              >
+
+              <div class="nav-subgroup-title" data-api-group="batch">
+                Batch operations
+              </div>
+              <a
+                href="#api:saveMany"
+                class="nav-subitem api-method-item"
+                data-anchor="saveMany"
+                >saveMany(items)</a
+              >
+              <a
+                href="#api:createMany"
+                class="nav-subitem api-method-item"
+                data-anchor="createMany"
+                >createMany(items)</a
+              >
+              <a
+                href="#api:updateMany"
+                class="nav-subitem api-method-item"
+                data-anchor="updateMany"
+                >updateMany(items)</a
+              >
+              <a
+                href="#api:destroyMany"
+                class="nav-subitem api-method-item"
+                data-anchor="destroyMany"
+                >destroyMany(keys)</a
+              >
+
+              <div class="nav-subgroup-title" data-api-group="delete">
+                Delete operations
+              </div>
+              <a
+                href="#api:destroy"
+                class="nav-subitem api-method-item"
+                data-anchor="destroy"
+                >destroy(key)</a
+              >
+              <a
+                href="#api:truncate"
+                class="nav-subitem api-method-item"
+                data-anchor="truncate"
+                >truncate()</a
+              >
+
+              <div class="nav-subgroup-title" data-api-group="advanced">
+                Advanced features
+              </div>
+              <a
+                href="#api:watch"
+                class="nav-subitem api-method-item"
+                data-anchor="watch"
+                >watch(key, callback)</a
+              >
+              <a
+                href="#api:on"
+                class="nav-subitem api-method-item"
+                data-anchor="on"
+                >on(event, callback)</a
+              >
+              <a
+                href="#api:transaction"
+                class="nav-subitem api-method-item"
+                data-anchor="transaction"
+                >transaction(callback)</a
+              >
+              <a
+                href="#api:describe"
+                class="nav-subitem api-method-item"
+                data-anchor="describe"
+                >describe(key)</a
+              >
+              <a
+                href="#api:getStatistics"
+                class="nav-subitem api-method-item"
+                data-anchor="getStatistics"
+                >getStatistics()</a
+              >
+              <a
+                href="#api:getActivityLogs"
+                class="nav-subitem api-method-item"
+                data-anchor="getActivityLogs"
+                >getActivityLogs()</a
               >
             </div>
           </div>
-          <a href="#logs-stats" class="nav-item" data-page="logs-stats"
-            >Logs & Statistics</a
-          >
+          <div class="nav-item-group">
+            <a href="#logs-stats" class="nav-item" data-page="logs-stats"
+              >Logs & Statistics</a
+            >
+            <div class="nav-submenu api-method-menu">
+              <div class="nav-subgroup-title" data-logs-group="configuration">
+                Configuration
+              </div>
+              <a
+                href="#logs-stats:configure-logs"
+                class="nav-subitem api-method-item"
+                data-anchor="configure-logs"
+                >configureLogs(config)</a
+              >
+              <a
+                href="#logs-stats:get-log-config"
+                class="nav-subitem api-method-item"
+                data-anchor="get-log-config"
+                >getLogConfig()</a
+              >
+
+              <div class="nav-subgroup-title" data-logs-group="logs">
+                Activity logs
+              </div>
+              <a
+                href="#logs-stats:get-activity-logs"
+                class="nav-subitem api-method-item"
+                data-anchor="get-activity-logs"
+                >getActivityLogs(limit)</a
+              >
+              <a
+                href="#logs-stats:get-logs"
+                class="nav-subitem api-method-item"
+                data-anchor="get-logs"
+                >getLogs(limit)</a
+              >
+              <a
+                href="#logs-stats:clear-activity-logs"
+                class="nav-subitem api-method-item"
+                data-anchor="clear-activity-logs"
+                >clearActivityLogs()</a
+              >
+
+              <div class="nav-subgroup-title" data-logs-group="statistics">
+                Statistics
+              </div>
+              <a
+                href="#logs-stats:get-statistic"
+                class="nav-subitem api-method-item"
+                data-anchor="get-statistic"
+                >getStatistic(engineName)</a
+              >
+              <a
+                href="#logs-stats:get-statistics"
+                class="nav-subitem api-method-item"
+                data-anchor="get-statistics"
+                >getStatistics()</a
+              >
+              <a
+                href="#logs-stats:statistics-aliases"
+                class="nav-subitem api-method-item"
+                data-anchor="statistics-aliases"
+                >Statistics aliases</a
+              >
+            </div>
+          </div>
         </div>
         <div class="nav-section">
           <div class="nav-title">

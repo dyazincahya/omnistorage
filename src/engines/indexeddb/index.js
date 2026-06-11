@@ -1,11 +1,13 @@
 import { openDB } from "idb";
 import { BaseEngine } from "../base.js";
 
+const OMNISTORAGE_STORE_NAME = "omnistorage_kv";
+
 export default class IndexedDBEngine extends BaseEngine {
   constructor(dbName = "MyStoreDB") {
     super(dbName, "indexeddb");
 
-    this.storeName = "kv";
+    this.storeName = OMNISTORAGE_STORE_NAME;
     this._dbPromise = null;
   }
 
@@ -14,10 +16,10 @@ export default class IndexedDBEngine extends BaseEngine {
    */
   async _getIdb() {
     if (!this._dbPromise) {
-      this._dbPromise = openDB(this.dbName, 1, {
+      this._dbPromise = openDB(this.dbName, 2, {
         upgrade(db) {
-          if (!db.objectStoreNames.contains("kv")) {
-            db.createObjectStore("kv", { keyPath: "key" });
+          if (!db.objectStoreNames.contains(OMNISTORAGE_STORE_NAME)) {
+            db.createObjectStore(OMNISTORAGE_STORE_NAME, { keyPath: "key" });
           }
         },
       });

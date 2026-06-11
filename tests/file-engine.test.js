@@ -5,7 +5,7 @@ import path from "path";
 describe("FileEngine", () => {
   let engine;
   const DB_NAME = "FileTestDB";
-  const TEST_DIR = path.resolve(process.cwd(), ".storage_test");
+  const TEST_DIR = path.resolve(process.cwd(), ".omnistorage_test");
 
   beforeEach(async () => {
     // Clean up test directory before each test

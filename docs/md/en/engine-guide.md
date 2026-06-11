@@ -4,15 +4,15 @@ This page explains how OmniStorage chooses a default engine, how to switch engin
 
 ## <i class="ri-radar-line"></i> Default Engine
 
-By default, OmniStorage uses `memory` when no engine is selected globally with `.use()` or locally with `.engine()`.
+By default, OmniStorage uses `sqlite` when no engine is selected globally with `.use()` or locally with `.engine()`.
 
-`memory` is the safest universal default because it works in both browsers and Node.js without requiring platform-specific APIs. Use `.use(engineType)` when you want a different global default.
+`sqlite` is runtime-aware: it resolves to `sqlite-server` in Node.js/server runtimes and `sqlite-client` in browser/client runtimes. Use `.use(engineType)` when you want a different global default.
 
 Engine priority is:
 
 1. Local engine from `.engine(engineType)`
 2. Global engine from `.use(engineType)`
-3. Built-in fallback: `memory`
+3. Built-in fallback: `sqlite`
 
 ## <i class="ri-arrow-left-right-line"></i> Switching Engines
 
@@ -68,23 +68,25 @@ General behavior:
 
 - In `local`, `session`, `cookie`, `cache`, `memory`, and `file`, `dbName` acts as a global key prefix.
 - In database-like engines such as `indexeddb`, `sqlite-server`, and `sqlite-client`, `dbName` is used as the physical database name or database scope.
+- IndexedDB data uses the `omnistorage_kv` object store, while SQLite data uses the `omnistorage_kv` table.
+- For SQLite engines, when `dbName` points to an existing database, OmniStorage reuses it and only creates the OmniStorage table if it is missing. If the database does not exist, SQLite creates it.
 - `namespace()` adds another logical layer for grouping keys by feature or module.
 
 ## <i class="ri-route-line"></i> Choosing the Right Engine
 
 Use this quick guide as a starting point:
 
-| Need | Recommended Engine |
-| :--- | :--- |
-| Small persistent browser preferences | `local` |
-| Temporary state for the current tab | `session` |
-| Very small browser values that may need server visibility | `cookie` |
-| Offline-friendly API snapshots or cache entries | `cache` |
-| Larger browser-side structured data | `indexeddb` |
-| Temporary runtime cache, tests, or demos | `memory` |
-| Simple Node.js disk persistence | `file` |
-| Durable Node.js storage with database reliability | `sqlite-server` |
-| SQLite-like behavior in the browser | `sqlite-client` |
+| Need                                                      | Recommended Engine |
+| :-------------------------------------------------------- | :----------------- |
+| Small persistent browser preferences                      | `local`            |
+| Temporary state for the current tab                       | `session`          |
+| Very small browser values that may need server visibility | `cookie`           |
+| Offline-friendly API snapshots or cache entries           | `cache`            |
+| Larger browser-side structured data                       | `indexeddb`        |
+| Temporary runtime cache, tests, or demos                  | `memory`           |
+| Simple Node.js disk persistence                           | `file`             |
+| Durable Node.js storage with database reliability         | `sqlite-server`    |
+| SQLite-like behavior in the browser                       | `sqlite-client`    |
 
 ## <i class="ri-lightbulb-line"></i> Practical Examples
 
@@ -155,7 +157,7 @@ const invoiceData = {
   status: "paid",
 };
 
-store.use("sqlite-server");
+store.use("sqlite");
 await store.save("invoice:INV-001", invoiceData);
 ```
 

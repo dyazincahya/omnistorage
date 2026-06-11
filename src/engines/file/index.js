@@ -1,14 +1,28 @@
 import { BaseEngine } from "../base.js";
-import fs from "fs/promises";
-import path from "path";
 
 export default class FileEngine extends BaseEngine {
   constructor(dbName) {
     super(dbName, "file");
-    this.storageDir = path.resolve(process.cwd(), ".storage");
-    this.filePath = path.join(this.storageDir, `${this.dbName}.json`);
+    const cwd =
+      typeof process !== "undefined" && typeof process.cwd === "function"
+        ? process.cwd()
+        : ".";
+    this.storageDir = `${cwd}/.omnistorage`;
+    this.filePath = `${this.storageDir}/${this.dbName}.json`;
     this.data = null;
     this.isLoaded = false;
+    this._fs = null;
+  }
+
+  async _loadFs() {
+    if (this._fs) return this._fs;
+    if (typeof process === "undefined" || !process.versions?.node) {
+      throw new Error("File engine is only available in Node.js runtimes.");
+    }
+
+    const dynamicImport = new Function("specifier", "return import(specifier)");
+    this._fs = await dynamicImport("node:fs/promises");
+    return this._fs;
   }
 
   async getItemRaw(fullKey) {
@@ -19,6 +33,7 @@ export default class FileEngine extends BaseEngine {
   async _ensureLoaded() {
     if (this.isLoaded) return;
 
+    const fs = await this._loadFs();
     try {
       await fs.mkdir(this.storageDir, { recursive: true });
       const content = await fs.readFile(this.filePath, "utf-8");
@@ -30,6 +45,7 @@ export default class FileEngine extends BaseEngine {
   }
 
   async _save() {
+    const fs = await this._loadFs();
     await fs.mkdir(this.storageDir, { recursive: true });
     await fs.writeFile(this.filePath, JSON.stringify(this.data, null, 2));
   }

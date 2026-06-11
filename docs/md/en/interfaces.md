@@ -26,7 +26,7 @@ The TypeScript-style declarations below describe the public objects and return s
 
 ### Engine types
 
-Use these values with `.use(engineType)` or `.engine(engineType)`:
+Use these values with `.use(engineType)`, `.use({ db: { engine } })`, or `.engine(engineType)`:
 
 ```typescript
 type EngineType =
@@ -37,6 +37,7 @@ type EngineType =
   | "memory"
   | "file"
   | "indexeddb"
+  | "sqlite"
   | "sqlite-server"
   | "sqlite-client";
 ```
@@ -132,13 +133,14 @@ These are the public methods developers can call on `store` or a `new StoreManag
 
 | Method                                | Returns                  | Description                                                      |
 | :------------------------------------ | :----------------------- | :--------------------------------------------------------------- |
+| `.init(options)`                      | `Promise<StoreManager>`  | Initializes global db, engine, and logs configuration.           |
 | `.db(name)`                           | `StoreManager`           | Sets the database name and reinitializes engines with that name. |
 | `.getDbName()`                        | `string`                 | Returns the current database name.                               |
-| `.use(engineType)`                    | `StoreManager`           | Sets the default engine globally.                                |
+| `.use(config)`                        | `StoreManager`           | Sets the global database name and/or default engine.             |
 | `.engine(engineType)`                 | `ConfiguredStore`        | Returns a temporary engine-bound operation interface.            |
 | `.config(engineType)`                 | `ConfiguredStore`        | Backward-compatible alias for `.engine(engineType)`.             |
 | `.namespace(name)`                    | `NamespaceStore`         | Returns a namespace-scoped operation interface.                  |
-| `.command(payload)`                   | `Promise<StoreResponse>` | Executes a standard JSON payload.                             |
+| `.command(payload)`                   | `Promise<StoreResponse>` | Executes a standard JSON payload.                                |
 | `.execute(payload)`                   | `Promise<StoreResponse>` | Alias for `.command(payload)`.                                   |
 | `.run(payload)`                       | `Promise<StoreResponse>` | Alias for `.command(payload)`.                                   |
 | `.create(key, value)`                 | `Promise<StoreResponse>` | Inserts a new item and fails if the key already exists.          |
@@ -171,6 +173,8 @@ These are the public methods developers can call on `store` or a `new StoreManag
 | `.getMeta(key)`                       | `Promise<StoreResponse>` | Alias for `.describe()`.                                         |
 | `.getStatistic(engineType?)`          | `Promise<StoreResponse>` | Returns storage statistics for one engine or all engines.        |
 | `.getStatistics()`                    | `Promise<StoreResponse>` | Alias for `.getStatistic()` without an engine type.              |
+| `.configureLogs(config)`              | `StoreManager`           | Configures log mode: `auto`, `client`, or `server`.              |
+| `.getLogConfig()`                     | `object`                 | Returns the current log storage configuration.                   |
 | `.getActivityLogs(limit?)`            | `Promise<StoreResponse>` | Returns activity logs captured by OmniStorage.                   |
 | `.getLogs(limit?)`                    | `Promise<StoreResponse>` | Alias for `.getActivityLogs()`.                                  |
 | `.clearActivityLogs()`                | `Promise<StoreResponse>` | Clears all activity logs.                                        |

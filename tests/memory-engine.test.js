@@ -12,6 +12,10 @@ describe("MemoryEngine", () => {
     expect(engine.engineType).toBe("memory");
   });
 
+  test("should use native Map storage", () => {
+    expect(engine._store).toBeInstanceOf(Map);
+  });
+
   test("should set and get items", async () => {
     await engine.setItem("testKey", "testValue");
     const value = await engine.getItem("testKey");

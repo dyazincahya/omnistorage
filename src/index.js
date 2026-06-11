@@ -103,9 +103,26 @@ class StoreManager {
       "sqlite-server": new SQLiteServerEngine(this._dbName),
       "sqlite-client": new SQLiteClientEngine(this._dbName),
     };
+    this.engines.sqlite = this.engines[this._resolveRuntimeSqliteEngine()];
 
-    // Use memory as the universal default because it works in browsers and Node.js.
-    this.defaultEngine = this.engines.memory;
+    this.defaultEngine = this.engines.sqlite;
+  }
+
+  _isBrowserRuntime() {
+    return typeof globalThis.window !== "undefined";
+  }
+
+  _isTestRuntime() {
+    return typeof process !== "undefined" && process.env.NODE_ENV === "test";
+  }
+
+  _resolveRuntimeSqliteEngine() {
+    if (this._isTestRuntime()) return "sqlite-server";
+    return this._isBrowserRuntime() ? "sqlite-client" : "sqlite-server";
+  }
+
+  _resolveEngineType(type) {
+    return type === "sqlite" ? this._resolveRuntimeSqliteEngine() : type;
   }
 
   /**
@@ -162,11 +179,33 @@ class StoreManager {
   }
 
   /**
+   * Initialize global store configuration.
+   * @param {{ db?: { name?: string, engine?: 'local' | 'session' | 'memory' | 'file' | 'indexeddb' | 'cookie' | 'cache' | 'sqlite' | 'sqlite-server' | 'sqlite-client' }, dbName?: string, database?: string, engine?: 'local' | 'session' | 'memory' | 'file' | 'indexeddb' | 'cookie' | 'cache' | 'sqlite' | 'sqlite-server' | 'sqlite-client', logs?: 'auto' | 'client' | 'server' | { mode?: 'auto' | 'client' | 'server' } }} options
+   */
+  async init(options = {}) {
+    if (!is.object(options) || is.array(options)) {
+      throw new Error("store.init() requires a configuration object.");
+    }
+
+    const dbName =
+      options.db?.name || options.dbName || options.database || "omnistorage";
+    const engine = options.db?.engine || options.engine || "sqlite";
+    const logs = options.logs || "auto";
+
+    this.db(dbName);
+    this.use(engine);
+    this.configureLogs(logs);
+
+    return this;
+  }
+
+  /**
    * Temporary switch to a specific engine (Chainable)
-   * @param {'local' | 'session' | 'memory' | 'file' | 'indexeddb' | 'cookie' | 'cache' | 'sqlite-server' | 'sqlite-client'} type
+   * @param {'local' | 'session' | 'memory' | 'file' | 'indexeddb' | 'cookie' | 'cache' | 'sqlite' | 'sqlite-server' | 'sqlite-client'} type
    */
   engine(type) {
-    const engine = this.engines[type];
+    const resolvedType = this._resolveEngineType(type);
+    const engine = this.engines[resolvedType];
     if (!engine) {
       console.warn(`Engine ${type} not found, using default.`);
       return this;
@@ -189,30 +228,55 @@ class StoreManager {
       truncate: async () => await this.truncate(engine),
       describe: async (key) => await this.describe(key, engine),
       watch: (key, cb) => this.watch(key, cb),
-      transaction: async (callback) => await this.transaction(callback, type),
+      transaction: async (callback) =>
+        await this.transaction(callback, resolvedType),
       namespace: (ns) => this.namespace(ns, engine),
       command: async (payload) =>
-        await this.command({ ...payload, engine: type }),
+        await this.command({ ...payload, engine: resolvedType }),
       execute: async (payload) =>
-        await this.command({ ...payload, engine: type }),
-      run: async (payload) => await this.command({ ...payload, engine: type }),
+        await this.command({ ...payload, engine: resolvedType }),
+      run: async (payload) =>
+        await this.command({ ...payload, engine: resolvedType }),
     };
   }
 
   /**
    * Alias for engine(type). Kept for backward compatibility.
-   * @param {'local' | 'session' | 'memory' | 'file' | 'indexeddb' | 'cookie' | 'cache' | 'sqlite-server' | 'sqlite-client'} type
+   * @param {'local' | 'session' | 'memory' | 'file' | 'indexeddb' | 'cookie' | 'cache' | 'sqlite' | 'sqlite-server' | 'sqlite-client'} type
    */
   config(type) {
     return this.engine(type);
   }
 
+  _normalizeUseConfig(config) {
+    if (is.string(config)) {
+      return { engine: config };
+    }
+
+    if (!is.object(config) || is.array(config)) {
+      return {};
+    }
+
+    return {
+      dbName: config.db?.name || config.dbName || config.database,
+      engine: config.db?.engine || config.engine,
+    };
+  }
+
   /**
    * Set the default engine globally
+   * @param {'local' | 'session' | 'memory' | 'file' | 'indexeddb' | 'cookie' | 'cache' | 'sqlite' | 'sqlite-server' | 'sqlite-client' | { db?: { name?: string, engine?: 'local' | 'session' | 'memory' | 'file' | 'indexeddb' | 'cookie' | 'cache' | 'sqlite' | 'sqlite-server' | 'sqlite-client' }, dbName?: string, database?: string, engine?: 'local' | 'session' | 'memory' | 'file' | 'indexeddb' | 'cookie' | 'cache' | 'sqlite' | 'sqlite-server' | 'sqlite-client' }} config
    */
-  use(type) {
-    if (this.engines[type]) {
-      this.defaultEngine = this.engines[type];
+  use(config) {
+    const { dbName, engine } = this._normalizeUseConfig(config);
+
+    if (is.string(dbName) && dbName.trim()) {
+      this.db(dbName);
+    }
+
+    const resolvedType = this._resolveEngineType(engine);
+    if (this.engines[resolvedType]) {
+      this.defaultEngine = this.engines[resolvedType];
     }
     return this;
   }
@@ -230,25 +294,29 @@ class StoreManager {
       "sqlite-client": () => new SQLiteClientEngine(dbName),
     };
 
-    if (!factories[type]) return null;
-    return factories[type]();
+    const resolvedType = this._resolveEngineType(type);
+    return factories[resolvedType]?.() || null;
   }
 
   _getCommandEngine(type, dbName = this._dbName) {
     if (!type) return this.defaultEngine;
-    if (!this.engines[type]) return null;
-    if (dbName === this._dbName) return this.engines[type];
+    const resolvedType = this._resolveEngineType(type);
+    if (!this.engines[resolvedType]) return null;
+    if (dbName === this._dbName) return this.engines[resolvedType];
 
-    const cacheKey = `${type}:${dbName}`;
+    const cacheKey = `${resolvedType}:${dbName}`;
     if (!this._commandEngines.has(cacheKey)) {
-      this._commandEngines.set(cacheKey, this._createEngine(type, dbName));
+      this._commandEngines.set(
+        cacheKey,
+        this._createEngine(resolvedType, dbName),
+      );
     }
 
     return this._commandEngines.get(cacheKey);
   }
 
   _normalizeCommandPayload(payload = {}) {
-    if (!payload || typeof payload !== "object" || Array.isArray(payload)) {
+    if (!is.object(payload) || is.array(payload)) {
       throw new Error("JSON payload must be a plain object.");
     }
 
@@ -314,11 +382,7 @@ class StoreManager {
   }
 
   _requireCommandItems(cmd) {
-    if (
-      !cmd.items ||
-      typeof cmd.items !== "object" ||
-      Array.isArray(cmd.items)
-    ) {
+    if (!is.object(cmd.items) || is.array(cmd.items)) {
       throw new Error(
         `Operation "${cmd.operation}" requires an "items" object.`,
       );
@@ -786,6 +850,22 @@ class StoreManager {
   }
 
   /**
+   * Configure activity log storage.
+   * @param {'auto' | 'client' | 'server' | { mode?: 'auto' | 'client' | 'server' }} config
+   */
+  configureLogs(config = "auto") {
+    logger.configure(config);
+    return this;
+  }
+
+  /**
+   * Get current activity log configuration.
+   */
+  getLogConfig() {
+    return logger.getConfig();
+  }
+
+  /**
    * Get all activity logs
    */
   async getActivityLogs(limit = 100) {
@@ -794,6 +874,7 @@ class StoreManager {
       ok: true,
       data: logs,
       message: "Activity logs retrieved",
+      source: logger.getSource(),
     });
   }
 
@@ -812,6 +893,7 @@ class StoreManager {
     return this._formatResponse({
       ok: true,
       message: "Activity logs cleared",
+      source: logger.getSource(),
     });
   }
 
@@ -1010,7 +1092,7 @@ class StoreManager {
   /**
    * Run multiple operations in a single transaction (Atomic where supported)
    * @param {Function} callback
-   * @param {'local' | 'session' | 'memory' | 'file' | 'indexeddb'} [type]
+   * @param {'local' | 'session' | 'memory' | 'file' | 'indexeddb' | 'cookie' | 'cache' | 'sqlite' | 'sqlite-server' | 'sqlite-client'} [type]
    */
   async transaction(callback, type) {
     const engine = type ? this.engines[type] : this.defaultEngine;
@@ -1076,7 +1158,7 @@ class StoreManager {
 
   /**
    * Get statistics for one or all engines
-   * @param {'local' | 'session' | 'memory' | 'file' | 'indexeddb'} [type]
+   * @param {'local' | 'session' | 'memory' | 'file' | 'indexeddb' | 'cookie' | 'cache' | 'sqlite' | 'sqlite-server' | 'sqlite-client'} [type]
    */
   async getStatistic(type) {
     if (type) {

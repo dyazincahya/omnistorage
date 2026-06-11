@@ -26,7 +26,7 @@ Deklarasi bergaya TypeScript di bawah ini menjelaskan bentuk objek publik dan re
 
 ### Tipe engine
 
-Gunakan nilai ini pada `.use(engineType)` atau `.engine(engineType)`:
+Gunakan nilai ini pada `.use(engineType)`, `.use({ db: { engine } })`, atau `.engine(engineType)`:
 
 ```typescript
 type EngineType =
@@ -37,6 +37,7 @@ type EngineType =
   | "memory"
   | "file"
   | "indexeddb"
+  | "sqlite"
   | "sqlite-server"
   | "sqlite-client";
 ```
@@ -130,52 +131,55 @@ interface CommandPayload<T = unknown> {
 
 Berikut method publik yang bisa dipanggil developer melalui `store` atau instance `new StoreManager()`.
 
-| Method                                | Return                   | Penjelasan                                                                     |
-| :------------------------------------ | :----------------------- | :----------------------------------------------------------------------------- |
-| `.db(name)`                           | `StoreManager`           | Mengatur nama database dan menginisialisasi ulang engine dengan nama tersebut. |
-| `.getDbName()`                        | `string`                 | Mengambil nama database saat ini.                                              |
-| `.use(engineType)`                    | `StoreManager`           | Mengatur engine default secara global.                                         |
-| `.engine(engineType)`                 | `ConfiguredStore`        | Mengembalikan interface operasi sementara yang terikat ke engine tertentu.     |
-| `.config(engineType)`                 | `ConfiguredStore`        | Alias backward-compatible untuk `.engine(engineType)`.                         |
-| `.namespace(name)`                    | `NamespaceStore`         | Mengembalikan interface operasi yang ter-scope namespace.                      |
-| `.command(payload)`                   | `Promise<StoreResponse>` | Menjalankan JSON payload standar.                                           |
-| `.execute(payload)`                   | `Promise<StoreResponse>` | Alias untuk `.command(payload)`.                                               |
-| `.run(payload)`                       | `Promise<StoreResponse>` | Alias untuk `.command(payload)`.                                               |
-| `.create(key, value)`                 | `Promise<StoreResponse>` | Menyisipkan item baru dan gagal jika key sudah ada.                            |
-| `.insert(key, value)`                 | `Promise<StoreResponse>` | Alias untuk `.create()`.                                                       |
-| `.update(key, value)`                 | `Promise<StoreResponse>` | Memperbarui item yang sudah ada dan gagal jika key belum ada.                  |
-| `.save(key, value)`                   | `Promise<StoreResponse>` | Operasi upsert. Membuat atau menimpa sesuai kebutuhan.                         |
-| `.set(key, value)`                    | `Promise<StoreResponse>` | Alias untuk `.save()`.                                                         |
-| `.find(key, options?)`                | `Promise<StoreResponse>` | Mengambil satu item berdasarkan key.                                           |
-| `.findOne(key, options?)`             | `Promise<StoreResponse>` | Alias untuk `.find()`.                                                         |
-| `.get(key, options?)`                 | `Promise<StoreResponse>` | Alias untuk `.find()`.                                                         |
-| `.getByKey(key, options?)`            | `Promise<StoreResponse>` | Alias untuk `.find()`.                                                         |
-| `.getById(key, options?)`             | `Promise<StoreResponse>` | Alias untuk `.find()`.                                                         |
-| `.findAll()`                          | `Promise<StoreResponse>` | Mengambil semua item dari engine default saat ini.                             |
-| `.getAll()`                           | `Promise<StoreResponse>` | Alias untuk `.findAll()`.                                                      |
-| `.destroy(key)`                       | `Promise<StoreResponse>` | Menghapus satu item berdasarkan key.                                           |
-| `.delete(key)`                        | `Promise<StoreResponse>` | Alias untuk `.destroy()`.                                                      |
-| `.remove(key)`                        | `Promise<StoreResponse>` | Alias untuk `.destroy()`.                                                      |
-| `.truncate()`                         | `Promise<StoreResponse>` | Menghapus semua data pada engine/database scope saat ini.                      |
-| `.clear()`                            | `Promise<StoreResponse>` | Alias untuk `.truncate()`.                                                     |
-| `.saveMany(items)`                    | `Promise<StoreResponse>` | Upsert banyak item.                                                            |
-| `.setMany(items)`                     | `Promise<StoreResponse>` | Alias untuk `.saveMany()`.                                                     |
-| `.createMany(items)`                  | `Promise<StoreResponse>` | Insert banyak item; key yang sudah ada dilaporkan gagal.                       |
-| `.updateMany(items)`                  | `Promise<StoreResponse>` | Update banyak item; key yang tidak ditemukan dilaporkan gagal.                 |
-| `.findMany(keys, options?)`           | `Promise<StoreResponse>` | Mengambil banyak item berdasarkan daftar key.                                  |
-| `.getMany(keys, options?)`            | `Promise<StoreResponse>` | Alias untuk `.findMany()`.                                                     |
-| `.destroyMany(keys)`                  | `Promise<StoreResponse>` | Menghapus banyak item berdasarkan daftar key.                                  |
-| `.deleteMany(keys)`                   | `Promise<StoreResponse>` | Alias untuk `.destroyMany()`.                                                  |
-| `.transaction(callback, engineType?)` | `Promise<StoreResponse>` | Menjalankan beberapa operasi dalam callback bergaya transaksi.                 |
-| `.describe(key)`                      | `Promise<StoreResponse>` | Mengambil metadata key, seperti estimasi ukuran dan engine.                    |
-| `.getMeta(key)`                       | `Promise<StoreResponse>` | Alias untuk `.describe()`.                                                     |
-| `.getStatistic(engineType?)`          | `Promise<StoreResponse>` | Mengambil statistik satu engine atau semua engine.                             |
-| `.getStatistics()`                    | `Promise<StoreResponse>` | Alias untuk `.getStatistic()` tanpa engine type.                               |
-| `.getActivityLogs(limit?)`            | `Promise<StoreResponse>` | Mengambil log aktivitas yang dicatat OmniStorage.                              |
-| `.getLogs(limit?)`                    | `Promise<StoreResponse>` | Alias untuk `.getActivityLogs()`.                                              |
-| `.clearActivityLogs()`                | `Promise<StoreResponse>` | Menghapus semua log aktivitas.                                                 |
-| `.watch(key, callback)`               | `() => void`             | Memantau satu key dan mengembalikan fungsi unwatch.                            |
-| `.on(event, callback)`                | `StoreManager`           | Mendaftarkan hook global.                                                      |
+| Method                                | Return                   | Penjelasan                                                                 |
+| :------------------------------------ | :----------------------- | :------------------------------------------------------------------------- |
+| `.init(options)`                      | `Promise<StoreManager>`  | Menginisialisasi konfigurasi global db, engine, dan logs.                  |
+| `.db(name)`                           | `StoreManager`           | Mengatur nama database dan reinitialize engine dengan nama tersebut.       |
+| `.getDbName()`                        | `string`                 | Mengambil nama database saat ini.                                          |
+| `.use(config)`                        | `StoreManager`           | Mengatur nama database global dan/atau engine default.                     |
+| `.engine(engineType)`                 | `ConfiguredStore`        | Mengembalikan interface operasi sementara yang terikat ke engine tertentu. |
+| `.config(engineType)`                 | `ConfiguredStore`        | Alias backward-compatible untuk `.engine(engineType)`.                     |
+| `.namespace(name)`                    | `NamespaceStore`         | Mengembalikan interface operasi yang ter-scope namespace.                  |
+| `.command(payload)`                   | `Promise<StoreResponse>` | Menjalankan JSON payload standar.                                          |
+| `.execute(payload)`                   | `Promise<StoreResponse>` | Alias untuk `.command(payload)`.                                           |
+| `.run(payload)`                       | `Promise<StoreResponse>` | Alias untuk `.command(payload)`.                                           |
+| `.create(key, value)`                 | `Promise<StoreResponse>` | Menyisipkan item baru dan gagal jika key sudah ada.                        |
+| `.insert(key, value)`                 | `Promise<StoreResponse>` | Alias untuk `.create()`.                                                   |
+| `.update(key, value)`                 | `Promise<StoreResponse>` | Memperbarui item yang sudah ada dan gagal jika key belum ada.              |
+| `.save(key, value)`                   | `Promise<StoreResponse>` | Operasi upsert. Membuat atau menimpa sesuai kebutuhan.                     |
+| `.set(key, value)`                    | `Promise<StoreResponse>` | Alias untuk `.save()`.                                                     |
+| `.find(key, options?)`                | `Promise<StoreResponse>` | Mengambil satu item berdasarkan key.                                       |
+| `.findOne(key, options?)`             | `Promise<StoreResponse>` | Alias untuk `.find()`.                                                     |
+| `.get(key, options?)`                 | `Promise<StoreResponse>` | Alias untuk `.find()`.                                                     |
+| `.getByKey(key, options?)`            | `Promise<StoreResponse>` | Alias untuk `.find()`.                                                     |
+| `.getById(key, options?)`             | `Promise<StoreResponse>` | Alias untuk `.find()`.                                                     |
+| `.findAll()`                          | `Promise<StoreResponse>` | Mengambil semua item dari engine default saat ini.                         |
+| `.getAll()`                           | `Promise<StoreResponse>` | Alias untuk `.findAll()`.                                                  |
+| `.destroy(key)`                       | `Promise<StoreResponse>` | Menghapus satu item berdasarkan key.                                       |
+| `.delete(key)`                        | `Promise<StoreResponse>` | Alias untuk `.destroy()`.                                                  |
+| `.remove(key)`                        | `Promise<StoreResponse>` | Alias untuk `.destroy()`.                                                  |
+| `.truncate()`                         | `Promise<StoreResponse>` | Menghapus semua data pada engine/database scope saat ini.                  |
+| `.clear()`                            | `Promise<StoreResponse>` | Alias untuk `.truncate()`.                                                 |
+| `.saveMany(items)`                    | `Promise<StoreResponse>` | Upsert banyak item.                                                        |
+| `.setMany(items)`                     | `Promise<StoreResponse>` | Alias untuk `.saveMany()`.                                                 |
+| `.createMany(items)`                  | `Promise<StoreResponse>` | Insert banyak item; key yang sudah ada dilaporkan gagal.                   |
+| `.updateMany(items)`                  | `Promise<StoreResponse>` | Update banyak item; key yang tidak ditemukan dilaporkan gagal.             |
+| `.findMany(keys, options?)`           | `Promise<StoreResponse>` | Mengambil banyak item berdasarkan daftar key.                              |
+| `.getMany(keys, options?)`            | `Promise<StoreResponse>` | Alias untuk `.findMany()`.                                                 |
+| `.destroyMany(keys)`                  | `Promise<StoreResponse>` | Menghapus banyak item berdasarkan daftar key.                              |
+| `.deleteMany(keys)`                   | `Promise<StoreResponse>` | Alias untuk `.destroyMany()`.                                              |
+| `.transaction(callback, engineType?)` | `Promise<StoreResponse>` | Menjalankan beberapa operasi dalam callback bergaya transaksi.             |
+| `.describe(key)`                      | `Promise<StoreResponse>` | Mengambil metadata key, seperti estimasi ukuran dan engine.                |
+| `.getMeta(key)`                       | `Promise<StoreResponse>` | Alias untuk `.describe()`.                                                 |
+| `.getStatistic(engineType?)`          | `Promise<StoreResponse>` | Mengambil statistik satu engine atau semua engine.                         |
+| `.getStatistics()`                    | `Promise<StoreResponse>` | Alias untuk `.getStatistic()` tanpa engine type.                           |
+| `.configureLogs(config)`              | `StoreManager`           | Mengatur mode log: `auto`, `client`, atau `server`.                        |
+| `.getLogConfig()`                     | `object`                 | Mengambil konfigurasi penyimpanan log saat ini.                            |
+| `.getActivityLogs(limit?)`            | `Promise<StoreResponse>` | Mengambil log aktivitas yang dicatat OmniStorage.                          |
+| `.getLogs(limit?)`                    | `Promise<StoreResponse>` | Alias untuk `.getActivityLogs()`.                                          |
+| `.clearActivityLogs()`                | `Promise<StoreResponse>` | Menghapus semua log aktivitas.                                             |
+| `.watch(key, callback)`               | `() => void`             | Memantau satu key dan mengembalikan fungsi unwatch.                        |
+| `.on(event, callback)`                | `StoreManager`           | Mendaftarkan hook global.                                                  |
 
 ### Opsi pencarian
 

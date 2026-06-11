@@ -13,6 +13,8 @@ const runnableEngines = new Set([
 ]);
 const sqliteConnections = new Map();
 const cacheConnections = new Map();
+const OMNISTORAGE_IDB_STORE = "omnistorage_kv";
+const OMNISTORAGE_SQLITE_TABLE = "omnistorage_kv";
 let sqlite3Module = null;
 
 const ENGINE_LIMITS = {
@@ -588,10 +590,10 @@ function parseStored(value) {
 async function openDb(dbName) {
   if (idbConnections.has(dbName)) return idbConnections.get(dbName);
   const db = await new Promise((resolve, reject) => {
-    const req = indexedDB.open(dbName, 1);
+    const req = indexedDB.open(dbName, 2);
     req.onupgradeneeded = () => {
-      if (!req.result.objectStoreNames.contains("kv"))
-        req.result.createObjectStore("kv", { keyPath: "key" });
+      if (!req.result.objectStoreNames.contains(OMNISTORAGE_IDB_STORE))
+        req.result.createObjectStore(OMNISTORAGE_IDB_STORE, { keyPath: "key" });
     };
     req.onsuccess = () => resolve(req.result);
     req.onerror = () => reject(req.error);
@@ -603,8 +605,8 @@ async function openDb(dbName) {
 async function idb(cmd, mode, cb) {
   const db = await openDb(cmd.dbName);
   return new Promise((resolve, reject) => {
-    const tx = db.transaction("kv", mode);
-    const req = cb(tx.objectStore("kv"));
+    const tx = db.transaction(OMNISTORAGE_IDB_STORE, mode);
+    const req = cb(tx.objectStore(OMNISTORAGE_IDB_STORE));
     if (req) {
       req.onsuccess = () => resolve(req.result);
       req.onerror = () => reject(req.error);
@@ -757,10 +759,13 @@ async function sqliteDb(cmd) {
   }
 
   const sqlite3 = sqlite3Module;
-  const db = new sqlite3.oo1.DB(`${cmd.dbName}.sqlite3`, "ct");
+  const dbName = /\.(sqlite|sqlite3|db)$/i.test(cmd.dbName)
+    ? cmd.dbName
+    : `${cmd.dbName}.sqlite3`;
+  const db = new sqlite3.oo1.DB(dbName, "c");
 
   db.exec(`
-    CREATE TABLE IF NOT EXISTS kv (
+    CREATE TABLE IF NOT EXISTS omnistorage_kv (
       key TEXT PRIMARY KEY,
       value TEXT
     )
@@ -788,7 +793,7 @@ async function rawGet(cmd, key) {
   const db = await sqliteDb(cmd);
   let value = null;
   db.exec({
-    sql: "SELECT value FROM kv WHERE key = ?",
+    sql: `SELECT value FROM ${OMNISTORAGE_SQLITE_TABLE} WHERE key = ?`,
     bind: [key],
     callback: (row) => {
       value = row[0];
@@ -824,7 +829,7 @@ async function setItem(cmd, key, value) {
   else {
     const db = await sqliteDb(cmd);
     db.exec({
-      sql: "INSERT OR REPLACE INTO kv (key, value) VALUES (?, ?)",
+      sql: `INSERT OR REPLACE INTO ${OMNISTORAGE_SQLITE_TABLE} (key, value) VALUES (?, ?)`,
       bind: [fk, stored],
     });
   }
@@ -847,7 +852,7 @@ async function removeItem(cmd, key) {
   else {
     const db = await sqliteDb(cmd);
     db.exec({
-      sql: "DELETE FROM kv WHERE key = ?",
+      sql: `DELETE FROM ${OMNISTORAGE_SQLITE_TABLE} WHERE key = ?`,
       bind: [fk],
     });
   }
@@ -883,7 +888,7 @@ async function keys(cmd) {
   const db = await sqliteDb(cmd);
   const found = [];
   db.exec({
-    sql: "SELECT key FROM kv WHERE key LIKE ?",
+    sql: `SELECT key FROM ${OMNISTORAGE_SQLITE_TABLE} WHERE key LIKE ?`,
     bind: [`${p}%`],
     callback: (row) => found.push(row[0]),
   });

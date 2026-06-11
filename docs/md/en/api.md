@@ -4,7 +4,47 @@ Use familiar methods to manage your data. All operations return a standard respo
 
 <h2 id="config"><i class="ri-settings-4-line"></i> Configuration & Namespacing</h2>
 
-### <i class="ri-database-2-line"></i> `.db(name)`
+<h3 id="init"><i class="ri-rocket-line"></i> <code>.init(options)</code></h3>
+
+Initializes global store configuration in one place. This is useful in `app.js` or another bootstrap file before your first storage operation.
+
+```javascript
+import store from "@x-labs-myid/omnistorage";
+
+await store.init({
+  db: {
+    name: "omnistorage",
+    engine: "sqlite",
+  },
+  logs: "auto",
+});
+```
+
+Equivalent chainable setup:
+
+```javascript
+store
+  .use({
+    db: {
+      name: "omnistorage",
+      engine: "sqlite",
+    },
+  })
+  .configureLogs("auto");
+```
+
+| Option      | Required | Description                                                                                                                                       |
+| :---------- | :------: | :------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `db`        |    No    | Database config object. Defaults to `{ name: "omnistorage", engine: "sqlite" }`.                                                                  |
+| `db.name`   |    No    | Global database name. Default `omnistorage`.                                                                                                      |
+| `db.engine` |    No    | Default storage engine. Values: `local`, `session`, `cookie`, `cache`, `memory`, `file`, `indexeddb`, `sqlite`, `sqlite-client`, `sqlite-server`. |
+| `logs`      |    No    | Log mode: `auto`, `client`, `server`, or `{ mode: "auto" }`.                                                                                      |
+
+> `sqlite` is the default database engine and automatically resolves to `sqlite-client` in browsers or `sqlite-server` in Node.js.
+
+> `.init()` is additive. Existing `.db()`, `.use()`, and `.configureLogs()` calls remain supported.
+
+<h3 id="db"><i class="ri-database-2-line"></i> <code>.db(name)</code></h3>
 
 Sets the global database name. This acts as a physical database name in IndexedDB or a global prefix in other engines.
 
@@ -14,19 +54,28 @@ import store from "@x-labs-myid/omnistorage";
 store.db("my_app");
 ```
 
-### <i class="ri-plug-line"></i> `.use(engineType)`
+<h3 id="use"><i class="ri-plug-line"></i> <code>.use(config)</code></h3>
 
-Sets the default storage engine globally.
+Sets the global database name and default storage engine. You can pass only an engine string for simple cases, or a semantic database config object when configuring both.
 
-> If no global engine is set with `.use()` and no local engine is selected with `.engine()`, OmniStorage uses `memory` by default.
+> If no global engine is set with `.use()` and no local engine is selected with `.engine()`, OmniStorage uses `sqlite` by default and auto-detects `sqlite-client` or `sqlite-server` by runtime.
 
 ```javascript
 import store from "@x-labs-myid/omnistorage";
 
-store.use("session"); // local, session, cookie, cache, memory, file, indexeddb, sqlite-server, sqlite-client
+store.use("sqlite"); // simple engine-only setup
+
+store.use({
+  db: {
+    name: "omnistorage",
+    engine: "sqlite",
+  },
+});
 ```
 
-### <i class="ri-equalizer-line"></i> `.engine(engineType)`
+Available engines: `local`, `session`, `cookie`, `cache`, `memory`, `file`, `indexeddb`, `sqlite`, `sqlite-server`, `sqlite-client`.
+
+<h3 id="engine"><i class="ri-equalizer-line"></i> <code>.engine(engineType)</code></h3>
 
 Temporary switch to a specific engine for a chain of operations without changing the global default.
 
@@ -38,7 +87,7 @@ await store.engine("memory").save("temp_key", "value");
 
 > `.config(engineType)` is still supported as a backward-compatible alias.
 
-### <i class="ri-folder-shield-line"></i> `.namespace(name)`
+<h3 id="namespace"><i class="ri-folder-shield-line"></i> <code>.namespace(name)</code></h3>
 
 Creates a logical isolation layer within the current engine.
 
@@ -53,7 +102,7 @@ await auth.save("token", "xyz123"); // Saved as "dbName_v1/auth:token"
 
 <h2 id="command-payload"><i class="ri-terminal-box-line"></i> JSON Command Runner</h2>
 
-### <i class="ri-braces-line"></i> `.command(payload)` / `.execute(payload)` / `.run(payload)`
+<h3 id="command"><i class="ri-braces-line"></i> <code>.command(payload)</code> / <code>.execute(payload)</code> / <code>.run(payload)</code></h3>
 
 Executes a storage operation from a plain JSON-compatible object.
 
@@ -111,7 +160,7 @@ const result = await store.db("demo_app").engine("memory").save("user:1", {
 | Field       | Required | Description                                                                                               |
 | :---------- | :------: | :-------------------------------------------------------------------------------------------------------- |
 | `operation` |   Yes    | Operation to execute. `action` and `method` are accepted as aliases.                                      |
-| `engine`    |    No    | Storage engine. Defaults to the current default engine, which is `memory` unless changed with `.use()`.   |
+| `engine`    |    No    | Storage engine. Defaults to the current default engine, which is `sqlite` unless changed with `.use()`.   |
 | `dbName`    |    No    | Database name for this command. `database` is accepted as an alias.                                       |
 | `namespace` |    No    | Logical namespace. Defaults to `default`. Any non-default value runs the operation inside that namespace. |
 | `key`       | Depends  | Required by single-key operations such as `save`, `find`, `delete`, and `describe`.                       |
@@ -252,7 +301,7 @@ Before choosing a method, understand how they handle existing data:
 | **If Key Exists** | <i class="ri-error-warning-line"></i> **Fails** (Error). | <i class="ri-refresh-line"></i> **Updates** (Overwrite). |
 | **Best Use Case** | Unique IDs, Registration.                                | User Settings, Profiles.                                 |
 
-### <i class="ri-add-circle-line"></i> `.create(key, value)`
+<h3 id="create"><i class="ri-add-circle-line"></i> <code>.create(key, value)</code></h3>
 
 Stores new data. This function will fail if the key already exists in the storage.
 
@@ -294,7 +343,7 @@ const res = await store.command({
 
 :::
 
-### <i class="ri-edit-line"></i> `.update(key, value)`
+<h3 id="update"><i class="ri-edit-line"></i> <code>.update(key, value)</code></h3>
 
 Updates existing data. This function will fail if the key is not found.
 
@@ -322,7 +371,7 @@ const res = await store.command({
 
 :::
 
-### <i class="ri-save-3-line"></i> `.save(key, value)`
+<h3 id="save"><i class="ri-save-3-line"></i> <code>.save(key, value)</code></h3>
 
 _Upsert_ operation. It automatically decides whether to create a new entry or update an existing one.
 
@@ -374,7 +423,7 @@ const res = await store.command({
 
 <h2 id="retrieval"><i class="ri-search-eye-line"></i> Data Retrieval</h2>
 
-### <i class="ri-find-replace-line"></i> `.find(key, options?)` / `.findOne(key, options?)`
+<h3 id="find"><i class="ri-find-replace-line"></i> <code>.find(key, options?)</code> / <code>.findOne(key, options?)</code></h3>
 
 Retrieves a single data entry. `.findOne`, `.get`, `.getByKey`, and `.getById` are aliases for the same lookup behavior.
 
@@ -408,7 +457,7 @@ const res = await store.command({
 
 :::
 
-### <i class="ri-list-check"></i> `.findAll()` / `.getAll()`
+<h3 id="findAll"><i class="ri-list-check"></i> <code>.findAll()</code> / <code>.getAll()</code></h3>
 
 Retrieves all data within the current database or namespace.
 
@@ -434,7 +483,7 @@ const res = await store.command({
 
 :::
 
-### <i class="ri-stack-line"></i> `.findMany(keys, options?)` / `.getMany(keys, options?)`
+<h3 id="findMany"><i class="ri-stack-line"></i> <code>.findMany(keys, options?)</code> / <code>.getMany(keys, options?)</code></h3>
 
 Retrieves multiple entries by key.
 
@@ -465,7 +514,7 @@ const res = await store.command({
 
 <h2 id="deletion"><i class="ri-delete-bin-line"></i> Deletion</h2>
 
-### <i class="ri-close-circle-line"></i> `.destroy(key)` / `.delete(key)` / `.remove(key)`
+<h3 id="destroy"><i class="ri-close-circle-line"></i> <code>.destroy(key)</code> / <code>.delete(key)</code> / <code>.remove(key)</code></h3>
 
 Deletes a single data entry by key.
 
@@ -492,7 +541,7 @@ const res = await store.command({
 
 :::
 
-### <i class="ri-eraser-line"></i> `.truncate()` / `.clear()`
+<h3 id="truncate"><i class="ri-eraser-line"></i> <code>.truncate()</code> / <code>.clear()</code></h3>
 
 Deletes all data within the current database or namespace.
 
@@ -524,7 +573,7 @@ const res = await store.command({
 
 Process multiple items efficiently in one call.
 
-### `.saveMany(items)` / `.setMany(items)`
+<h3 id="saveMany"><code>.saveMany(items)</code> / <code>.setMany(items)</code></h3>
 
 Upserts multiple items.
 
@@ -557,7 +606,7 @@ await store.command({
 
 :::
 
-### `.createMany(items)`
+<h3 id="createMany"><code>.createMany(items)</code></h3>
 
 Inserts multiple items. Existing keys are returned as failed results.
 
@@ -590,7 +639,7 @@ await store.command({
 
 :::
 
-### `.updateMany(items)`
+<h3 id="updateMany"><code>.updateMany(items)</code></h3>
 
 Updates multiple items. Missing keys are returned as failed results.
 
@@ -623,7 +672,7 @@ await store.command({
 
 :::
 
-### `.destroyMany(keys)` / `.deleteMany(keys)`
+<h3 id="destroyMany"><code>.destroyMany(keys)</code> / <code>.deleteMany(keys)</code></h3>
 
 Deletes multiple items by key.
 
@@ -654,7 +703,7 @@ await store.command({
 
 <h2 id="advanced"><i class="ri-rocket-2-line"></i> Advanced Features</h2>
 
-### <i class="ri-eye-line"></i> `.watch(key, callback)`
+<h3 id="watch"><i class="ri-eye-line"></i> <code>.watch(key, callback)</code></h3>
 
 Monitors changes to a specific key. Returns an `unwatch` function.
 
@@ -668,7 +717,7 @@ const unwatch = store.watch("user:101", (newValue, oldValue) => {
 unwatch();
 ```
 
-### <i class="ri-flashlight-line"></i> `.on(event, callback)`
+<h3 id="on"><i class="ri-flashlight-line"></i> <code>.on(event, callback)</code></h3>
 
 Global hooks for storage operations. Supported events: `onSet`, `onGet`, `onDelete`, `onClear`.
 
@@ -680,7 +729,7 @@ store.on("onSet", (data) => {
 });
 ```
 
-### <i class="ri-exchange-funds-line"></i> `.transaction(callback)`
+<h3 id="transaction"><i class="ri-exchange-funds-line"></i> <code>.transaction(callback)</code></h3>
 
 Executes multiple operations in a single transaction-like block.
 
@@ -693,7 +742,7 @@ await store.transaction(async (trx) => {
 });
 ```
 
-### <i class="ri-information-line"></i> `.describe(key)` / `.getMeta(key)`
+<h3 id="describe"><i class="ri-information-line"></i> <code>.describe(key)</code> / <code>.getMeta(key)</code></h3>
 
 Retrieves metadata for a specific key, such as estimated size in bytes and engine used.
 
@@ -704,7 +753,7 @@ const meta = await store.describe("user:101");
 console.log(meta.data.size);
 ```
 
-### <i class="ri-bar-chart-box-line"></i> `.getStatistic(name?)` / `.getStatistics()`
+<h3 id="getStatistics"><i class="ri-bar-chart-box-line"></i> <code>.getStatistic(name?)</code> / <code>.getStatistics()</code></h3>
 
 Retrieves storage usage statistics. See [Logs & Statistics](logs-stats.md) for activity-log details.
 
@@ -715,7 +764,7 @@ const allStats = await store.getStatistics();
 const localStats = await store.getStatistic("local");
 ```
 
-### <i class="ri-file-list-3-line"></i> `.getActivityLogs(limit?)`, `.getLogs(limit?)`, `.clearActivityLogs()`
+<h3 id="getActivityLogs"><i class="ri-file-list-3-line"></i> <code>.getActivityLogs(limit?)</code>, <code>.getLogs(limit?)</code>, <code>.clearActivityLogs()</code></h3>
 
 Reads or clears OmniStorage activity logs.
 

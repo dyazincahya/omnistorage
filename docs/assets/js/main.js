@@ -188,6 +188,7 @@ const translations = {
       engineGuide: "Engine Guide",
       interfaces: "Exports & Interfaces",
       api: "API Reference",
+      logsStats: "Logs & Statistics",
       cookbook: "Cookbook",
       usecases: "Use Cases",
       engineSub: {
@@ -201,14 +202,54 @@ const translations = {
         "sqlite-server": "SQLite Server",
         "sqlite-client": "SQLite WASM",
       },
+      apiGroups: {
+        configuration: "Configuration",
+        write: "Write operations",
+        read: "Read operations",
+        batch: "Batch operations",
+        delete: "Delete operations",
+        advanced: "Advanced features",
+      },
       apiSub: {
-        config: "Configuration",
-        "command-payload": "JSON Payload",
-        basic: "Basic Operations",
-        retrieval: "Data Retrieval",
-        deletion: "Deletion",
-        batch: "Batch Operations",
-        advanced: "Advanced Features",
+        init: "init(options)",
+        db: "db(name)",
+        use: "use(engineType)",
+        engine: "engine(engineType)",
+        namespace: "namespace(name)",
+        command: "command(payload)",
+        create: "create(key, value)",
+        save: "save(key, value)",
+        update: "update(key, value)",
+        find: "find(key)",
+        findAll: "findAll()",
+        findMany: "findMany(keys)",
+        saveMany: "saveMany(items)",
+        createMany: "createMany(items)",
+        updateMany: "updateMany(items)",
+        destroyMany: "destroyMany(keys)",
+        destroy: "destroy(key)",
+        truncate: "truncate()",
+        watch: "watch(key, callback)",
+        on: "on(event, callback)",
+        transaction: "transaction(callback)",
+        describe: "describe(key)",
+        getStatistics: "getStatistics()",
+        getActivityLogs: "getActivityLogs()",
+      },
+      logsStatsGroups: {
+        configuration: "Configuration",
+        logs: "Activity logs",
+        statistics: "Statistics",
+      },
+      logsStatsSub: {
+        "configure-logs": "configureLogs(config)",
+        "get-log-config": "getLogConfig()",
+        "get-activity-logs": "getActivityLogs(limit)",
+        "get-logs": "getLogs(limit)",
+        "clear-activity-logs": "clearActivityLogs()",
+        "get-statistic": "getStatistic(engineName)",
+        "get-statistics": "getStatistics()",
+        "statistics-aliases": "Statistics aliases",
       },
       examplesSub: {
         auth: "Authentication",
@@ -343,14 +384,54 @@ const translations = {
         "sqlite-server": "SQLite Server",
         "sqlite-client": "SQLite WASM",
       },
+      apiGroups: {
+        configuration: "Konfigurasi",
+        write: "Operasi tulis",
+        read: "Operasi baca",
+        batch: "Operasi batch",
+        delete: "Operasi hapus",
+        advanced: "Fitur lanjutan",
+      },
       apiSub: {
-        config: "Konfigurasi",
-        "command-payload": "JSON Payload",
-        basic: "Operasi Dasar",
-        retrieval: "Pengambilan Data",
-        deletion: "Penghapusan",
-        batch: "Operasi Batch",
-        advanced: "Fitur Lanjutan",
+        init: "init(options)",
+        db: "db(name)",
+        use: "use(engineType)",
+        engine: "engine(engineType)",
+        namespace: "namespace(name)",
+        command: "command(payload)",
+        create: "create(key, value)",
+        save: "save(key, value)",
+        update: "update(key, value)",
+        find: "find(key)",
+        findAll: "findAll()",
+        findMany: "findMany(keys)",
+        saveMany: "saveMany(items)",
+        createMany: "createMany(items)",
+        updateMany: "updateMany(items)",
+        destroyMany: "destroyMany(keys)",
+        destroy: "destroy(key)",
+        truncate: "truncate()",
+        watch: "watch(key, callback)",
+        on: "on(event, callback)",
+        transaction: "transaction(callback)",
+        describe: "describe(key)",
+        getStatistics: "getStatistics()",
+        getActivityLogs: "getActivityLogs()",
+      },
+      logsStatsGroups: {
+        configuration: "Konfigurasi",
+        logs: "Log aktivitas",
+        statistics: "Statistik",
+      },
+      logsStatsSub: {
+        "configure-logs": "configureLogs(config)",
+        "get-log-config": "getLogConfig()",
+        "get-activity-logs": "getActivityLogs(limit)",
+        "get-logs": "getLogs(limit)",
+        "clear-activity-logs": "clearActivityLogs()",
+        "get-statistic": "getStatistic(engineName)",
+        "get-statistics": "getStatistics()",
+        "statistics-aliases": "Alias statistik",
       },
       examplesSub: {
         auth: "Autentikasi",
@@ -544,6 +625,7 @@ function updateUIStrings() {
     "engine-guide": t.sidebar.engineGuide,
     interfaces: t.sidebar.interfaces,
     api: t.sidebar.api,
+    "logs-stats": t.sidebar.logsStats,
     examples: t.sidebar.usecases,
   };
 
@@ -551,13 +633,22 @@ function updateUIStrings() {
     $(`[data-page="${page}"]`).text(text);
   });
 
-  // Sidebar Sub-items (Storage Engines, API & Examples)
+  // Sidebar Sub-items (Storage Engines, API, Logs & Examples)
   Object.entries({
     ...t.sidebar.engineSub,
     ...t.sidebar.apiSub,
+    ...t.sidebar.logsStatsSub,
     ...t.sidebar.examplesSub,
   }).forEach(([anchor, text]) => {
     $(`[data-anchor="${anchor}"]`).text(text);
+  });
+
+  Object.entries(t.sidebar.apiGroups || {}).forEach(([group, text]) => {
+    $(`[data-api-group="${group}"]`).text(text);
+  });
+
+  Object.entries(t.sidebar.logsStatsGroups || {}).forEach(([group, text]) => {
+    $(`[data-logs-group="${group}"]`).text(text);
   });
 
   // Language Buttons
@@ -596,35 +687,8 @@ function getHeadingText(heading) {
   return $(heading).clone().find("i").remove().end().text().trim();
 }
 
-function renderPageToc(pageName) {
-  if (pageName === "home") {
-    $pageToc.empty();
-    return;
-  }
-
-  const headings = [...contentDiv.querySelectorAll("h2[id], h3[id]")].filter(
-    (heading) => getHeadingText(heading).length > 0,
-  );
-
-  if (!headings.length) {
-    $pageToc.empty();
-    return;
-  }
-
-  const items = headings
-    .map((heading) => {
-      const level = heading.tagName.toLowerCase();
-      const text = escapeHtml(getHeadingText(heading));
-      return `<a class="page-toc-link ${level === "h3" ? "is-nested" : ""}" href="#${pageName}:${heading.id}" data-toc-anchor="${heading.id}">${text}</a>`;
-    })
-    .join("");
-
-  $pageToc.html(`
-    <div class="page-toc-inner">
-      <div class="page-toc-title">On this page</div>
-      <nav class="page-toc-nav">${items}</nav>
-    </div>
-  `);
+function renderPageToc() {
+  $pageToc.empty();
 }
 
 function initScrollSpy(pageName) {

@@ -63,6 +63,7 @@ export const formatStandardResponse = ({
   data = null,
   message = "Success",
   engine = "unknown",
+  ...meta
 }) => {
   return {
     ok,
@@ -70,6 +71,7 @@ export const formatStandardResponse = ({
     message,
     engine,
     timestamp: Date.now(),
+    ...meta,
   };
 };
 

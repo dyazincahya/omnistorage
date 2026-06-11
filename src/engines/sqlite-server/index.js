@@ -1,18 +1,49 @@
-import Database from "better-sqlite3";
 import { BaseEngine } from "../base.js";
+
+const OMNISTORAGE_TABLE_NAME = "omnistorage_kv";
 
 export default class SQLiteServerEngine extends BaseEngine {
   constructor(dbName) {
     super(dbName, "sqlite-server");
-    this.dbFile = `${dbName}.sqlite`;
+    this.dbFile = this._resolveDbFile(dbName);
+    this.databaseExists = false;
     this._db = null;
+    this._Database = null;
+    this._fs = null;
   }
 
-  _getDb() {
+  _resolveDbFile(dbName) {
+    const sqliteExtension = /\.(sqlite|sqlite3|db)$/i;
+    const looksLikePath = /[\\/]/.test(dbName);
+    return sqliteExtension.test(dbName) || looksLikePath
+      ? dbName
+      : `${dbName}.sqlite`;
+  }
+
+  async _loadNodeModules() {
+    if (this._Database && this._fs) return;
+    if (typeof process === "undefined" || !process.versions?.node) {
+      throw new Error(
+        "SQLite server engine is only available in Node.js runtimes.",
+      );
+    }
+
+    const dynamicImport = new Function("specifier", "return import(specifier)");
+    const [{ default: Database }, fs] = await Promise.all([
+      dynamicImport("better-sqlite3"),
+      dynamicImport("node:fs"),
+    ]);
+    this._Database = Database;
+    this._fs = fs;
+  }
+
+  async _getDb() {
     if (!this._db) {
-      this._db = new Database(this.dbFile);
+      await this._loadNodeModules();
+      this.databaseExists = this._fs.existsSync(this.dbFile);
+      this._db = new this._Database(this.dbFile);
       this._db.exec(`
-        CREATE TABLE IF NOT EXISTS kv (
+        CREATE TABLE IF NOT EXISTS ${OMNISTORAGE_TABLE_NAME} (
           key TEXT PRIMARY KEY,
           value TEXT
         )
@@ -22,8 +53,10 @@ export default class SQLiteServerEngine extends BaseEngine {
   }
 
   async getItemRaw(fullKey) {
-    const db = this._getDb();
-    const row = db.prepare("SELECT value FROM kv WHERE key = ?").get(fullKey);
+    const db = await this._getDb();
+    const row = db
+      .prepare(`SELECT value FROM ${OMNISTORAGE_TABLE_NAME} WHERE key = ?`)
+      .get(fullKey);
     return row ? row.value : null;
   }
 
@@ -32,19 +65,24 @@ export default class SQLiteServerEngine extends BaseEngine {
   }
 
   async setItem(key, value) {
-    const db = this._getDb();
-    db.prepare("INSERT OR REPLACE INTO kv (key, value) VALUES (?, ?)")
-      .run(this._applyPrefix(key), value);
+    const db = await this._getDb();
+    db.prepare(
+      `INSERT OR REPLACE INTO ${OMNISTORAGE_TABLE_NAME} (key, value) VALUES (?, ?)`,
+    ).run(this._applyPrefix(key), value);
   }
 
   async removeItem(key) {
-    const db = this._getDb();
-    db.prepare("DELETE FROM kv WHERE key = ?").run(this._applyPrefix(key));
+    const db = await this._getDb();
+    db.prepare(`DELETE FROM ${OMNISTORAGE_TABLE_NAME} WHERE key = ?`).run(
+      this._applyPrefix(key),
+    );
   }
 
   async setItems(items) {
-    const db = this._getDb();
-    const insert = db.prepare("INSERT OR REPLACE INTO kv (key, value) VALUES (?, ?)");
+    const db = await this._getDb();
+    const insert = db.prepare(
+      `INSERT OR REPLACE INTO ${OMNISTORAGE_TABLE_NAME} (key, value) VALUES (?, ?)`,
+    );
     const transaction = db.transaction((data) => {
       for (const [k, v] of Object.entries(data)) {
         insert.run(this._applyPrefix(k), v);
@@ -54,8 +92,10 @@ export default class SQLiteServerEngine extends BaseEngine {
   }
 
   async removeItems(keys) {
-    const db = this._getDb();
-    const del = db.prepare("DELETE FROM kv WHERE key = ?");
+    const db = await this._getDb();
+    const del = db.prepare(
+      `DELETE FROM ${OMNISTORAGE_TABLE_NAME} WHERE key = ?`,
+    );
     const transaction = db.transaction((ks) => {
       for (const k of ks) {
         del.run(this._applyPrefix(k));
@@ -65,15 +105,21 @@ export default class SQLiteServerEngine extends BaseEngine {
   }
 
   async truncate() {
-    const db = this._getDb();
+    const db = await this._getDb();
     const prefix = `${this.dbName}_%`;
-    db.prepare("DELETE FROM kv WHERE key LIKE ?").run(prefix);
+    db.prepare(`DELETE FROM ${OMNISTORAGE_TABLE_NAME} WHERE key LIKE ?`).run(
+      prefix,
+    );
   }
 
   async getAll() {
-    const db = this._getDb();
+    const db = await this._getDb();
     const prefix = `${this.dbName}_`;
-    const rows = db.prepare("SELECT key, value FROM kv WHERE key LIKE ?").all(`${prefix}%`);
+    const rows = db
+      .prepare(
+        `SELECT key, value FROM ${OMNISTORAGE_TABLE_NAME} WHERE key LIKE ?`,
+      )
+      .all(`${prefix}%`);
     const results = {};
     rows.forEach((row) => {
       const cleanKey = row.key.replace(prefix, "");
@@ -83,8 +129,8 @@ export default class SQLiteServerEngine extends BaseEngine {
   }
 
   async keys() {
-    const db = this._getDb();
-    const rows = db.prepare("SELECT key FROM kv").all();
+    const db = await this._getDb();
+    const rows = db.prepare(`SELECT key FROM ${OMNISTORAGE_TABLE_NAME}`).all();
     return rows.map((row) => row.key);
   }
 }

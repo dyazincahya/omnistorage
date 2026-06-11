@@ -25,7 +25,89 @@ describe("StoreManager", () => {
     expect(store.getDbName()).toBe("newdb");
   });
 
-  test("should use memory engine by default", () => {
+  test("should use sqlite engine by default", () => {
+    expect(store.defaultEngine.engineType).toBe("sqlite-server");
+  });
+
+  test("should configure activity log engine", () => {
+    store.configureLogs("auto");
+    const config = store.getLogConfig();
+    expect(config.mode).toBe("auto");
+    expect(typeof config.databaseExists).toBe("boolean");
+  });
+
+  test("should include log source in activity log response", async () => {
+    await store.save("logSourceKey", "value");
+    const result = await store.getActivityLogs(1);
+
+    expect(result.source).toBe("server");
+    expect(result.data[0].source).toBe("server");
+  });
+
+  test("should initialize global config", async () => {
+    const result = await store.init({
+      db: {
+        name: "omnistorage",
+        engine: "sqlite",
+      },
+      logs: "server",
+    });
+
+    expect(result).toBe(store);
+    expect(store.getDbName()).toBe("omnistorage");
+    expect(store.defaultEngine.engineType).toBe("sqlite-server");
+    expect(store.getLogConfig().mode).toBe("server");
+  });
+
+  test("should keep legacy init config", async () => {
+    await store.init({
+      dbName: "legacy",
+      engine: "memory",
+      logs: "auto",
+    });
+
+    expect(store.getDbName()).toBe("legacy");
+    expect(store.defaultEngine.engineType).toBe("memory");
+    expect(store.getLogConfig().mode).toBe("auto");
+  });
+
+  test("should initialize default global config", async () => {
+    await store.init();
+
+    expect(store.getDbName()).toBe("omnistorage");
+    expect(store.defaultEngine.engineType).toBe("sqlite-server");
+    expect(store.getLogConfig().mode).toBe("auto");
+  });
+
+  test("should keep chainable global config", () => {
+    const result = store.db("app").use("memory").configureLogs("auto");
+
+    expect(result).toBe(store);
+    expect(store.getDbName()).toBe("app");
+    expect(store.defaultEngine.engineType).toBe("memory");
+    expect(store.getLogConfig().mode).toBe("auto");
+  });
+
+  test("should support semantic chainable config", () => {
+    const result = store
+      .use({
+        db: {
+          name: "omnistorage",
+          engine: "sqlite",
+        },
+      })
+      .configureLogs("auto");
+
+    expect(result).toBe(store);
+    expect(store.getDbName()).toBe("omnistorage");
+    expect(store.defaultEngine.engineType).toBe("sqlite-server");
+    expect(store.getLogConfig().mode).toBe("auto");
+  });
+
+  test("should keep flat chainable config compatibility", () => {
+    store.use({ dbName: "legacy", engine: "memory" });
+
+    expect(store.getDbName()).toBe("legacy");
     expect(store.defaultEngine.engineType).toBe("memory");
   });
 

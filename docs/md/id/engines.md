@@ -8,13 +8,13 @@
 
 LocalStorage menggunakan API native browser `window.localStorage`. Data disimpan per origin dan tetap tersedia setelah reload halaman, browser restart, atau tab ditutup sampai data dihapus oleh user, browser, atau aplikasi.
 
-| Properti | Nilai |
-| :--- | :--- |
-| **Key Engine** | `local` |
-| **Tipe** | Client (Browser) |
-| **Persistensi** | Persisten sampai dihapus |
-| **Limit** | Guard default 5 MB |
-| **Dependensi** | [Native Browser API](https://developer.mozilla.org/en-US/docs/Web/API/Window/localStorage) |
+| Properti        | Nilai                                                                                      |
+| :-------------- | :----------------------------------------------------------------------------------------- |
+| **Key Engine**  | `local`                                                                                    |
+| **Tipe**        | Client (Browser)                                                                           |
+| **Persistensi** | Persisten sampai dihapus                                                                   |
+| **Limit**       | Guard default 5 MB                                                                         |
+| **Dependensi**  | [Native Browser API](https://developer.mozilla.org/en-US/docs/Web/API/Window/localStorage) |
 
 **Fungsi:** Menyimpan data key-value kecil langsung di browser menggunakan Web Storage berbasis string.
 
@@ -37,13 +37,13 @@ LocalStorage menggunakan API native browser `window.localStorage`. Data disimpan
 
 SessionStorage menggunakan API native browser `window.sessionStorage`. Perilakunya mirip LocalStorage, tetapi data hanya berlaku untuk tab/sesi browser saat ini.
 
-| Properti | Nilai |
-| :--- | :--- |
-| **Key Engine** | `session` |
-| **Tipe** | Client (Browser) |
-| **Persistensi** | Hanya sesi tab saat ini |
-| **Limit** | Guard default 5 MB |
-| **Dependensi** | [Native Browser API](https://developer.mozilla.org/en-US/docs/Web/API/Window/sessionStorage) |
+| Properti        | Nilai                                                                                        |
+| :-------------- | :------------------------------------------------------------------------------------------- |
+| **Key Engine**  | `session`                                                                                    |
+| **Tipe**        | Client (Browser)                                                                             |
+| **Persistensi** | Hanya sesi tab saat ini                                                                      |
+| **Limit**       | Guard default 5 MB                                                                           |
+| **Dependensi**  | [Native Browser API](https://developer.mozilla.org/en-US/docs/Web/API/Window/sessionStorage) |
 
 **Fungsi:** Menyimpan data sementara yang seharusnya hilang ketika tab atau sesi browser berakhir.
 
@@ -66,13 +66,13 @@ SessionStorage menggunakan API native browser `window.sessionStorage`. Perilakun
 
 Cookies menyimpan data key-value kecil melalui interface browser `document.cookie`. Berbeda dari LocalStorage, cookie dapat ikut terkirim otomatis bersama request HTTP yang sesuai, tergantung pengaturan path, domain, SameSite, dan secure.
 
-| Properti | Nilai |
-| :--- | :--- |
-| **Key Engine** | `cookie` |
-| **Tipe** | Client (Browser) |
-| **Persistensi** | Session cookie secara default pada engine saat ini |
-| **Limit** | Guard default total ~80 KB; 4 KB per item cookie |
-| **Dependensi** | [Native Browser API](https://developer.mozilla.org/en-US/docs/Web/API/Document/cookie) |
+| Properti        | Nilai                                                                                  |
+| :-------------- | :------------------------------------------------------------------------------------- |
+| **Key Engine**  | `cookie`                                                                               |
+| **Tipe**        | Client (Browser)                                                                       |
+| **Persistensi** | Session cookie secara default pada engine saat ini                                     |
+| **Limit**       | Guard default total ~80 KB; 4 KB per item cookie                                       |
+| **Dependensi**  | [Native Browser API](https://developer.mozilla.org/en-US/docs/Web/API/Document/cookie) |
 
 **Fungsi:** Menyimpan nilai kecil yang dapat diakses browser sebagai HTTP cookie dengan prefix key standar OmniStorage. Engine saat ini menulis cookie yang bisa diakses browser melalui `document.cookie` dengan default `Path=/` dan `SameSite=Lax`.
 
@@ -97,13 +97,13 @@ Cookies menyimpan data key-value kecil melalui interface browser `document.cooki
 
 Cache Storage menggunakan API browser `caches`. API ini umum digunakan oleh Progressive Web App dan Service Worker untuk menyimpan pasangan request/response agar aplikasi bisa bekerja offline dan mengakses data berulang dengan cepat.
 
-| Properti | Nilai |
-| :--- | :--- |
-| **Key Engine** | `cache` |
-| **Tipe** | Client (Browser) |
-| **Persistensi** | Cache persisten best-effort, mengikuti quota/eviction browser |
-| **Limit** | Soft guard 50 MB |
-| **Dependensi** | [Native Browser API](https://developer.mozilla.org/en-US/docs/Web/API/CacheStorage) |
+| Properti        | Nilai                                                                               |
+| :-------------- | :---------------------------------------------------------------------------------- |
+| **Key Engine**  | `cache`                                                                             |
+| **Tipe**        | Client (Browser)                                                                    |
+| **Persistensi** | Cache persisten best-effort, mengikuti quota/eviction browser                       |
+| **Limit**       | Soft guard 50 MB                                                                    |
+| **Dependensi**  | [Native Browser API](https://developer.mozilla.org/en-US/docs/Web/API/CacheStorage) |
 
 **Fungsi:** Menyimpan nilai OmniStorage sebagai response JSON di balik key request internal yang dibuat otomatis.
 
@@ -127,15 +127,15 @@ Cache Storage menggunakan API browser `caches`. API ini umum digunakan oleh Prog
 
 IndexedDB adalah API database browser untuk menyimpan data terstruktur. API ini mendukung dataset lebih besar daripada LocalStorage dan dirancang asynchronous agar tidak memblokir main thread.
 
-| Properti | Nilai |
-| :--- | :--- |
-| **Key Engine** | `indexeddb` |
-| **Tipe** | Client (Browser) |
+| Properti        | Nilai                                                            |
+| :-------------- | :--------------------------------------------------------------- |
+| **Key Engine**  | `indexeddb`                                                      |
+| **Tipe**        | Client (Browser)                                                 |
 | **Persistensi** | Persisten sampai dihapus atau terkena kebijakan eviction browser |
-| **Limit** | Soft guard 500 MB |
-| **Dependensi** | [`idb`](https://www.npmjs.com/package/idb) |
+| **Limit**       | Soft guard 500 MB                                                |
+| **Dependensi**  | [`idb`](https://www.npmjs.com/package/idb)                       |
 
-**Fungsi:** Menyimpan data terstruktur sisi client ke object store IndexedDB menggunakan key dan value OmniStorage.
+**Fungsi:** Menyimpan data terstruktur sisi client ke object store IndexedDB `omnistorage_kv` menggunakan key dan value OmniStorage.
 
 **Umum digunakan untuk:**
 
@@ -156,15 +156,15 @@ IndexedDB adalah API database browser untuk menyimpan data terstruktur. API ini 
 
 Engine memory menyimpan data di memori runtime JavaScript aktif. Di browser, data hidup dalam konteks halaman saat ini. Di Node.js, data hidup dalam proses yang sedang berjalan.
 
-| Properti | Nilai |
-| :--- | :--- |
-| **Key Engine** | `memory` |
-| **Tipe** | Runtime universal (Browser & Node.js) |
-| **Persistensi** | Volatile, hilang saat runtime berakhir |
-| **Limit** | Soft guard 50 MB |
-| **Dependensi** | [`cacheable`](https://www.npmjs.com/package/cacheable) |
+| Properti        | Nilai                                                                                                    |
+| :-------------- | :------------------------------------------------------------------------------------------------------- |
+| **Key Engine**  | `memory`                                                                                                 |
+| **Tipe**        | Runtime universal (Browser & Node.js)                                                                    |
+| **Persistensi** | Volatile, hilang saat runtime berakhir                                                                   |
+| **Limit**       | Soft guard 50 MB                                                                                         |
+| **Dependensi**  | JavaScript [`Map`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Map) |
 
-**Fungsi:** Menyediakan penyimpanan sementara yang sangat cepat tanpa menulis ke API browser atau disk.
+**Fungsi:** Menyediakan penyimpanan sementara yang sangat cepat menggunakan JavaScript `Map` native tanpa menulis ke API browser, disk, atau library cache pihak ketiga.
 
 **Umum digunakan untuk:**
 
@@ -178,21 +178,23 @@ Engine memory menyimpan data di memori runtime JavaScript aktif. Di browser, dat
 
 - Data hilang saat halaman reload atau proses Node.js restart.
 - Tidak dibagikan antar tab, worker, atau instance server.
+- Pada proyek yang memiliki frontend dan backend sekaligus, `memory` di browser dan `memory` di Node.js terpisah karena masing-masing runtime memiliki instance `Map` sendiri.
+- Tidak memakai `cacheable` atau library memory pihak ketiga lainnya.
 - Cocok untuk kecepatan dan state sementara, bukan penyimpanan durable.
 
 ---
 
 <h2 id="file"><i class="ri-folder-open-line"></i> File System</h2>
 
-Engine file menyimpan data ke disk menggunakan kemampuan file system Node.js. Pada implementasi saat ini, setiap `dbName` disimpan sebagai file JSON di dalam direktori `.storage` pada working directory proses.
+Engine file menyimpan data ke disk menggunakan kemampuan file system Node.js. Pada implementasi saat ini, setiap `dbName` disimpan sebagai file JSON di dalam direktori `.omnistorage` pada working directory proses.
 
-| Properti | Nilai |
-| :--- | :--- |
-| **Key Engine** | `file` |
-| **Tipe** | Server (Node.js) |
-| **Persistensi** | Persisten di disk lokal |
-| **Limit** | Soft guard 100 MB |
-| **Dependensi** | Node.js [`fs`](https://nodejs.org/api/fs.html) |
+| Properti        | Nilai                                          |
+| :-------------- | :--------------------------------------------- |
+| **Key Engine**  | `file`                                         |
+| **Tipe**        | Server (Node.js)                               |
+| **Persistensi** | Persisten di disk lokal                        |
+| **Limit**       | Soft guard 100 MB                              |
+| **Dependensi**  | Node.js [`fs`](https://nodejs.org/api/fs.html) |
 
 **Fungsi:** Menyimpan data key-value ke file JSON di server atau runtime Node.js lokal.
 
@@ -216,15 +218,15 @@ Engine file menyimpan data ke disk menggunakan kemampuan file system Node.js. Pa
 
 SQLite Server menggunakan SQLite melalui Node.js. Di OmniStorage, engine ini menyediakan penyimpanan key-value berbasis SQLite yang durable untuk aplikasi server-side.
 
-| Properti | Nilai |
-| :--- | :--- |
-| **Key Engine** | `sqlite-server` |
-| **Tipe** | Server (Node.js) |
-| **Persistensi** | File database SQLite persisten |
-| **Limit** | Soft guard 1 GB |
-| **Dependensi** | [`better-sqlite3`](https://www.npmjs.com/package/better-sqlite3) |
+| Properti        | Nilai                                                            |
+| :-------------- | :--------------------------------------------------------------- |
+| **Key Engine**  | `sqlite-server`                                                  |
+| **Tipe**        | Server (Node.js)                                                 |
+| **Persistensi** | File database SQLite persisten                                   |
+| **Limit**       | Soft guard 1 GB                                                  |
+| **Dependensi**  | [`better-sqlite3`](https://www.npmjs.com/package/better-sqlite3) |
 
-**Fungsi:** Menyimpan data key-value OmniStorage ke file database SQLite lokal di server.
+**Fungsi:** Menyimpan data key-value OmniStorage ke table `omnistorage_kv` di dalam file database SQLite lokal di server.
 
 **Umum digunakan untuk:**
 
@@ -237,6 +239,7 @@ SQLite Server menggunakan SQLite melalui Node.js. Di OmniStorage, engine ini men
 
 - Membutuhkan lingkungan Node.js dan dukungan dependency SQLite native.
 - Cocok untuk database lokal yang durable.
+- `.db(name)` mengatur nama database logis. Jika database SQLite yang sesuai sudah ada, OmniStorage akan memakainya dan hanya membuat table `omnistorage_kv` jika belum ada. Jika belum ada, SQLite akan membuatnya.
 - OmniStorage mengekspos engine ini sebagai key-value engine, bukan API query SQL penuh.
 - Untuk deployment multi-server terdistribusi, pertimbangkan bagaimana file SQLite dibagikan atau direplikasi.
 
@@ -246,15 +249,15 @@ SQLite Server menggunakan SQLite melalui Node.js. Di OmniStorage, engine ini men
 
 SQLite Client menggunakan SQLite yang dikompilasi ke WebAssembly, sehingga perilaku SQLite dapat berjalan langsung di browser.
 
-| Properti | Nilai |
-| :--- | :--- |
-| **Key Engine** | `sqlite-client` |
-| **Tipe** | Client (Browser) |
-| **Persistensi** | Persisten dengan OPFS jika tersedia; selain itu tergantung browser/runtime |
-| **Limit** | Soft guard 256 MB |
-| **Dependensi** | [`@sqlite.org/sqlite-wasm`](https://www.npmjs.com/package/@sqlite.org/sqlite-wasm) |
+| Properti        | Nilai                                                                              |
+| :-------------- | :--------------------------------------------------------------------------------- |
+| **Key Engine**  | `sqlite-client`                                                                    |
+| **Tipe**        | Client (Browser)                                                                   |
+| **Persistensi** | Persisten dengan OPFS jika tersedia; selain itu tergantung browser/runtime         |
+| **Limit**       | Soft guard 256 MB                                                                  |
+| **Dependensi**  | [`@sqlite.org/sqlite-wasm`](https://www.npmjs.com/package/@sqlite.org/sqlite-wasm) |
 
-**Fungsi:** Menyediakan engine key-value berbasis SQLite di browser melalui WebAssembly. Implementasi saat ini menggunakan OPFS jika didukung dan fallback ke mode database SQLite WASM standar jika tidak tersedia.
+**Fungsi:** Menyediakan engine key-value berbasis SQLite di browser melalui WebAssembly. Data disimpan di table `omnistorage_kv`. Implementasi saat ini memeriksa storage SQLite berbasis OPFS jika tersedia, memakai database existing dengan nama yang sama, dan hanya membuat database/table ketika diperlukan.
 
 **Umum digunakan untuk:**
 
@@ -267,6 +270,7 @@ SQLite Client menggunakan SQLite yang dikompilasi ke WebAssembly, sehingga peril
 
 - Dukungan browser dan perilaku persistensi dapat bergantung pada WebAssembly, OPFS, dan kemampuan origin storage.
 - Lebih berat dibanding LocalStorage atau IndexedDB.
+- Jika `.db(name)` cocok dengan database SQLite browser yang sudah ada, OmniStorage akan memakainya dan hanya membuat table `omnistorage_kv` jika belum ada.
 - OmniStorage mengekspos engine ini sebagai key-value engine, bukan API query SQL penuh.
 - Gunakan ketika penyimpanan browser berbasis SQLite cukup bermanfaat untuk menjustifikasi kompleksitas tambahan.
 

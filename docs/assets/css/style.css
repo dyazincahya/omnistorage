@@ -237,6 +237,28 @@ pre code {
   margin-left: 8px;
 }
 
+.nav-subgroup-title {
+  margin: 10px 0 3px 8px;
+  padding: 2px 12px 2px 12px;
+  color: var(--color-fg-default);
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1.35;
+  border-left: 1px solid transparent;
+}
+
+.api-method-menu {
+  padding-left: 10px;
+}
+
+.api-method-item {
+  padding-left: 20px;
+  font-family:
+    ui-monospace, SFMono-Regular, SFMono-Regular, Consolas, "Liberation Mono",
+    Menlo, monospace;
+  font-size: 12px;
+}
+
 .nav-subitem:hover {
   color: var(--primary);
   background-color: rgba(83, 64, 200, 0.05);

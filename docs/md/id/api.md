@@ -4,7 +4,47 @@ Gunakan metode yang familiar untuk mengelola data Anda. Semua operasi async meng
 
 <h2 id="config"><i class="ri-settings-4-line"></i> Konfigurasi & Namespacing</h2>
 
-### <i class="ri-database-2-line"></i> `.db(name)`
+<h3 id="init"><i class="ri-rocket-line"></i> <code>.init(options)</code></h3>
+
+Menginisialisasi konfigurasi global store di satu tempat. Ini cocok dipakai di `app.js` atau file bootstrap sebelum operasi storage pertama.
+
+```javascript
+import store from "@x-labs-myid/omnistorage";
+
+await store.init({
+  db: {
+    name: "omnistorage",
+    engine: "sqlite",
+  },
+  logs: "auto",
+});
+```
+
+Padanan dengan setup chainable:
+
+```javascript
+store
+  .use({
+    db: {
+      name: "omnistorage",
+      engine: "sqlite",
+    },
+  })
+  .configureLogs("auto");
+```
+
+| Opsi        | Wajib | Deskripsi                                                                                                                                        |
+| :---------- | :---: | :----------------------------------------------------------------------------------------------------------------------------------------------- |
+| `db`        | Tidak | Object konfigurasi database. Default `{ name: "omnistorage", engine: "sqlite" }`.                                                                |
+| `db.name`   | Tidak | Nama database global. Default `omnistorage`.                                                                                                     |
+| `db.engine` | Tidak | Engine storage default. Nilai: `local`, `session`, `cookie`, `cache`, `memory`, `file`, `indexeddb`, `sqlite`, `sqlite-client`, `sqlite-server`. |
+| `logs`      | Tidak | Mode log: `auto`, `client`, `server`, atau `{ mode: "auto" }`.                                                                                   |
+
+> `sqlite` adalah engine database default dan otomatis menjadi `sqlite-client` di browser atau `sqlite-server` di Node.js.
+
+> `.init()` bersifat tambahan. Pemanggilan `.db()`, `.use()`, dan `.configureLogs()` tetap didukung.
+
+<h3 id="db"><i class="ri-database-2-line"></i> <code>.db(name)</code></h3>
 
 Mengatur nama database global. Ini bertindak sebagai nama database fisik di IndexedDB atau prefix global pada engine lainnya.
 
@@ -14,19 +54,28 @@ import store from "@x-labs-myid/omnistorage";
 store.db("my_app");
 ```
 
-### <i class="ri-plug-line"></i> `.use(engineType)`
+<h3 id="use"><i class="ri-plug-line"></i> <code>.use(config)</code></h3>
 
-Mengatur engine penyimpanan default secara global.
+Mengatur nama database global dan engine penyimpanan default. Anda bisa mengirim string engine saja untuk kasus sederhana, atau object konfigurasi database yang lebih semantik ketika mengatur keduanya.
 
-> Jika tidak ada engine global yang diatur dengan `.use()` dan tidak ada engine lokal yang dipilih dengan `.engine()`, OmniStorage menggunakan `memory` secara default.
+> Jika tidak ada engine global yang diatur dengan `.use()` dan tidak ada engine lokal yang dipilih dengan `.engine()`, OmniStorage menggunakan `sqlite` secara default dan otomatis memilih `sqlite-client` atau `sqlite-server` sesuai runtime.
 
 ```javascript
 import store from "@x-labs-myid/omnistorage";
 
-store.use("session"); // local, session, cookie, cache, memory, file, indexeddb, sqlite-server, sqlite-client
+store.use("sqlite"); // setup sederhana hanya untuk engine
+
+store.use({
+  db: {
+    name: "omnistorage",
+    engine: "sqlite",
+  },
+});
 ```
 
-### <i class="ri-equalizer-line"></i> `.engine(engineType)`
+Engine yang tersedia: `local`, `session`, `cookie`, `cache`, `memory`, `file`, `indexeddb`, `sqlite`, `sqlite-server`, `sqlite-client`.
+
+<h3 id="engine"><i class="ri-equalizer-line"></i> <code>.engine(engineType)</code></h3>
 
 Beralih sementara ke engine tertentu untuk serangkaian operasi tanpa mengubah default global.
 
@@ -38,7 +87,7 @@ await store.engine("memory").save("temp_key", "value");
 
 > `.config(engineType)` masih didukung sebagai alias backward-compatible.
 
-### <i class="ri-folder-shield-line"></i> `.namespace(name)`
+<h3 id="namespace"><i class="ri-folder-shield-line"></i> <code>.namespace(name)</code></h3>
 
 Membuat lapisan isolasi logis di dalam engine saat ini.
 
@@ -53,7 +102,7 @@ await auth.save("token", "xyz123"); // Disimpan sebagai "dbName_v1/auth:token"
 
 <h2 id="command-payload"><i class="ri-terminal-box-line"></i> JSON Command Runner</h2>
 
-### <i class="ri-braces-line"></i> `.command(payload)` / `.execute(payload)` / `.run(payload)`
+<h3 id="command"><i class="ri-braces-line"></i> <code>.command(payload)</code> / <code>.execute(payload)</code> / <code>.run(payload)</code></h3>
 
 Menjalankan operasi storage dari payload command berbentuk objek JSON-compatible.
 
@@ -111,7 +160,7 @@ const result = await store.db("demo_app").engine("memory").save("user:1", {
 | Field       |   Wajib    | Deskripsi                                                                                                        |
 | :---------- | :--------: | :--------------------------------------------------------------------------------------------------------------- |
 | `operation` |     Ya     | Operasi yang akan dijalankan. `action` dan `method` diterima sebagai alias.                                      |
-| `engine`    |   Tidak    | Engine penyimpanan. Default mengikuti engine saat ini, yaitu `memory` kecuali diubah dengan `.use()`.            |
+| `engine`    |   Tidak    | Engine penyimpanan. Default mengikuti engine saat ini, yaitu `sqlite` kecuali diubah dengan `.use()`.            |
 | `dbName`    |   Tidak    | Nama database untuk command ini. `database` diterima sebagai alias.                                              |
 | `namespace` |   Tidak    | Namespace logis. Default `default`. Nilai selain `default` akan menjalankan operasi di dalam namespace tersebut. |
 | `key`       | Tergantung | Wajib untuk operasi satu key seperti `save`, `find`, `delete`, dan `describe`.                                   |
@@ -252,7 +301,7 @@ Sebelum memilih metode, pahami bagaimana keduanya menangani data yang sudah ada:
 | **Jika Key Ada**  | <i class="ri-error-warning-line"></i> **Gagal** (Error). | <i class="ri-refresh-line"></i> **Update** (Menimpa). |
 | **Kasus Terbaik** | ID unik, registrasi.                                     | Pengaturan user, profil.                              |
 
-### <i class="ri-add-circle-line"></i> `.create(key, value)`
+<h3 id="create"><i class="ri-add-circle-line"></i> <code>.create(key, value)</code></h3>
 
 Menyimpan data baru. Fungsi ini akan gagal jika key sudah ada di dalam penyimpanan.
 
@@ -294,7 +343,7 @@ const res = await store.command({
 
 :::
 
-### <i class="ri-edit-line"></i> `.update(key, value)`
+<h3 id="update"><i class="ri-edit-line"></i> <code>.update(key, value)</code></h3>
 
 Memperbarui data yang sudah ada. Fungsi ini akan gagal jika key tidak ditemukan.
 
@@ -322,7 +371,7 @@ const res = await store.command({
 
 :::
 
-### <i class="ri-save-3-line"></i> `.save(key, value)`
+<h3 id="save"><i class="ri-save-3-line"></i> <code>.save(key, value)</code></h3>
 
 Operasi _upsert_. Secara otomatis akan memutuskan apakah membuat data baru atau memperbarui yang sudah ada.
 
@@ -374,7 +423,7 @@ const res = await store.command({
 
 <h2 id="retrieval"><i class="ri-search-eye-line"></i> Pengambilan Data</h2>
 
-### <i class="ri-find-replace-line"></i> `.find(key, options?)` / `.findOne(key, options?)`
+<h3 id="find"><i class="ri-find-replace-line"></i> <code>.find(key, options?)</code> / <code>.findOne(key, options?)</code></h3>
 
 Mengambil satu entri data. `.findOne`, `.get`, `.getByKey`, dan `.getById` adalah alias untuk perilaku pencarian yang sama.
 
@@ -408,7 +457,7 @@ const res = await store.command({
 
 :::
 
-### <i class="ri-list-check"></i> `.findAll()` / `.getAll()`
+<h3 id="findAll"><i class="ri-list-check"></i> <code>.findAll()</code> / <code>.getAll()</code></h3>
 
 Mengambil semua data dalam database atau namespace saat ini.
 
@@ -434,7 +483,7 @@ const res = await store.command({
 
 :::
 
-### <i class="ri-stack-line"></i> `.findMany(keys, options?)` / `.getMany(keys, options?)`
+<h3 id="findMany"><i class="ri-stack-line"></i> <code>.findMany(keys, options?)</code> / <code>.getMany(keys, options?)</code></h3>
 
 Mengambil banyak entri berdasarkan daftar key.
 
@@ -465,7 +514,7 @@ const res = await store.command({
 
 <h2 id="deletion"><i class="ri-delete-bin-line"></i> Penghapusan</h2>
 
-### <i class="ri-close-circle-line"></i> `.destroy(key)` / `.delete(key)` / `.remove(key)`
+<h3 id="destroy"><i class="ri-close-circle-line"></i> <code>.destroy(key)</code> / <code>.delete(key)</code> / <code>.remove(key)</code></h3>
 
 Menghapus satu entri data berdasarkan key.
 
@@ -492,7 +541,7 @@ const res = await store.command({
 
 :::
 
-### <i class="ri-eraser-line"></i> `.truncate()` / `.clear()`
+<h3 id="truncate"><i class="ri-eraser-line"></i> <code>.truncate()</code> / <code>.clear()</code></h3>
 
 Menghapus semua data dalam database atau namespace saat ini.
 
@@ -524,7 +573,7 @@ const res = await store.command({
 
 Memproses banyak item secara efisien dalam satu panggilan.
 
-### `.saveMany(items)` / `.setMany(items)`
+<h3 id="saveMany"><code>.saveMany(items)</code> / <code>.setMany(items)</code></h3>
 
 _Upsert_ banyak item sekaligus.
 
@@ -557,7 +606,7 @@ await store.command({
 
 :::
 
-### `.createMany(items)`
+<h3 id="createMany"><code>.createMany(items)</code></h3>
 
 _Insert_ banyak item sekaligus. Key yang sudah ada akan dilaporkan gagal.
 
@@ -590,7 +639,7 @@ await store.command({
 
 :::
 
-### `.updateMany(items)`
+<h3 id="updateMany"><code>.updateMany(items)</code></h3>
 
 _Update_ banyak item sekaligus. Key yang tidak ditemukan akan dilaporkan gagal.
 
@@ -623,7 +672,7 @@ await store.command({
 
 :::
 
-### `.destroyMany(keys)` / `.deleteMany(keys)`
+<h3 id="destroyMany"><code>.destroyMany(keys)</code> / <code>.deleteMany(keys)</code></h3>
 
 Menghapus banyak item berdasarkan key.
 
@@ -654,7 +703,7 @@ await store.command({
 
 <h2 id="advanced"><i class="ri-rocket-2-line"></i> Fitur Lanjutan</h2>
 
-### <i class="ri-eye-line"></i> `.watch(key, callback)`
+<h3 id="watch"><i class="ri-eye-line"></i> <code>.watch(key, callback)</code></h3>
 
 Memantau perubahan pada key tertentu. Mengembalikan fungsi `unwatch`.
 
@@ -668,7 +717,7 @@ const unwatch = store.watch("user:101", (newValue, oldValue) => {
 unwatch();
 ```
 
-### <i class="ri-flashlight-line"></i> `.on(event, callback)`
+<h3 id="on"><i class="ri-flashlight-line"></i> <code>.on(event, callback)</code></h3>
 
 Hook global untuk operasi penyimpanan. Event yang didukung: `onSet`, `onGet`, `onDelete`, `onClear`.
 
@@ -680,7 +729,7 @@ store.on("onSet", (data) => {
 });
 ```
 
-### <i class="ri-exchange-funds-line"></i> `.transaction(callback)`
+<h3 id="transaction"><i class="ri-exchange-funds-line"></i> <code>.transaction(callback)</code></h3>
 
 Eksekusi banyak operasi dalam blok bergaya transaksi.
 
@@ -693,7 +742,7 @@ await store.transaction(async (trx) => {
 });
 ```
 
-### <i class="ri-information-line"></i> `.describe(key)` / `.getMeta(key)`
+<h3 id="describe"><i class="ri-information-line"></i> <code>.describe(key)</code> / <code>.getMeta(key)</code></h3>
 
 Mengambil metadata untuk key tertentu, seperti estimasi ukuran dalam bytes dan engine yang digunakan.
 
@@ -704,7 +753,7 @@ const meta = await store.describe("user:101");
 console.log(meta.data.size);
 ```
 
-### <i class="ri-bar-chart-box-line"></i> `.getStatistic(name?)` / `.getStatistics()`
+<h3 id="getStatistics"><i class="ri-bar-chart-box-line"></i> <code>.getStatistic(name?)</code> / <code>.getStatistics()</code></h3>
 
 Mengambil statistik penggunaan penyimpanan. Lihat [Log & Statistik](logs-stats.md) untuk detail log aktivitas.
 
@@ -715,7 +764,7 @@ const allStats = await store.getStatistics();
 const localStats = await store.getStatistic("local");
 ```
 
-### <i class="ri-file-list-3-line"></i> `.getActivityLogs(limit?)`, `.getLogs(limit?)`, `.clearActivityLogs()`
+<h3 id="getActivityLogs"><i class="ri-file-list-3-line"></i> <code>.getActivityLogs(limit?)</code>, <code>.getLogs(limit?)</code>, <code>.clearActivityLogs()</code></h3>
 
 Membaca atau menghapus log aktivitas OmniStorage.
 

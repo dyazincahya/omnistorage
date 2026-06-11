@@ -8,12 +8,12 @@
 
 LocalStorage uses the browser's native `window.localStorage` API. Data is stored per origin and remains available after page reloads, browser restarts, or tab closes until the user, browser, or application clears it.
 
-| Property | Value |
-| :--- | :--- |
-| **Engine Key** | `local` |
-| **Type** | Client (Browser) |
-| **Persistence** | Persistent until cleared |
-| **Limit** | 5 MB default guard |
+| Property         | Value                                                                                      |
+| :--------------- | :----------------------------------------------------------------------------------------- |
+| **Engine Key**   | `local`                                                                                    |
+| **Type**         | Client (Browser)                                                                           |
+| **Persistence**  | Persistent until cleared                                                                   |
+| **Limit**        | 5 MB default guard                                                                         |
 | **Dependencies** | [Native Browser API](https://developer.mozilla.org/en-US/docs/Web/API/Window/localStorage) |
 
 **What it does:** Stores small key-value data directly in the browser using string-based Web Storage.
@@ -37,12 +37,12 @@ LocalStorage uses the browser's native `window.localStorage` API. Data is stored
 
 SessionStorage uses the browser's native `window.sessionStorage` API. It behaves similarly to LocalStorage, but data is scoped to the current browser tab/session.
 
-| Property | Value |
-| :--- | :--- |
-| **Engine Key** | `session` |
-| **Type** | Client (Browser) |
-| **Persistence** | Current tab session only |
-| **Limit** | 5 MB default guard |
+| Property         | Value                                                                                        |
+| :--------------- | :------------------------------------------------------------------------------------------- |
+| **Engine Key**   | `session`                                                                                    |
+| **Type**         | Client (Browser)                                                                             |
+| **Persistence**  | Current tab session only                                                                     |
+| **Limit**        | 5 MB default guard                                                                           |
 | **Dependencies** | [Native Browser API](https://developer.mozilla.org/en-US/docs/Web/API/Window/sessionStorage) |
 
 **What it does:** Stores temporary key-value data that should disappear when the tab or browser session ends.
@@ -66,12 +66,12 @@ SessionStorage uses the browser's native `window.sessionStorage` API. It behaves
 
 Cookies store small key-value data through the browser's `document.cookie` interface. Unlike LocalStorage, cookies may be sent automatically with matching HTTP requests, depending on path, domain, SameSite, and secure settings.
 
-| Property | Value |
-| :--- | :--- |
-| **Engine Key** | `cookie` |
-| **Type** | Client (Browser) |
-| **Persistence** | Session cookie by default in the current engine |
-| **Limit** | ~80 KB total default guard; 4 KB per cookie item |
+| Property         | Value                                                                                  |
+| :--------------- | :------------------------------------------------------------------------------------- |
+| **Engine Key**   | `cookie`                                                                               |
+| **Type**         | Client (Browser)                                                                       |
+| **Persistence**  | Session cookie by default in the current engine                                        |
+| **Limit**        | ~80 KB total default guard; 4 KB per cookie item                                       |
 | **Dependencies** | [Native Browser API](https://developer.mozilla.org/en-US/docs/Web/API/Document/cookie) |
 
 **What it does:** Stores small browser-accessible values as HTTP cookies using OmniStorage's standard key prefixing. The current engine writes browser-accessible cookies through `document.cookie` with default `Path=/` and `SameSite=Lax`.
@@ -97,12 +97,12 @@ Cookies store small key-value data through the browser's `document.cookie` inter
 
 Cache Storage uses the browser's `caches` API. It is commonly used by Progressive Web Apps and Service Workers to store request/response pairs for offline support and fast repeat access.
 
-| Property | Value |
-| :--- | :--- |
-| **Engine Key** | `cache` |
-| **Type** | Client (Browser) |
-| **Persistence** | Best-effort persistent cache, subject to browser quota/eviction policy |
-| **Limit** | 50 MB soft guard |
+| Property         | Value                                                                               |
+| :--------------- | :---------------------------------------------------------------------------------- |
+| **Engine Key**   | `cache`                                                                             |
+| **Type**         | Client (Browser)                                                                    |
+| **Persistence**  | Best-effort persistent cache, subject to browser quota/eviction policy              |
+| **Limit**        | 50 MB soft guard                                                                    |
 | **Dependencies** | [Native Browser API](https://developer.mozilla.org/en-US/docs/Web/API/CacheStorage) |
 
 **What it does:** Stores OmniStorage values as JSON responses behind generated internal request keys.
@@ -127,15 +127,15 @@ Cache Storage uses the browser's `caches` API. It is commonly used by Progressiv
 
 IndexedDB is a browser database API for storing structured data. It supports larger datasets than LocalStorage and is designed for asynchronous, non-blocking storage.
 
-| Property | Value |
-| :--- | :--- |
-| **Engine Key** | `indexeddb` |
-| **Type** | Client (Browser) |
-| **Persistence** | Persistent until cleared or evicted by browser policy |
-| **Limit** | 500 MB soft guard |
-| **Dependencies** | [`idb`](https://www.npmjs.com/package/idb) |
+| Property         | Value                                                 |
+| :--------------- | :---------------------------------------------------- |
+| **Engine Key**   | `indexeddb`                                           |
+| **Type**         | Client (Browser)                                      |
+| **Persistence**  | Persistent until cleared or evicted by browser policy |
+| **Limit**        | 500 MB soft guard                                     |
+| **Dependencies** | [`idb`](https://www.npmjs.com/package/idb)            |
 
-**What it does:** Stores structured client-side data in an IndexedDB object store using OmniStorage keys and values.
+**What it does:** Stores structured client-side data in the `omnistorage_kv` IndexedDB object store using OmniStorage keys and values.
 
 **Commonly used for:**
 
@@ -156,15 +156,15 @@ IndexedDB is a browser database API for storing structured data. It supports lar
 
 The memory engine stores data inside the active JavaScript runtime memory. In the browser, data lives in the current page context. In Node.js, data lives in the running process.
 
-| Property | Value |
-| :--- | :--- |
-| **Engine Key** | `memory` |
-| **Type** | Universal runtime (Browser & Node.js) |
-| **Persistence** | Volatile, cleared when runtime ends |
-| **Limit** | 50 MB soft guard |
-| **Dependencies** | [`cacheable`](https://www.npmjs.com/package/cacheable) |
+| Property         | Value                                                                                                    |
+| :--------------- | :------------------------------------------------------------------------------------------------------- |
+| **Engine Key**   | `memory`                                                                                                 |
+| **Type**         | Universal runtime (Browser & Node.js)                                                                    |
+| **Persistence**  | Volatile, cleared when runtime ends                                                                      |
+| **Limit**        | 50 MB soft guard                                                                                         |
+| **Dependencies** | JavaScript [`Map`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Map) |
 
-**What it does:** Provides very fast temporary storage without writing to browser APIs or disk.
+**What it does:** Provides very fast temporary storage using native JavaScript `Map` without writing to browser APIs, disk, or third-party cache libraries.
 
 **Commonly used for:**
 
@@ -178,20 +178,22 @@ The memory engine stores data inside the active JavaScript runtime memory. In th
 
 - Data is lost when the page reloads or the Node.js process restarts.
 - It is not shared across tabs, workers, or server instances.
+- In a project that has both frontend and backend, browser `memory` and Node.js `memory` are separate because each runtime owns its own `Map` instance.
+- It does not use `cacheable` or any other third-party memory library.
 - Best for speed and temporary state, not durable storage.
 
 ---
 
 <h2 id="file"><i class="ri-folder-open-line"></i> File System</h2>
 
-The file engine stores data on disk using Node.js file system capabilities. In the current implementation, each `dbName` is stored as a JSON file under a `.storage` directory in the process working directory.
+The file engine stores data on disk using Node.js file system capabilities. In the current implementation, each `dbName` is stored as a JSON file under a `.omnistorage` directory in the process working directory.
 
-| Property | Value |
-| :--- | :--- |
-| **Engine Key** | `file` |
-| **Type** | Server (Node.js) |
-| **Persistence** | Persistent on local disk |
-| **Limit** | 100 MB soft guard |
+| Property         | Value                                          |
+| :--------------- | :--------------------------------------------- |
+| **Engine Key**   | `file`                                         |
+| **Type**         | Server (Node.js)                               |
+| **Persistence**  | Persistent on local disk                       |
+| **Limit**        | 100 MB soft guard                              |
 | **Dependencies** | Node.js [`fs`](https://nodejs.org/api/fs.html) |
 
 **What it does:** Persists key-value data into a JSON file on the server or local Node.js runtime.
@@ -216,15 +218,15 @@ The file engine stores data on disk using Node.js file system capabilities. In t
 
 SQLite Server uses SQLite through Node.js. In OmniStorage, it provides a durable SQLite-backed key-value store for server-side applications.
 
-| Property | Value |
-| :--- | :--- |
-| **Engine Key** | `sqlite-server` |
-| **Type** | Server (Node.js) |
-| **Persistence** | Persistent SQLite database file |
-| **Limit** | 1 GB soft guard |
+| Property         | Value                                                            |
+| :--------------- | :--------------------------------------------------------------- |
+| **Engine Key**   | `sqlite-server`                                                  |
+| **Type**         | Server (Node.js)                                                 |
+| **Persistence**  | Persistent SQLite database file                                  |
+| **Limit**        | 1 GB soft guard                                                  |
 | **Dependencies** | [`better-sqlite3`](https://www.npmjs.com/package/better-sqlite3) |
 
-**What it does:** Stores OmniStorage key-value data in a local SQLite database file on the server.
+**What it does:** Stores OmniStorage key-value data in the `omnistorage_kv` table inside a local SQLite database file on the server.
 
 **Commonly used for:**
 
@@ -237,6 +239,7 @@ SQLite Server uses SQLite through Node.js. In OmniStorage, it provides a durable
 
 - Requires a Node.js environment and native SQLite dependency support.
 - Works well for durable local databases.
+- `.db(name)` sets the logical database name. If the matching SQLite database already exists, OmniStorage reuses it and only creates the `omnistorage_kv` table if it is missing. If it does not exist, SQLite creates it.
 - OmniStorage exposes this as a key-value engine, not a full SQL query API.
 - For distributed multi-server deployments, consider how the SQLite file is shared or replicated.
 
@@ -246,15 +249,15 @@ SQLite Server uses SQLite through Node.js. In OmniStorage, it provides a durable
 
 SQLite Client uses SQLite compiled to WebAssembly, allowing SQLite-style storage to run in the browser.
 
-| Property | Value |
-| :--- | :--- |
-| **Engine Key** | `sqlite-client` |
-| **Type** | Client (Browser) |
-| **Persistence** | Persistent with OPFS when available; otherwise browser/runtime dependent |
-| **Limit** | 256 MB soft guard |
+| Property         | Value                                                                              |
+| :--------------- | :--------------------------------------------------------------------------------- |
+| **Engine Key**   | `sqlite-client`                                                                    |
+| **Type**         | Client (Browser)                                                                   |
+| **Persistence**  | Persistent with OPFS when available; otherwise browser/runtime dependent           |
+| **Limit**        | 256 MB soft guard                                                                  |
 | **Dependencies** | [`@sqlite.org/sqlite-wasm`](https://www.npmjs.com/package/@sqlite.org/sqlite-wasm) |
 
-**What it does:** Provides a browser-side SQLite-backed key-value engine through WebAssembly. The current implementation uses OPFS when supported and falls back to a standard SQLite WASM database mode otherwise.
+**What it does:** Provides a browser-side SQLite-backed key-value engine through WebAssembly. Data is stored in the `omnistorage_kv` table. The current implementation checks OPFS-backed SQLite storage when available, reuses an existing database with the same name, and creates the database/table only when needed.
 
 **Commonly used for:**
 
@@ -267,6 +270,7 @@ SQLite Client uses SQLite compiled to WebAssembly, allowing SQLite-style storage
 
 - Browser support and persistence behavior can depend on WebAssembly, OPFS, and origin storage capabilities.
 - It is heavier than LocalStorage or IndexedDB.
+- If `.db(name)` matches an existing browser SQLite database, OmniStorage uses it and creates only the `omnistorage_kv` table when missing.
 - OmniStorage exposes this as a key-value engine, not a full SQL query API.
 - Use it when SQLite-backed browser storage is useful enough to justify the extra complexity.
 
