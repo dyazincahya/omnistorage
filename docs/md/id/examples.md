@@ -2,6 +2,8 @@
 
 Halaman ini menyediakan pola implementasi praktis untuk kebutuhan aplikasi umum menggunakan `OmniStorage`. Setiap contoh dimulai dari import agar mudah disalin ke project dan disesuaikan.
 
+Untuk demo lengkap yang bisa dijalankan, buka [demo app](https://omnistorage-example.vercel.app) _(Vercel)_ atau lihat [source code contoh](https://github.com/dyazincahya/omnistorage-example).
+
 <h2 id="auth"><i class="ri-user-settings-line"></i> Alur Autentikasi Aman</h2>
 
 Gunakan engine `session` untuk data sesi browser dan namespace agar key autentikasi tetap terisolasi.

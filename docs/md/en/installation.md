@@ -2,6 +2,11 @@
 
 Start using `OmniStorage` in your project.
 
+## <i class="ri-external-link-line"></i> Demo & Example
+
+- **Demo app:** [omnistorage-example.vercel.app](https://omnistorage-example.vercel.app) _(Vercel)_
+- **Example source code:** [dyazincahya/omnistorage-example](https://github.com/dyazincahya/omnistorage-example)
+
 ## <i class="ri-terminal-box-line"></i> Installation
 
 Use npm to install the library:

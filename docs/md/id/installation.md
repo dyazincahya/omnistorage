@@ -2,6 +2,11 @@
 
 Mulai menggunakan `OmniStorage` di proyek Anda.
 
+## <i class="ri-external-link-line"></i> Demo & Contoh
+
+- **Demo app:** [omnistorage-example.vercel.app](https://omnistorage-example.vercel.app) _(Vercel)_
+- **Source code contoh:** [dyazincahya/omnistorage-example](https://github.com/dyazincahya/omnistorage-example)
+
 ## <i class="ri-terminal-box-line"></i> Instalasi
 
 Gunakan npm untuk menginstal library:

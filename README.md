@@ -26,6 +26,11 @@
 
 The library is designed for projects that need flexible storage options without rewriting application logic for each environment.
 
+## Demo & Example
+
+- **Demo app:** [omnistorage-example.vercel.app](https://omnistorage-example.vercel.app)
+- **Example source code:** [dyazincahya/omnistorage-example](https://github.com/dyazincahya/omnistorage-example)
+
 ## Key Features
 
 - **Universal API** — use one consistent interface across browser and Node.js environments.

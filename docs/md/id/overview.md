@@ -6,6 +6,11 @@
 
 Library ini menyediakan satu API asynchronous yang konsisten untuk menyimpan data di browser, server, dan runtime bersama.
 
+## <i class="ri-external-link-line"></i> Demo & Contoh
+
+- **Demo app:** [omnistorage-example.vercel.app](https://omnistorage-example.vercel.app) _(Vercel)_
+- **Source code contoh:** [dyazincahya/omnistorage-example](https://github.com/dyazincahya/omnistorage-example)
+
 ## <i class="ri-question-line"></i> Mengapa Menggunakan Library Ini?
 
 1. <i class="ri-global-line"></i> **API Universal**: Gunakan API penyimpanan yang sama di Browser dan Node.js.

@@ -2,6 +2,8 @@
 
 This page provides practical implementation patterns for common application requirements using `OmniStorage`. Each example starts from the import so it can be copied into a project and adapted.
 
+For a complete working demo, open the [demo app](https://omnistorage-example.vercel.app) _(Vercel)_ or browse the [example source code](https://github.com/dyazincahya/omnistorage-example).
+
 <h2 id="auth"><i class="ri-user-settings-line"></i> Secure Authentication Flow</h2>
 
 Use `session` storage for browser session data and a namespace to keep authentication keys isolated.
